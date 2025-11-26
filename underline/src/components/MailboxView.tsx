@@ -29,7 +29,7 @@ interface ReceivedMatchRequest {
   timestamp: Date;
 }
 
-export function MailboxView({ 
+export function MailboxView({
   sentMatchRequests,
   receivedMatchRequests,
   onProfileClick,
@@ -37,8 +37,8 @@ export function MailboxView({
   onTabChange,
   onAcceptMatch,
   onRejectMatch
-}: { 
-  sentMatchRequests?: SentMatchRequest[]; 
+}: {
+  sentMatchRequests?: SentMatchRequest[];
   receivedMatchRequests?: ReceivedMatchRequest[];
   onProfileClick?: (profileId: string, source: "home" | "mailbox") => void;
   activeTab: string;
@@ -74,8 +74,8 @@ export function MailboxView({
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
       <MailboxHeader />
       <MailboxTabs activeTab={activeTab} onTabChange={onTabChange} />
-      
-      <div className="flex-1 bg-[#FCFCFA]">
+
+      <div className="flex-1 bg-[#FCFCFA] pb-24">
         {activeTab === "received" ? (
           <div className="px-6 py-4">
             {receivedMatchRequests && receivedMatchRequests.length > 0 ? (
@@ -94,7 +94,7 @@ export function MailboxView({
                       className="bg-white border border-[#1A3C34]/10 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
                     >
                       <div className="flex gap-3 mb-3">
-                        <div 
+                        <div
                           className="w-14 h-14 rounded-full overflow-hidden border border-[#1A3C34]/10 flex-shrink-0"
                         >
                           <img
@@ -173,7 +173,7 @@ export function MailboxView({
                     className="bg-white border border-[#1A3C34]/10 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
                   >
                     <div className="flex gap-3 mb-3">
-                      <div 
+                      <div
                         className="w-14 h-14 rounded-full overflow-hidden border border-[#1A3C34]/10 flex-shrink-0"
                       >
                         <img
@@ -197,7 +197,7 @@ export function MailboxView({
                       </div>
                       <div className="text-right">
                         <span className="text-xs text-[#D4AF37] font-sans">
-                          신청 완료
+                          수락 대기중
                         </span>
                       </div>
                     </div>

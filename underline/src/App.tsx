@@ -192,7 +192,11 @@ export default function App() {
     sentence: string;
   }) => {
     const alreadySent = sentMatchRequests.find(req => req.profileId === profileData.profileId);
-    if (alreadySent) return;
+
+    if (alreadySent) {
+      // Already sent - do nothing here, handled in ProfileDetailViewWithInteraction
+      return;
+    }
 
     setSentMatchRequests(prev => [
       { ...profileData, timestamp: new Date() },
@@ -245,6 +249,12 @@ export default function App() {
     setShowLoginModal(false);
   };
 
+  // Placeholder functions for HomeRecruitingView compatibility
+  const handleShowLoginModal = () => setShowLoginModal(true);
+  const handleRegister = () => setIsRegistered(true);
+  const handleCancelRegister = () => setIsRegistered(false);
+
+
   if (isLoading) {
     return <div className="min-h-screen bg-[#FCFCFA] flex items-center justify-center">Loading...</div>;
   }
@@ -279,53 +289,75 @@ export default function App() {
           {isDatingPhase ? (
             <HomeDatingView
               isSignedUp={isSignedUp}
-              onShowLoginModal={() => setShowLoginModal(true)}
+              onShowLoginModal={handleShowLoginModal}
               onProfileClick={handleProfileClick}
             />
           ) : (
             <HomeRecruitingView
               isSignedUp={isSignedUp}
-              onShowLoginModal={() => setShowLoginModal(true)}
-              isRegistered={hasProfile} // This might need to be synced with hasProfile too
-              onRegister={() => { }}
-              onCancelRegister={() => { }}
+              onShowLoginModal={handleShowLoginModal}
+              isRegistered={isRegistered}
+              onRegister={handleRegister}
+              onCancelRegister={handleCancelRegister}
             />
           )}
           <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
         </>
       )}
 
-      {currentView === "mailbox" && (
+      {isSignedUp && (
         <>
-          <MailboxView
-            sentMatchRequests={sentMatchRequests}
-            receivedMatchRequests={receivedMatchRequests}
-            onProfileClick={handleProfileClick}
-            activeTab={mailboxActiveTab}
-            onTabChange={setMailboxActiveTab}
-            onAcceptMatch={handleAcceptMatch}
-            onRejectMatch={handleRejectMatch}
-          />
-          <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
-        </>
-      )}
+          {currentView === "mailbox" && (
+            <>
+              <MailboxView
+                sentMatchRequests={sentMatchRequests}
+                receivedMatchRequests={receivedMatchRequests}
+                onProfileClick={handleProfileClick}
+                activeTab={mailboxActiveTab}
+                onTabChange={setMailboxActiveTab}
+                onAcceptMatch={handleAcceptMatch}
+                onRejectMatch={handleRejectMatch}
+              />
+              <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
+            </>
+          )}
 
-      {currentView === "profile" && (
-        <>
-          <MyProfileView onLogout={handleLogout} />
-          <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
-        </>
-      )}
+          {/* Keep MailboxView mounted when showing profile detail from mailbox */}
+          {currentView === "profileDetail" && profileSource === "mailbox" && (
+            <>
+              <MailboxView
+                sentMatchRequests={sentMatchRequests}
+                receivedMatchRequests={receivedMatchRequests}
+                onProfileClick={handleProfileClick}
+                activeTab={mailboxActiveTab}
+                onTabChange={setMailboxActiveTab}
+                onAcceptMatch={handleAcceptMatch}
+                onRejectMatch={handleRejectMatch}
+              />
+              <BottomNav activeTab="mailbox" onTabChange={handleTabChange} />
+            </>
+          )}
 
-      {currentView === "profileDetail" && selectedProfileId && (
-        <ProfileDetailViewWithInteraction
-          profileId={selectedProfileId}
-          onBack={handleBackFromProfileDetail}
-          onMatchRequest={handleMatchRequest}
-          onCancelMatchRequest={handleCancelMatchRequest}
-          sentMatchRequests={sentMatchRequests}
-          disableMatching={profileSource === "mailbox"}
-        />
+          {currentView === "profile" && (
+            <>
+              <MyProfileView onLogout={handleLogout} />
+              <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
+            </>
+          )}
+
+          {currentView === "profileDetail" && selectedProfileId && (
+            <div className={profileSource === "mailbox" ? "fixed inset-0 z-[100] bg-[#FCFCFA] flex justify-center" : ""}>
+              <ProfileDetailViewWithInteraction
+                profileId={selectedProfileId}
+                onBack={handleBackFromProfileDetail}
+                onMatchRequest={handleMatchRequest}
+                onCancelMatchRequest={handleCancelMatchRequest}
+                sentMatchRequests={sentMatchRequests}
+                disableMatching={profileSource === "mailbox"}
+              />
+            </div>
+          )}
+        </>
       )}
 
       <Toaster position="top-center" />

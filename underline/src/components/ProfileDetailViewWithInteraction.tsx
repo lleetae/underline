@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, MapPin, BookOpen, Heart } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner@2.0.3";
@@ -26,15 +26,15 @@ interface ProfileDetailData {
   books: Book[];
 }
 
-export function ProfileDetailViewWithInteraction({ 
-  profileId, 
+export function ProfileDetailViewWithInteraction({
+  profileId,
   onBack,
   onMatchRequest,
   onCancelMatchRequest,
   sentMatchRequests = [],
   disableMatching = false
-}: { 
-  profileId: string; 
+}: {
+  profileId: string;
   onBack: () => void;
   onMatchRequest?: (profileData: {
     profileId: string;
@@ -60,7 +60,15 @@ export function ProfileDetailViewWithInteraction({
   const [selectedSentence, setSelectedSentence] = useState<string | null>(null);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Reset scroll position when profileId changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [profileId]);
+
   // Check if already sent request to this profile
   const existingRequest = sentMatchRequests.find(req => req.profileId === profileId);
   const isRequestSent = !!existingRequest;
@@ -228,9 +236,9 @@ export function ProfileDetailViewWithInteraction({
   // Book Detail View
   if (selectedBook) {
     const sentences = selectedBook.review.split(/(?<=[.!?])\s+/);
-    
+
     return (
-      <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+      <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex flex-col">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-[#FCFCFA]/95 backdrop-blur-sm border-b border-[#1A3C34]/10">
           <div className="flex items-center gap-3 px-6 py-4">
@@ -283,11 +291,10 @@ export function ProfileDetailViewWithInteraction({
                     <span key={index}>
                       <span
                         onClick={() => !disableMatching && !isRequestSent && handleSentenceClick(sentence.trim())}
-                        className={`${!disableMatching && !isRequestSent ? 'cursor-pointer' : 'cursor-default'} transition-all duration-300 inline ${
-                          isSelected
-                            ? "bg-[#D4AF37]/20 border-b-2 border-[#D4AF37] font-semibold px-1 -mx-1"
-                            : !disableMatching && !isRequestSent ? "hover:bg-[#D4AF37]/10 rounded px-1 -mx-1" : ""
-                        }`}
+                        className={`${!disableMatching && !isRequestSent ? 'cursor-pointer' : 'cursor-default'} transition-all duration-300 inline ${isSelected
+                          ? "bg-[#D4AF37]/20 border-b-2 border-[#D4AF37] font-semibold px-1 -mx-1"
+                          : !disableMatching && !isRequestSent ? "hover:bg-[#D4AF37]/10 rounded px-1 -mx-1" : ""
+                          }`}
                       >
                         {sentence}
                       </span>
@@ -417,7 +424,7 @@ export function ProfileDetailViewWithInteraction({
 
   // Main Profile View with Book Shelf
   return (
-    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex flex-col">
       {/* Top Navigation */}
       <div className="sticky top-0 z-10 bg-[#FCFCFA]/95 backdrop-blur-sm border-b border-[#1A3C34]/10">
         <div className="flex items-center gap-3 px-6 py-4">
@@ -432,7 +439,7 @@ export function ProfileDetailViewWithInteraction({
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-32">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pb-32">
         {/* Profile Header */}
         <div className="relative">
           <div className="aspect-[4/5] overflow-hidden">
