@@ -20,11 +20,11 @@ interface Step2Data {
   isbn13: string;
 }
 
-export function SignUpStep2View({ 
-  onComplete, 
-  onBack 
-}: { 
-  onComplete: (data: Step2Data) => void; 
+export function SignUpStep2View({
+  onComplete,
+  onBack
+}: {
+  onComplete: (data: Step2Data) => void;
   onBack: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,74 +63,61 @@ export function SignUpStep2View({
     }
 
     setIsSearching(true);
-    
+
     try {
-      // CORS 이슈로 인해 실제 API 호출이 안될 수 있으므로 mock 데이터 사용
-      // 실제 환경에서는 백엔드 프록시를 통해 호출해야 함
-      
-      const ttbkey = "ttbboookbla1908004";
-      const apiUrl = `http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=${ttbkey}&Query=${encodeURIComponent(searchQuery)}&QueryType=Title&MaxResults=10&start=1&SearchTarget=Book&output=js&Version=20131101&Cover=Big`;
-      
-      try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        
-        if (data.item && data.item.length > 0) {
-          const books: AladinBook[] = data.item.map((item: any) => ({
-            title: item.title,
-            author: item.author,
-            publisher: item.publisher,
-            pubDate: item.pubDate,
-            isbn13: item.isbn13,
-            cover: item.cover,
-            description: item.description || ""
-          }));
-          setSearchResults(books);
-        } else {
-          setSearchResults([]);
-          toast.info("검색 결과가 없습니다");
-        }
-      } catch (error) {
-        // CORS 에러 시 mock 데이터 사용
-        console.log("API 호출 실패, mock 데이터 사용");
-        const filtered = mockBooks.filter(book => 
-          book.title.includes(searchQuery) || book.author.includes(searchQuery)
-        );
-        setSearchResults(filtered.length > 0 ? filtered : mockBooks);
+      // 로컬 백엔드 API 호출
+      const response = await fetch(`http://localhost:3001/api/books/search?query=${encodeURIComponent(searchQuery)}`);
+      const data = await response.json();
+
+      if (data.item && data.item.length > 0) {
+        const books: AladinBook[] = data.item.map((item: any) => ({
+          title: item.title,
+          author: item.author,
+          publisher: item.publisher,
+          pubDate: item.pubDate,
+          isbn13: item.isbn13,
+          cover: item.cover,
+          description: item.description || ""
+        }));
+        setSearchResults(books);
+        toast.success(`${books.length}개의 검색 결과를 찾았습니다`);
+      } else {
+        setSearchResults([]);
+        toast.info("검색 결과가 없습니다");
       }
+    } catch (error) {
+      console.log("API 호출 실패, mock 데이터 사용", error);
+      const filtered = mockBooks.filter(book =>
+        book.title.includes(searchQuery) || book.author.includes(searchQuery)
+      );
+      setSearchResults(filtered.length > 0 ? filtered : mockBooks);
+      toast.warning("검색에 실패했습니다. Mock 데이터를 표시합니다.");
     } finally {
       setIsSearching(false);
     }
   };
 
   const handleBookClick = async (book: AladinBook) => {
-    // 책 상세 정보 가져오기 (알라딘 상품조회 API)
     try {
-      const ttbkey = "ttbboookbla1908004";
-      const apiUrl = `http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=${ttbkey}&itemIdType=ISBN13&ItemId=${book.isbn13}&output=js&Version=20131101&OptResult=description&Cover=Big`;
-      
-      try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        
-        if (data.item && data.item.length > 0) {
-          const detailBook = data.item[0];
-          setSelectedBook({
-            ...book,
-            description: detailBook.description || book.description,
-            cover: detailBook.cover || book.cover
-          });
-        } else {
-          setSelectedBook(book);
-        }
-      } catch (error) {
-        // CORS 에러 시 기본 데이터 사용
+      // 로컬 백엔드 API 호출
+      const response = await fetch(`http://localhost:3001/api/books/detail/${book.isbn13}`);
+      const data = await response.json();
+
+      if (data.item && data.item.length > 0) {
+        const detailBook = data.item[0];
+        setSelectedBook({
+          ...book,
+          description: detailBook.description || book.description,
+          cover: detailBook.cover || book.cover
+        });
+      } else {
         setSelectedBook(book);
       }
     } catch (error) {
+      console.log("상세 정보 조회 실패", error);
       setSelectedBook(book);
     }
-    
+
     setShowDetail(true);
   };
 
@@ -179,14 +166,14 @@ export function SignUpStep2View({
           <div className="bg-[#FCFCFA] rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-2xl">
             <div className="sticky top-0 bg-[#FCFCFA] border-b border-[#1A3C34]/10 px-6 py-4 flex items-center justify-between">
               <h3 className="font-serif text-lg text-[#1A3C34]">책 상세 정보</h3>
-              <button 
+              <button
                 onClick={() => setShowDetail(false)}
                 className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors"
               >
                 <X className="w-5 h-5 text-[#1A3C34]" />
               </button>
             </div>
-            
+
             <div className="px-6 py-6 space-y-4">
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
@@ -205,7 +192,7 @@ export function SignUpStep2View({
                   </div>
                 </div>
               </div>
-              
+
               {selectedBook.description && (
                 <div>
                   <h5 className="font-sans text-sm text-[#1A3C34]/70 mb-2">책 소개</h5>
@@ -330,7 +317,7 @@ export function SignUpStep2View({
                     다시 선택
                   </button>
                 </div>
-                
+
                 <div className="flex gap-4 mb-4">
                   <ImageWithFallback
                     src={selectedBook.cover}
@@ -353,7 +340,7 @@ export function SignUpStep2View({
                   <h3 className="font-serif text-lg text-[#1A3C34]">책 감상문</h3>
                   <div className="h-px flex-1 bg-[#D4AF37]/30" />
                 </div>
-                
+
                 <textarea
                   value={bookReview}
                   onChange={(e) => setBookReview(e.target.value)}
