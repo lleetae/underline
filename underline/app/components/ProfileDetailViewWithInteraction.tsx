@@ -235,7 +235,7 @@ export function ProfileDetailViewWithInteraction({
     return (
       <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-[#FCFCFA]/95 backdrop-blur-sm border-b border-[#1A3C34]/10">
+        <div className="sticky top-0 z-50 bg-[#FCFCFA]/95 backdrop-blur-sm border-b border-[#1A3C34]/10">
           <div className="flex items-center gap-3 px-6 py-4">
             <button
               onClick={handleCloseBookDetail}
@@ -274,7 +274,7 @@ export function ProfileDetailViewWithInteraction({
                 }}
               />
 
-              <div className="relative z-10 font-serif text-[#1A3C34] leading-relaxed whitespace-pre-wrap">
+              <div className="relative z-10 font-serif text-[#1A3C34] leading-relaxed whitespace-pre-wrap break-words">
                 {selectedBook.review}
               </div>
             </div>
@@ -291,7 +291,7 @@ export function ProfileDetailViewWithInteraction({
                       내가 보낸 편지
                     </p>
                     <div className="bg-white/60 rounded-lg p-3 border border-[#D4AF37]/20">
-                      <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap">
+                      <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap break-words">
                         {existingRequest.letter}
                       </p>
                     </div>
@@ -457,7 +457,7 @@ export function ProfileDetailViewWithInteraction({
                     내가 보낸 편지
                   </p>
                   <div className="bg-white/60 rounded-lg p-3 border border-[#D4AF37]/20">
-                    <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap">
+                    <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap break-words">
                       {existingRequest.letter}
                     </p>
                   </div>

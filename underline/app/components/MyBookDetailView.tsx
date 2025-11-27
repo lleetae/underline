@@ -155,10 +155,16 @@ export function MyBookDetailView({
                 <textarea
                   value={editedReview}
                   onChange={(e) => setEditedReview(e.target.value)}
+                  maxLength={10000}
                   rows={15}
                   className="w-full px-4 py-3 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-serif text-sm focus:outline-none focus:border-[#D4AF37] transition-colors resize-none bg-white leading-relaxed"
                   placeholder="감상문을 작성해주세요..."
                 />
+                <div className="flex justify-end mt-2">
+                  <p className="text-xs text-[#1A3C34]/60 font-sans">
+                    {editedReview.length} / 10,000
+                  </p>
+                </div>
               </div>
 
               {/* Edit Action Buttons - Below Textarea */}
@@ -182,7 +188,7 @@ export function MyBookDetailView({
           ) : (
             <div className="bg-white border border-[#1A3C34]/10 rounded-xl p-6 shadow-sm">
               <div className="prose prose-sm max-w-none">
-                <p className="text-[#1A3C34] font-serif leading-loose whitespace-pre-wrap">
+                <p className="text-[#1A3C34] font-serif leading-loose whitespace-pre-wrap break-words">
                   {book.review}
                 </p>
               </div>

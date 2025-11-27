@@ -26,13 +26,32 @@ export function SignUpStep2Basics({
     const [birthDate, setBirthDate] = useState(initialData?.birthDate || "");
     const [location, setLocation] = useState(initialData?.location || "");
     const [height, setHeight] = useState<string>(initialData?.height?.toString() || "");
+    const [isCheckingNickname, setIsCheckingNickname] = useState(false);
 
-    const handleCheckNickname = () => {
-        if (nickname.trim()) {
-            setIsNicknameChecked(true);
-            toast.success("사용 가능한 닉네임입니다");
-        } else {
+    const handleCheckNickname = async () => {
+        if (!nickname.trim()) {
             toast.error("닉네임을 입력해주세요");
+            return;
+        }
+
+        setIsCheckingNickname(true);
+        try {
+            const response = await fetch(`/api/check-nickname?nickname=${encodeURIComponent(nickname)}`);
+            const data = await response.json();
+
+            if (response.ok && data.available) {
+                setIsNicknameChecked(true);
+                toast.success(data.message);
+            } else {
+                setIsNicknameChecked(false);
+                toast.error(data.message || "이미 사용 중인 닉네임입니다");
+            }
+        } catch (error) {
+            console.error("Nickname check failed:", error);
+            toast.error("중복 확인 중 오류가 발생했습니다");
+            setIsNicknameChecked(false);
+        } finally {
+            setIsCheckingNickname(false);
         }
     };
 
@@ -104,10 +123,16 @@ export function SignUpStep2Basics({
                                 placeholder="닉네임을 입력하세요"
                             />
                             <button
+                                type="button"
                                 onClick={handleCheckNickname}
-                                className="px-4 py-2.5 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white rounded-lg transition-all duration-300 flex items-center gap-1.5 font-sans text-sm"
+                                disabled={isCheckingNickname}
+                                className="px-4 py-2.5 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white rounded-lg transition-all duration-300 flex items-center gap-1.5 font-sans text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Check className="w-4 h-4" />
+                                {isCheckingNickname ? (
+                                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <Check className="w-4 h-4" />
+                                )}
                                 확인
                             </button>
                         </div>
