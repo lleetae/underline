@@ -107,14 +107,14 @@ export function ProfileDetailViewWithInteraction({
           setProfile({
             id: memberData.id,
             nickname: memberData.nickname || "익명",
-            age: memberData.age || 0,
+            age: memberData.age || (memberData.birth_date ? new Date().getFullYear() - parseInt(memberData.birth_date.substring(0, 4)) : 0),
             location: memberData.location || "알 수 없음",
             religion: memberData.religion || "none",
             height: memberData.height || "",
             smoking: memberData.smoking || "non-smoker",
             drinking: memberData.drinking || "non-drinker",
             bio: memberData.bio || "",
-            photos: memberData.photo_url ? [memberData.photo_url] : [],
+            photos: memberData.photos && memberData.photos.length > 0 ? memberData.photos : (memberData.photo_url ? [memberData.photo_url] : []),
             books: books
           });
         }
