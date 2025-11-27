@@ -3,6 +3,7 @@ import { ArrowLeft, MapPin, BookOpen, Heart } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 import { CancelMatchModal } from "./CancelMatchModal";
+import { supabase } from "../lib/supabase";
 
 interface Book {
   id: string;
@@ -13,7 +14,7 @@ interface Book {
 }
 
 interface ProfileDetailData {
-  id: string;
+  id: number; // Changed to number
   nickname: string;
   age: number;
   location: string;
@@ -62,6 +63,10 @@ export function ProfileDetailViewWithInteraction({
   const [showCancelModal, setShowCancelModal] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  const [profile, setProfile] = useState<ProfileDetailData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  // const supabase = createClient(); // Removed local client creation
+
   // Reset scroll position when profileId changes
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -69,84 +74,67 @@ export function ProfileDetailViewWithInteraction({
     }
   }, [profileId]);
 
+  useEffect(() => {
+    const fetchProfileDetail = async () => {
+      if (!profileId) return;
+
+      setIsLoading(true);
+      try {
+        // Fetch member details
+        const { data: memberData, error: memberError } = await supabase
+          .from('member')
+          .select('*')
+          .eq('id', parseInt(profileId)) // Convert string prop to integer
+          .single();
+
+        if (memberError) throw memberError;
+
+        // Fetch member books
+        const { data: booksData, error: booksError } = await supabase
+          .from('member_books')
+          .select('*')
+          .eq('member_id', parseInt(profileId)) // Convert string prop to integer
+          .order('created_at', { ascending: false });
+
+        if (booksError) throw booksError;
+
+        if (memberData) {
+          const books: Book[] = (booksData || []).map((book: any) => ({
+            id: book.id,
+            title: book.book_title,
+            author: book.book_author,
+            cover: book.book_cover || "https://via.placeholder.com/150?text=No+Cover",
+            review: book.book_review
+          }));
+
+          setProfile({
+            id: memberData.id,
+            nickname: memberData.nickname || "익명",
+            age: memberData.age || 0,
+            location: memberData.location || "알 수 없음",
+            religion: memberData.religion || "none",
+            height: memberData.height || "",
+            smoking: memberData.smoking || "non-smoker",
+            drinking: memberData.drinking || "non-drinker",
+            bio: memberData.bio || "",
+            photos: memberData.photo_url ? [memberData.photo_url] : [],
+            books: books
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching profile detail:", error);
+        toast.error("프로필 정보를 불러오는데 실패했습니다.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfileDetail();
+  }, [profileId]);
+
   // Check if already sent request to this profile
   const existingRequest = sentMatchRequests.find(req => req.profileId === profileId);
   const isRequestSent = !!existingRequest;
-
-  // Mock profile data with multiple books - in real app, fetch by profileId
-  const profile: ProfileDetailData = {
-    id: profileId,
-    nickname: "책읽는소희",
-    age: 26,
-    location: "성수동",
-    religion: "무교",
-    height: "165cm",
-    smoking: "비흡연",
-    drinking: "가끔",
-    bio: "책과 커피, 그리고 조용한 오후를 사랑합니다. 깊이 있는 대화를 나눌 수 있는 사람을 찾고 있어요.",
-    photos: ["https://images.unsplash.com/photo-1494790108377-be9c29b29330"],
-    books: [
-      {
-        id: "1",
-        title: "참을 수 없는 존재의 가벼움",
-        author: "밀란 쿤데라",
-        cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f",
-        review: `밀란 쿤데라의 이 작품은 제 인생관을 완전히 바꿔놓았습니다. 가벼움과 무거움, 영원회귀와 일회성에 대한 철학적 사유가 깊은 울림을 줍니다.
-
-토마시와 테레사의 사랑 이야기를 통해 우리는 삶의 본질에 대해 질문하게 됩니다. 인생은 단 한 번뿐이고, 그렇기에 리허설 없는 무대 위의 연기와 같습니다.
-
-"가장 무거운 짐이 우리를 짓누르고, 우리를 땅에 주저앉게 하고, 우리를 짓누르는 것이야말로 동시에 가장 강렬한 삶의 충족을 나타내는 이미지이다."
-
-이 문장을 읽었을 때, 삶의 무게가 곧 삶의 의미라는 역설을 깨달았습니다.`,
-      },
-      {
-        id: "2",
-        title: "데미안",
-        author: "헤르만 헤세",
-        cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794",
-        review: `헤르만 헤세의 데미안은 자아 찾기에 대한 가장 아름다운 이야기입니다. 싱클레어가 데미안을 만나 자신의 내면을 발견해가는 과정이 깊은 감동을 줍니다.
-
-"새는 알에서 나오려고 투쟁한다. 알은 세계이다. 태어나려는 자는 하나의 세계를 깨뜨려야 한다."
-
-이 문장은 제게 변화를 두려워하지 말라고 말해줍니다. 진정한 나로 태어나기 위해서는 기존의 틀을 깨야 한다는 것을 배웠습니다.`,
-      },
-      {
-        id: "3",
-        title: "82년생 김지영",
-        author: "조남주",
-        cover: "https://images.unsplash.com/photo-1524578271613-d550eacf6090",
-        review: `조남주 작가의 이 소설은 우리 사회의 민낯을 보여줍니다. 평범한 여성의 일상을 통해 우리가 당연하게 여겼던 것들을 다시 생각하게 만듭니다.
-
-김지영의 이야기는 특별하지 않습니다. 그것이 더 슬픕니다. 누군가의 딸, 누군가의 아내, 누군가의 엄마로만 불리는 한 사람의 이야기.
-
-"그냥 공정하고 싶은 거예요. 공평하게 기회를 얻고, 정당하게 평가받고 싶은 거예요."
-
-이 문장은 우리 모두가 원하는 것이 무엇인지 명확하게 보여줍니다.`,
-      },
-      {
-        id: "4",
-        title: "1984",
-        author: "조지 오웰",
-        cover: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d",
-        review: `조지 오웰의 디스토피아 소설은 현대 사회에 대한 강력한 경고입니다. 빅 브라더의 감시 사회는 우리의 현재를 반영합니다.
-
-"자유란 2 더하기 2는 4라고 말할 수 있는 자유이다. 이것이 인정되면 다른 모든 것은 따라온다."
-
-진실을 말할 수 있는 자유, 그것이 인간의 가장 기본적인 권리라는 것을 깨달았습니다.`,
-      },
-      {
-        id: "5",
-        title: "어린왕자",
-        author: "생텍쥐페리",
-        cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794",
-        review: `어린 시절 읽었을 때와 성인이 되어 읽었을 때의 감동이 완전히 다른 책입니다.
-
-"가장 중요한 것은 눈에 보이지 않아. 마음으로만 볼 수 있어."
-
-이 문장은 어른이 된 우리에게 무엇이 정말 소중한지 다시 생각하게 만듭니다.`,
-      },
-    ],
-  };
 
   // Helper function to display religion text
   const getReligionText = (religion: string) => {
@@ -196,9 +184,9 @@ export function ProfileDetailViewWithInteraction({
   };
 
   const handleSendRequest = () => {
-    if (selectedSentence && onMatchRequest) {
+    if (selectedSentence && onMatchRequest && profile) {
       onMatchRequest({
-        profileId: profile.id,
+        profileId: profile.id.toString(), // Convert back to string for callback
         nickname: profile.nickname,
         age: profile.age,
         location: profile.location,
@@ -225,13 +213,40 @@ export function ProfileDetailViewWithInteraction({
   };
 
   const handleConfirmCancelRequest = () => {
-    if (onCancelMatchRequest) {
-      onCancelMatchRequest(profile.id);
+    if (onCancelMatchRequest && profile) {
+      onCancelMatchRequest(profile.id.toString()); // Convert back to string for callback
       toast.success("매칭 신청이 취소되었습니다!");
       setShowCancelModal(false);
       onBack();
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p className="text-sm text-[#1A3C34]/60 font-sans">프로필 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <p className="text-sm text-[#1A3C34]/60 font-sans">프로필을 찾을 수 없습니다.</p>
+          <button
+            onClick={onBack}
+            className="mt-4 px-4 py-2 bg-[#1A3C34] text-white rounded-lg text-sm font-sans"
+          >
+            돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Book Detail View
   if (selectedBook) {
@@ -434,7 +449,7 @@ export function ProfileDetailViewWithInteraction({
           >
             <ArrowLeft className="w-5 h-5 text-[#1A3C34]" />
           </button>
-          <h1 className="font-sans text-base text-[#1A3C34]">프로필</h1>
+          <h1 className="font-sans text-base text-[#1A3C34]">상대프로필</h1>
         </div>
       </div>
 
