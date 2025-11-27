@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Bell } from "lucide-react";
+import { Bell, BookOpen, User, Mail } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { CancelRecruitmentModal } from "./CancelRecruitmentModal";
-import { supabase } from "../lib/supabase";
 import { useCountdown } from "../hooks/useCountdown";
+import useEmblaCarousel from "embla-carousel-react";
+
+import { supabase } from "../lib/supabase";
+
+interface HomeRecruitingViewProps {
+  isSignedUp: boolean;
+  onShowLoginModal: () => void;
+  isRegistered: boolean;
+  onRegister: () => void;
+  onCancelRegister: () => void;
+  onShowNotifications?: () => void;
+}
 
 interface SuccessStory {
   id: string;
@@ -11,6 +21,7 @@ interface SuccessStory {
   bookTitle: string;
   testimonial: string;
   matchedSentence: string;
+  type: "start" | "life"; // Case A or Case B
 }
 
 export function HomeRecruitingView({
@@ -19,393 +30,276 @@ export function HomeRecruitingView({
   isRegistered,
   onRegister,
   onCancelRegister,
-  onShowNotifications
-}: {
-  isSignedUp: boolean;
-  onShowLoginModal: () => void;
-  isRegistered: boolean;
-  onRegister: () => void;
-  onCancelRegister: () => void;
-  onShowNotifications?: () => void;
-}) {
-  const [showCancelModal, setShowCancelModal] = useState(false);
+  onShowNotifications,
+}: HomeRecruitingViewProps) {
+  // Countdown timer for next Friday 00:00:00 (Thursday 23:59 deadline)
+  const timeLeft = useCountdown(5, 0);
+  const [emblaRef] = useEmblaCarousel({ align: "start", dragFree: true });
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Countdown timer for next Friday 00:00:00
-  const timeLeft = useCountdown(5, 0);
-
-  // Fetch unread notification count with short polling (5 seconds)
+  // Fetch unread notification count
   useEffect(() => {
     if (!isSignedUp) return;
 
-    // Initial fetch
+    const fetchUnreadCount = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+        if (sessionError || !session) return;
+
+        const response = await fetch('/api/notifications?unread_only=true', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching unread count:", error);
+      }
+    };
+
     fetchUnreadCount();
-
-    // Poll every 5 seconds for near-real-time updates
     const interval = setInterval(fetchUnreadCount, 5000);
-
     return () => clearInterval(interval);
   }, [isSignedUp]);
-
-  const fetchUnreadCount = async () => {
-    try {
-      // Refresh session to prevent stale session issues
-      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
-
-      if (sessionError || !session) {
-        console.error("Session refresh failed:", sessionError);
-        return;
-      }
-
-      const token = session.access_token;
-      const response = await fetch('/api/notifications?unread_only=true', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUnreadCount(data.unreadCount || 0);
-      }
-    } catch (error) {
-      console.error("Error fetching unread count:", error);
-    }
-  };
-
-  const handleRegisterClick = async () => {
-    if (!isSignedUp) {
-      onShowLoginModal();
-      return;
-    }
-
-    try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Get member_id
-      const { data: memberData } = await supabase
-        .from('member')
-        .select('id')
-        .eq('auth_id', user.id)
-        .single();
-
-      if (!memberData) return;
-
-      // Insert or update dating_applications with status='active'
-      const { error } = await supabase
-        .from('dating_applications')
-        .upsert(
-          { member_id: memberData.id, status: 'active' },
-          { onConflict: 'member_id' }
-        );
-
-      if (error) {
-        console.error("Error applying:", error);
-        return;
-      }
-
-      // Call the prop callback
-      onRegister();
-    } catch (error) {
-      console.error("Registration failed:", error);
-    }
-  };
-
-  const handleCancelClick = () => {
-    setShowCancelModal(true);
-  };
 
   const successStories: SuccessStory[] = [
     {
       id: "1",
       userImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
       bookTitle: "참을 수 없는 존재의 가벼움",
-      testimonial: "같은 문장에 밑줄을 그은 사람을 만나다니, 운명 같았어요.",
-      matchedSentence: "가벼움과 무거움 사이에서..."
+      testimonial: "프로필에 적힌 '가벼움과 무거움 사이'라는 서평을 보고 신청했어요.",
+      matchedSentence: "가벼움과 무거움 사이",
+      type: "start",
     },
     {
       id: "2",
       userImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
       bookTitle: "데미안",
-      testimonial: "책을 통해 연결된 첫 만남, 대화가 끊이지 않았어요.",
-      matchedSentence: "새는 알에서 나오려고 투쟁한다..."
+      testimonial: "새는 알에서 나오려고 투쟁한다... 그 문장에 이끌렸습니다.",
+      matchedSentence: "새는 알에서 나오려고 투쟁한다",
+      type: "life",
     },
     {
       id: "3",
       userImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
       bookTitle: "1984",
-      testimonial: "같은 책을 읽은 사람과의 만남은 특별했습니다.",
-      matchedSentence: "자유는 노예 상태이다..."
+      testimonial: "같은 책을 인생 책으로 꼽은 사람을 만나 반가웠어요.",
+      matchedSentence: "자유는 노예 상태이다",
+      type: "life",
     },
   ];
 
   return (
-    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#FCFCFA]/95 backdrop-blur-md border-b border-[var(--foreground)]/5">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="w-8" /> {/* Spacer for centering */}
-          <h1 className="font-serif text-2xl text-[var(--foreground)] tracking-wide">
-            Underline
-          </h1>
-          <button
-            onClick={onShowNotifications}
-            className="p-2 -mr-2 rounded-full hover:bg-[var(--foreground)]/5 transition-colors text-[var(--foreground)] relative"
-          >
-            <Bell className="w-5 h-5" />
-            {/* Notification badge */}
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[var(--primary)] rounded-full border border-[#FCFCFA]"></span>
-            )}
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-underline-cream text-underline-text font-sans pb-20 max-w-md mx-auto shadow-2xl shadow-black/5 relative">
+      {/* 1. GNB (Header) */}
+      <header className="sticky top-0 z-50 bg-underline-cream/90 backdrop-blur-sm h-[60px] flex items-center justify-between px-5 border-b border-black/5">
+        <div className="w-6" /> {/* Spacer */}
+        <h1 className="font-serif text-2xl font-bold tracking-tight text-underline-text">
+          Underline
+        </h1>
+        <button
+          onClick={onShowNotifications}
+          className="relative p-2 -mr-2 text-underline-text/80 hover:text-underline-text transition-colors"
+        >
+          <Bell className="w-6 h-6" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-underline-red rounded-full border border-underline-cream" />
+          )}
+        </button>
+      </header>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-24">
-        {/* Hero Section */}
-        <div className="px-6 py-8 text-center">
-          {/* Countdown Timer */}
-          <div className="mb-6">
-            <p className={`text-sm font-sans mb-3 ${timeLeft.days === 0 ? "text-[#FF6B6B] font-bold animate-pulse" : "text-[var(--foreground)]/60"}`}>
-              {timeLeft.days === 0 ? "마감 임박! " : ""}
-              {isRegistered ? "소개팅 오픈까지" : "신청 마감까지"}
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-[var(--foreground)]/10"}`}>
-                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[var(--foreground)]"}`}>
-                  {String(timeLeft.days).padStart(2, '0')}
-                </div>
-                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[var(--foreground)]/50"}`}>
-                  DAY
-                </div>
+      {/* 2. Hero Section */}
+      <section className="px-6 pt-10 pb-12 text-center">
+        {/* Timer */}
+        <div className="mb-8">
+          <p className={`text-sm font-sans mb-3 ${timeLeft.days === 0 ? "text-[#FF6B6B] font-bold animate-pulse" : "text-underline-text/60"}`}>
+            {timeLeft.days === 0 ? "마감 임박! " : ""}
+            신청 마감까지
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-black/5"}`}>
+              <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-underline-text"}`}>
+                {String(timeLeft.days).padStart(2, '0')}
               </div>
-              <div className="font-serif text-2xl text-[var(--foreground)]/30">:</div>
-              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-[var(--foreground)]/10"}`}>
-                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[var(--foreground)]"}`}>
-                  {String(timeLeft.hours).padStart(2, '0')}
-                </div>
-                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[var(--foreground)]/50"}`}>
-                  HOUR
-                </div>
+              <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-underline-text/50"}`}>
+                DAY
               </div>
-              <div className="font-serif text-2xl text-[var(--foreground)]/30">:</div>
-              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-[var(--foreground)]/10"}`}>
-                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[var(--foreground)]"}`}>
-                  {String(timeLeft.minutes).padStart(2, '0')}
-                </div>
-                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[var(--foreground)]/50"}`}>
-                  MIN
-                </div>
+            </div>
+            <div className="font-serif text-2xl text-underline-text/30">:</div>
+            <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-black/5"}`}>
+              <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-underline-text"}`}>
+                {String(timeLeft.hours).padStart(2, '0')}
+              </div>
+              <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-underline-text/50"}`}>
+                HOUR
+              </div>
+            </div>
+            <div className="font-serif text-2xl text-underline-text/30">:</div>
+            <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-black/5"}`}>
+              <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-underline-text"}`}>
+                {String(timeLeft.minutes).padStart(2, '0')}
+              </div>
+              <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-underline-text/50"}`}>
+                MIN
               </div>
             </div>
           </div>
+        </div>
+        {/* Main Copy */}
+        <h2 className="font-serif text-[28px] leading-snug font-bold mb-4 text-underline-text break-keep">
+          당신의 내면을 읽어줄 사람,<br />
+          이번 주 금요일에 만나보세요.
+        </h2>
 
-          {/* Main Text */}
-          <h2 className="font-serif text-2xl text-[var(--foreground)] mb-6 leading-relaxed">
-            {isRegistered ? (
-              <>
-                이번주 금요일에
-                <br />
-                만나요
-              </>
-            ) : (
-              <>
-                이번 주 소개팅에
-                <br />
-                참여하세요
-              </>
-            )}
-          </h2>
+        {/* Sub Copy */}
+        <p className="text-underline-text/60 text-sm mb-8 leading-relaxed break-keep">
+          겉모습 뒤에 숨겨진 '진짜 나'를 알아보는 대화.<br />
+          언더라인에서 이번 주 소개팅을 예약하세요.
+        </p>
 
-          {/* Primary CTA */}
+        {/* Main CTA */}
+        <div className="relative z-10">
           <button
-            className={`w-full font-sans font-medium py-4 rounded-lg transition-all duration-300 text-base ${isRegistered
-              ? "bg-[var(--foreground)] text-white hover:bg-[var(--foreground)]/90"
-              : "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-xl shadow-[var(--primary)]/30"
+            onClick={isRegistered ? onCancelRegister : (isSignedUp ? onRegister : onShowLoginModal)}
+            className={`w-full py-4 rounded-xl text-lg font-bold shadow-lg transition-all transform active:scale-[0.98] ${isRegistered
+              ? "bg-gray-200 text-gray-500"
+              : "bg-underline-red text-white shadow-underline-red/30 hover:shadow-underline-red/40"
               }`}
-            onClick={isRegistered ? handleCancelClick : handleRegisterClick}
           >
-            {isRegistered ? "신청 완료" : "참여 신청하기"}
+            {isRegistered ? "신청 완료" : "이번 주 소개팅 무료 신청하기"}
           </button>
-
-          {/* Info Text */}
-          <p className="text-xs text-[var(--foreground)]/40 font-sans mt-4 leading-relaxed">
-            {isRegistered
-              ? "신청을 취소하시려면 버튼을 다시 눌러주세요"
-              : "매주 금요일 밤 8시, 새로운 인연이 시작됩니다"
-            }
+          <p className="text-[11px] text-underline-text/40 mt-3">
+            매주 금요일 밤 8시, 새로운 인연이 시작됩니다
           </p>
-        </div >
+        </div>
+      </section>
 
-        {/* Content Feed */}
-        < div className="px-6 py-6 bg-gradient-to-b from-[#FCFCFA] to-[#F5F5F0]" >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-serif text-xl text-[var(--foreground)]">
-              지난주 매칭 성공
-            </h3>
-            <div className="h-px flex-1 ml-3 bg-[var(--primary)]/20" />
-          </div>
+      {/* 3. Social Proof (Horizontal Scroll) */}
+      <section className="py-10 bg-white border-y border-black/5">
+        <div className="px-6 mb-6">
+          <h3 className="font-serif text-xl font-bold text-underline-text">
+            실제 유저 후기
+          </h3>
+        </div>
 
-          {/* Horizontal Scroll Cards */}
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
+        <div className="overflow-hidden" ref={emblaRef}>
+          <div className="flex px-6 gap-4">
             {successStories.map((story) => (
               <div
                 key={story.id}
-                className="flex-shrink-0 w-[280px] bg-white border border-[var(--foreground)]/10 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow"
+                className="flex-[0_0_70%] min-w-0 relative rounded-2xl overflow-hidden aspect-[3/4] shadow-md group"
               >
-                {/* User Info */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full overflow-hidden border border-[var(--foreground)]/10">
-                    <ImageWithFallback
-                      src={story.userImage}
-                      alt="User"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-serif text-[var(--foreground)] text-sm truncate">
-                      {story.bookTitle}
-                    </p>
-                    <p className="text-xs text-[var(--foreground)]/50 font-sans">
-                      매칭 성공
+                {/* Background Image */}
+                <ImageWithFallback
+                  src={story.userImage}
+                  alt="User"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                {/* Content Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                  <div className="pr-2">
+                    <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/10 text-[10px] font-medium mb-3">
+                      <span>📖</span>
+                      <span>{story.type === "start" ? "대화의 시작" : "인생 책"}</span>
+                      <span className="opacity-50">|</span>
+                      <span>{story.bookTitle}</span>
+                    </div>
+                    <p className="text-lg font-bold leading-snug opacity-100 break-keep drop-shadow-md">
+                      "{story.testimonial.split(story.matchedSentence).map((part, i, arr) => (
+                        <React.Fragment key={i}>
+                          {part}
+                          {i < arr.length - 1 && <span className="text-underline-cream">{story.matchedSentence}</span>}
+                        </React.Fragment>
+                      ))}"
                     </p>
                   </div>
                 </div>
-
-                {/* Matched Sentence */}
-                <div className="bg-[#FCFCFA] border border-[var(--primary)]/20 rounded-lg p-3 mb-3">
-                  <p className="font-serif text-sm text-[var(--foreground)] italic leading-relaxed">
-                    "{story.matchedSentence}"
-                  </p>
-                </div>
-
-                {/* Testimonial */}
-                <p className="text-sm text-[var(--foreground)]/70 font-sans leading-relaxed">
-                  {story.testimonial}
-                </p>
               </div>
             ))}
           </div>
+        </div>
+      </section>
 
-          {/* Stats Section */}
-          <div className="mt-8 grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="font-serif text-2xl text-[var(--primary)] mb-1">
-                1,247
-              </div>
-              <div className="text-xs text-[var(--foreground)]/60 font-sans">
-                누적 매칭
-              </div>
+      {/* 4. Live Stats */}
+      <section className="px-6 py-12">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className="font-serif text-2xl font-bold text-underline-text mb-1">
+              1,247
             </div>
-            <div className="text-center">
-              <div className="font-serif text-2xl text-[var(--primary)] mb-1">
-                89%
-              </div>
-              <div className="text-xs text-[var(--foreground)]/60 font-sans">
-                만족도
-              </div>
+            <div className="text-xs text-underline-text/50">누적 매칭</div>
+          </div>
+          <div className="text-center">
+            <div className="font-serif text-2xl font-bold text-underline-text mb-1">
+              89%
             </div>
-            <div className="text-center">
-              <div className="font-serif text-2xl text-[var(--primary)] mb-1">
-                342
-              </div>
-              <div className="text-xs text-[var(--foreground)]/60 font-sans">
-                이번 주 신청
-              </div>
+            <div className="text-xs text-underline-text/50">만족도</div>
+          </div>
+          <div className="text-center relative">
+            <div className="font-serif text-2xl font-bold text-underline-text mb-1 flex items-center justify-center gap-1">
+              342
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse mb-3" />
+            </div>
+            <div className="text-xs text-underline-text/50">이번 주 신청</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Process */}
+      <section className="px-6 py-10 bg-white border-t border-black/5">
+        <h3 className="font-serif text-xl font-bold text-underline-text mb-8 text-center">
+          가벼운 만남 대신,<br />
+          이렇게 연결됩니다
+        </h3>
+
+        <div className="space-y-8 relative">
+          {/* Connecting Line */}
+          <div className="absolute left-[19px] top-4 bottom-4 w-0.5 bg-black/5" />
+
+          {/* Step 1 */}
+          <div className="relative flex gap-5">
+            <div className="relative z-10 w-10 h-10 rounded-full bg-underline-cream border border-black/10 flex items-center justify-center text-lg shadow-sm">
+              <BookOpen className="w-5 h-5 text-underline-red" />
+            </div>
+            <div className="flex-1 pt-1">
+              <h4 className="font-bold text-underline-text mb-1">나만의 서재 등록하기</h4>
+              <p className="text-sm text-underline-text/60 leading-relaxed">
+                사진보다 먼저, 당신의 인생 책과 느낀 점을 꽂아두세요. 그게 당신의 진짜 모습이니까요.
+              </p>
             </div>
           </div>
-        </div >
 
-        {/* How It Works Section */}
-        < div className="px-6 py-8" >
-          <h3 className="font-serif text-xl text-[var(--foreground)] mb-6 text-center">
-            어떻게 진행되나요?
-          </h3>
-          <div className="space-y-4">
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-sans text-sm">
-                1
-              </div>
-              <div>
-                <h4 className="font-sans font-medium text-[var(--foreground)] mb-1">
-                  프로필 등록
-                </h4>
-                <p className="text-sm text-[var(--foreground)]/60 font-sans leading-relaxed">
-                  인생책과 마음에 남은 문장을 공유하세요
-                </p>
-              </div>
+          {/* Step 2 */}
+          <div className="relative flex gap-5">
+            <div className="relative z-10 w-10 h-10 rounded-full bg-underline-cream border border-black/10 flex items-center justify-center text-lg shadow-sm">
+              <User className="w-5 h-5 text-underline-red" />
             </div>
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-sans text-sm">
-                2
-              </div>
-              <div>
-                <h4 className="font-sans font-medium text-[var(--foreground)] mb-1">
-                  매칭 대기
-                </h4>
-                <p className="text-sm text-[var(--foreground)]/60 font-sans leading-relaxed">
-                  AI가 책 취향과 가치관이 맞는 상대를 찾아드려요
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-sans text-sm">
-                3
-              </div>
-              <div>
-                <h4 className="font-sans font-medium text-[var(--foreground)] mb-1">
-                  만남 시작
-                </h4>
-                <p className="text-sm text-[var(--foreground)]/60 font-sans leading-relaxed">
-                  금요일 밤 8시, 우편함에서 새로운 인연을 확인하세요
-                </p>
-              </div>
+            <div className="flex-1 pt-1">
+              <h4 className="font-bold text-underline-text mb-1">결이 맞는 사람 찾기</h4>
+              <p className="text-sm text-underline-text/60 leading-relaxed">
+                당신의 책 취향을 보고 대화가 통할 상대를 찾아드려요. 서로의 얼굴은 매칭된 후에 공개됩니다.
+              </p>
             </div>
           </div>
-        </div >
-      </div >
 
-      {/* Cancel Recruitment Modal */}
-      < CancelRecruitmentModal
-        isOpen={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        onConfirm={async () => {
-          try {
-            // Get current user
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            // Get member_id
-            const { data: memberData } = await supabase
-              .from('member')
-              .select('id')
-              .eq('auth_id', user.id)
-              .single();
-
-            if (!memberData) return;
-
-            // Update status to 'cancelled'
-            const { error } = await supabase
-              .from('dating_applications')
-              .update({ status: 'cancelled' })
-              .eq('member_id', memberData.id);
-
-            if (error) {
-              console.error("Error cancelling:", error);
-              return;
-            }
-
-            // Call the prop callback
-            onCancelRegister();
-            setShowCancelModal(false);
-          } catch (error) {
-            console.error("Cancel failed:", error);
-          }
-        }}
-      />
-    </div >
+          {/* Step 3 */}
+          <div className="relative flex gap-5">
+            <div className="relative z-10 w-10 h-10 rounded-full bg-underline-cream border border-black/10 flex items-center justify-center text-lg shadow-sm">
+              <Mail className="w-5 h-5 text-underline-red" />
+            </div>
+            <div className="flex-1 pt-1">
+              <h4 className="font-bold text-underline-text mb-1">금요일 밤 8시, 인연의 편지 열기</h4>
+              <p className="text-sm text-underline-text/60 leading-relaxed">
+                한 주 동안 기다린 인연이 우편함에 도착합니다. 알림이 울리면 설레는 마음으로 확인해 보세요.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
