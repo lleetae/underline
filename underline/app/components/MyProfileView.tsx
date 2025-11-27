@@ -167,7 +167,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
           cover: b.book_cover || "",
           review: b.book_review || "",
           reviewPreview: (b.book_review || "").split('\n')[0].slice(0, 80) + "...",
-          pageCount: 300 // Mock default
+          pageCount: b.page_count || 0
         }));
         setBooks(mappedBooks);
       }
@@ -220,20 +220,49 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
   if (showAddBookView) {
     return (
       <AddBookView
-        onComplete={(newBookData) => {
-          const newBook: Book = {
-            id: (books.length + 1).toString(),
-            title: newBookData.title,
-            author: newBookData.author,
-            publisher: newBookData.publisher,
-            cover: newBookData.cover,
-            review: newBookData.review,
-            reviewPreview: newBookData.review.split('\n')[0].slice(0, 80) + "...",
-            pageCount: Math.floor(Math.random() * 300) + 200 // Mock page count for new books
-          };
-          setBooks([...books, newBook]);
-          setShowAddBookView(false);
-          toast.success("책이 추가되었습니다");
+        onComplete={async (newBookData) => {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+              toast.error("로그인이 필요합니다");
+              return;
+            }
+
+            // Save to database
+            const { data, error } = await supabase
+              .from('member_books')
+              .insert({
+                member_id: user.id,
+                book_title: newBookData.title,
+                book_author: newBookData.author,
+                book_cover: newBookData.cover,
+                book_isbn13: newBookData.isbn13,
+                book_review: newBookData.review,
+                page_count: newBookData.pageCount || 0
+              })
+              .select()
+              .single();
+
+            if (error) throw error;
+
+            // Update local state
+            const newBook: Book = {
+              id: data.id,
+              title: newBookData.title,
+              author: newBookData.author,
+              publisher: newBookData.publisher,
+              cover: newBookData.cover,
+              review: newBookData.review,
+              reviewPreview: newBookData.review.split('\n')[0].slice(0, 80) + "...",
+              pageCount: newBookData.pageCount || 0
+            };
+            setBooks([...books, newBook]);
+            setShowAddBookView(false);
+            toast.success("책이 추가되었습니다");
+          } catch (error) {
+            console.error("Error adding book:", error);
+            toast.error("책 추가에 실패했습니다");
+          }
         }}
         onBack={() => setShowAddBookView(false)}
       />

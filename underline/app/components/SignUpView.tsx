@@ -105,7 +105,8 @@ export function SignUpView({ onComplete }: { onComplete?: () => void; onBack?: (
           book_cover: fullUserData.bookCover,
           book_genre: fullUserData.bookGenre,
           book_isbn13: fullUserData.isbn13,
-          book_review: fullUserData.bookReview
+          book_review: fullUserData.bookReview,
+          page_count: fullUserData.pageCount || 0
         });
 
       if (bookError) throw bookError;

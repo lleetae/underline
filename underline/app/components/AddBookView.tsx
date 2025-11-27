@@ -11,6 +11,7 @@ interface AladinBook {
   isbn13: string;
   cover: string;
   description: string;
+  pageCount?: number;
 }
 
 interface BookData {
@@ -20,6 +21,7 @@ interface BookData {
   cover: string;
   review: string;
   isbn13: string;
+  pageCount?: number;
 }
 
 export function AddBookView({
@@ -83,7 +85,8 @@ export function AddBookView({
           pubDate: item.pubDate,
           isbn13: item.isbn13,
           cover: item.cover,
-          description: item.description || ""
+          description: item.description || "",
+          pageCount: item.subInfo?.itemPage || 0
         }));
         setSearchResults(books);
         toast.success(`${books.length}개의 검색 결과를 찾았습니다`);
@@ -115,7 +118,8 @@ export function AddBookView({
           setSelectedBook({
             ...book,
             description: detailBook.description || book.description,
-            cover: detailBook.cover || book.cover
+            cover: detailBook.cover || book.cover,
+            pageCount: detailBook.subInfo?.itemPage || book.pageCount || 0
           });
         } else {
           setSelectedBook(book);
@@ -150,7 +154,8 @@ export function AddBookView({
       publisher: selectedBook.publisher,
       cover: selectedBook.cover,
       review: bookReview,
-      isbn13: selectedBook.isbn13
+      isbn13: selectedBook.isbn13,
+      pageCount: selectedBook.pageCount || 0
     });
   };
 
