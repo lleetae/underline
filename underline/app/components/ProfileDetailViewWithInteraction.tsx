@@ -217,16 +217,39 @@ export function ProfileDetailViewWithInteraction({
       if (senderError || !senderData) throw new Error("Sender profile not found");
 
       // Insert into match_requests table
-      const { error: insertError } = await supabase
+      const { data: matchRequest, error: insertError } = await supabase
         .from('match_requests')
         .insert({
           sender_id: senderData.id,
           receiver_id: profile.id,
           letter: letter,
           status: 'pending'
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) throw insertError;
+
+      // Send Notification
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && matchRequest) {
+          await fetch('/api/notifications/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              type: 'match_request',
+              targetMemberId: profile.id, // Pass member ID (int)
+              matchId: matchRequest.id
+            })
+          });
+        }
+      } catch (e) {
+        console.error("Error sending notification:", e);
+      }
 
       onMatchRequest({
         profileId: profile.id.toString(),

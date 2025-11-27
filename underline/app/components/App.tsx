@@ -88,6 +88,39 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Realtime Subscription for Match Requests
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    console.log("Setting up realtime subscription for user:", session.user.id);
+
+    const channel = supabase
+      .channel('match_requests_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'match_requests'
+        },
+        (payload) => {
+          console.log('Realtime match request update received:', payload);
+          // Refresh profile data when any change happens to match_requests
+          // In a production app with RLS, we would only receive relevant events.
+          // Even without RLS on realtime, checking profile is safe as it fetches fresh data.
+          checkProfile(session.user.id);
+        }
+      )
+      .subscribe((status) => {
+        console.log("Subscription status:", status);
+      });
+
+    return () => {
+      console.log("Cleaning up realtime subscription");
+      supabase.removeChannel(channel);
+    };
+  }, [session]);
+
   const checkProfile = async (userId: string) => {
     console.log("checkProfile called with:", userId);
     try {
@@ -351,12 +384,34 @@ export default function App() {
 
   const handleAcceptMatch = async (requestId: string) => {
     try {
-      const { error } = await supabase
+      const { data: updatedMatch, error } = await supabase
         .from('match_requests')
         .update({ status: 'accepted' })
-        .eq('id', requestId);
+        .eq('id', requestId)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Send Notification to the sender
+      try {
+        if (session && updatedMatch) {
+          await fetch('/api/notifications/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              type: 'match_accepted',
+              targetMemberId: updatedMatch.sender_id, // Notify the sender
+              matchId: updatedMatch.id
+            })
+          });
+        }
+      } catch (e) {
+        console.error("Error sending notification:", e);
+      }
 
       toast.success("매칭이 수락되었습니다!");
 
