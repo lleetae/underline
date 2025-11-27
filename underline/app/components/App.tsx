@@ -7,6 +7,7 @@ import { MyProfileView } from "./MyProfileView";
 import { SignUpView } from "./SignUpView";
 import { HomeRecruitingView } from "./HomeRecruitingView";
 import { HomeDatingView } from "./HomeDatingView";
+import { NotificationsView } from "./NotificationsView";
 import { BottomNav } from "./mailbox/BottomNav";
 import { LoginModal } from "./LoginModal";
 import { Toaster } from "sonner";
@@ -21,7 +22,7 @@ export default function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false); // Added for HomeRecruitingView compatibility
 
-  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail">("home");
+  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [profileSource, setProfileSource] = useState<"home" | "mailbox">("home");
@@ -248,6 +249,21 @@ export default function App() {
     setShowLoginModal(false);
   };
 
+  const handleShowNotifications = () => {
+    if (!isSignedUp) {
+      setShowLoginModal(true);
+      return;
+    }
+    setCurrentView("notifications");
+  };
+
+  const handleNotificationNavigateToMatch = (matchId: string) => {
+    // For now, navigate to mailbox
+    // In a full implementation, we'd navigate to the specific match
+    setCurrentView("mailbox");
+    setMailboxActiveTab("matched");
+  };
+
   // Placeholder functions for HomeRecruitingView compatibility
   const handleShowLoginModal = () => setShowLoginModal(true);
   const handleRegister = () => setIsRegistered(true);
@@ -298,10 +314,18 @@ export default function App() {
               isRegistered={isRegistered}
               onRegister={handleRegister}
               onCancelRegister={handleCancelRegister}
+              onShowNotifications={handleShowNotifications}
             />
           )}
           <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
         </>
+      )}
+
+      {currentView === "notifications" && (
+        <NotificationsView
+          onBack={() => setCurrentView("home")}
+          onNavigateToMatch={handleNotificationNavigateToMatch}
+        />
       )}
 
       {isSignedUp && (

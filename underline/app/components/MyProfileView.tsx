@@ -136,6 +136,31 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
         // Use blurred photos if available, otherwise fallback to legacy photos
         const displayPhotos = blurredPhotos.length > 0 ? blurredPhotos : (member.photos || []);
 
+        // Decrypt Kakao ID
+        let decryptedKakaoId = member.kakao_id;
+        if (member.kakao_id) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            const response = await fetch('/api/decrypt/kakao', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ encryptedId: member.kakao_id })
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              decryptedKakaoId = data.decryptedId;
+            }
+          } catch (e) {
+            console.error("Error decrypting Kakao ID:", e);
+          }
+        }
+
         setProfileData({
           nickname: member.nickname,
           gender: member.gender,
@@ -146,7 +171,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
           smoking: member.smoking,
           drinking: member.drinking,
           bio: member.bio,
-          kakaoId: member.kakao_id,
+          kakaoId: decryptedKakaoId,
           profilePhotos: displayPhotos.map((url: string, index: number) => ({
             id: index.toString(),
             url: url,
@@ -348,7 +373,32 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
               }
             }
 
-            // 2. Update Database
+            // 2. Encrypt Kakao ID if it was changed
+            let encryptedKakaoId = updatedData.kakaoId;
+            if (updatedData.kakaoId) {
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+
+                const response = await fetch('/api/encrypt/kakao', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify({ kakaoId: updatedData.kakaoId })
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  encryptedKakaoId = data.encryptedId;
+                }
+              } catch (e) {
+                console.error("Error encrypting Kakao ID:", e);
+              }
+            }
+
+            // 3. Update Database
             const originalUrls = updatedData.profilePhotos.map(p => p.originalPath).filter(Boolean);
             const blurredUrls = updatedData.profilePhotos.map(p => p.blurredUrl || p.url);
 
@@ -357,7 +407,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
               .update({
                 nickname: updatedData.nickname,
                 bio: updatedData.bio,
-                kakao_id: updatedData.kakaoId,
+                kakao_id: encryptedKakaoId,
                 photo_urls_original: originalUrls,
                 photo_urls_blurred: blurredUrls,
                 photos: blurredUrls // Update legacy column for compatibility

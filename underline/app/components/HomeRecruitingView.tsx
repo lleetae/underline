@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { CancelRecruitmentModal } from "./CancelRecruitmentModal";
+import { supabase } from "../lib/supabase";
 
 interface SuccessStory {
   id: string;
@@ -11,20 +12,23 @@ interface SuccessStory {
   matchedSentence: string;
 }
 
-export function HomeRecruitingView({ 
-  isSignedUp, 
+export function HomeRecruitingView({
+  isSignedUp,
   onShowLoginModal,
   isRegistered,
   onRegister,
-  onCancelRegister
-}: { 
+  onCancelRegister,
+  onShowNotifications
+}: {
   isSignedUp: boolean;
   onShowLoginModal: () => void;
   isRegistered: boolean;
   onRegister: () => void;
   onCancelRegister: () => void;
+  onShowNotifications?: () => void;
 }) {
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Countdown timer state (example: 2 days, 14 hours, 23 minutes remaining)
   const [timeLeft, setTimeLeft] = useState({
@@ -52,6 +56,37 @@ export function HomeRecruitingView({
 
     return () => clearInterval(timer);
   }, []);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (isSignedUp) {
+      fetchUnreadCount();
+      // Poll every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isSignedUp]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const token = session.access_token;
+      const response = await fetch('/api/notifications?unread_only=true', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
 
   const handleRegisterClick = () => {
     if (!isSignedUp) {
@@ -98,10 +133,19 @@ export function HomeRecruitingView({
           <h1 className="font-serif text-2xl text-[#1A3C34] tracking-wide">
             Underline
           </h1>
-          <button className="p-2 hover:bg-[#1A3C34]/5 rounded-full transition-colors relative">
+          <button
+            onClick={onShowNotifications}
+            className="p-2 hover:bg-[#1A3C34]/5 rounded-full transition-colors relative"
+          >
             <Bell className="w-5 h-5 text-[#1A3C34]" />
-            {/* Notification dot */}
-            <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#D4AF37] rounded-full" />
+            {/* Notification badge */}
+            {unreadCount > 0 && (
+              <div className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-[#D4AF37] rounded-full flex items-center justify-center">
+                <span className="text-[10px] text-white font-sans font-medium px-1">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              </div>
+            )}
           </button>
         </div>
       </div>
@@ -164,11 +208,10 @@ export function HomeRecruitingView({
 
           {/* Primary CTA */}
           <button
-            className={`w-full font-sans font-medium py-4 rounded-lg transition-all duration-300 text-base ${
-              isRegistered
+            className={`w-full font-sans font-medium py-4 rounded-lg transition-all duration-300 text-base ${isRegistered
                 ? "bg-[#1A3C34] text-white hover:bg-[#1A3C34]/90"
                 : "bg-[#D4AF37] text-white hover:bg-[#D4AF37]/90 shadow-xl shadow-[#D4AF37]/30"
-            }`}
+              }`}
             onClick={isRegistered ? handleCancelClick : handleRegisterClick}
           >
             {isRegistered ? "신청 완료" : "참여 신청하기"}
@@ -176,8 +219,8 @@ export function HomeRecruitingView({
 
           {/* Info Text */}
           <p className="text-xs text-[#1A3C34]/40 font-sans mt-4 leading-relaxed">
-            {isRegistered 
-              ? "신청을 취소하시려면 버튼을 다시 눌러주세요" 
+            {isRegistered
+              ? "신청을 취소하시려면 버튼을 다시 눌러주세요"
               : "매주 금요일 밤 8시, 새로운 인연이 시작됩니다"
             }
           </p>
