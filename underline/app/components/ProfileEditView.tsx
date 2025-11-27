@@ -543,7 +543,9 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
                   키 (cm) *
                 </label>
                 <input
-                  type="text"
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={formData.height}
                   onChange={(e) => {
                     const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);

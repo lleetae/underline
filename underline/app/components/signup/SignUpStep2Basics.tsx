@@ -199,9 +199,11 @@ export function SignUpStep2Basics({
                         </label>
                         <input
                             type="number"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             value={height}
                             onChange={(e) => {
-                                const value = e.target.value.slice(0, 3);
+                                const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                 setHeight(value);
                             }}
                             className="w-full px-4 py-2.5 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors"

@@ -7,6 +7,7 @@ import { MyProfileView } from "./MyProfileView";
 import { SignUpView } from "./SignUpView";
 import { HomeRecruitingView } from "./HomeRecruitingView";
 import { HomeDatingView } from "./HomeDatingView";
+import { NotificationsView } from "./NotificationsView";
 import { BottomNav } from "./mailbox/BottomNav";
 import { LoginModal } from "./LoginModal";
 import { Toaster } from "sonner";
@@ -21,11 +22,11 @@ export default function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false); // Added for HomeRecruitingView compatibility
 
-  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail">("home");
+  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [profileSource, setProfileSource] = useState<"home" | "mailbox">("home");
-  const [mailboxActiveTab, setMailboxActiveTab] = useState<"matched" | "sent" | "messages">("matched");
+  const [mailboxActiveTab, setMailboxActiveTab] = useState<"matched" | "sent" | "received" | "messages">("matched");
   const [sentMatchRequests, setSentMatchRequests] = useState<Array<{
     profileId: string;
     nickname: string;
@@ -248,6 +249,27 @@ export default function App() {
     setShowLoginModal(false);
   };
 
+  const handleShowNotifications = () => {
+    if (!isSignedUp) {
+      setShowLoginModal(true);
+      return;
+    }
+    setCurrentView("notifications");
+  };
+
+  const handleNotificationNavigateToMatch = (matchId: string, notificationType: 'match_request' | 'match_accepted' | 'contact_revealed') => {
+    // Navigate to mailbox with appropriate tab
+    setCurrentView("mailbox");
+
+    // Match request -> 받음 (received) tab
+    // Match accepted, Contact revealed -> 매칭 됨 (matched) tab
+    if (notificationType === 'match_request') {
+      setMailboxActiveTab("received"); // Note: "sent" tab shows received requests in Korean UI
+    } else {
+      setMailboxActiveTab("matched");
+    }
+  };
+
   // Placeholder functions for HomeRecruitingView compatibility
   const handleShowLoginModal = () => setShowLoginModal(true);
   const handleRegister = () => setIsRegistered(true);
@@ -267,9 +289,10 @@ export default function App() {
   // If not logged in, isSignedUp is false, so Home view handles it.
   return (
     <div className="min-h-screen bg-[#FCFCFA] flex justify-center selection:bg-[#D4AF37]/20">
-      {/* Dev Tools - Toggle Recruiting/Dating Phase */}
-      <div className="fixed top-4 right-4 z-50 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 border border-[#1A3C34]/20">
-        <div className="flex items-center gap-2">
+      {/* Dev Tools - Toggle Recruiting/Dating Phase + Test Notifications */}
+      <div className="fixed top-4 right-4 z-50 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 border border-[#1A3C34]/20 max-w-xs">
+        {/* Phase Toggle */}
+        <div className="flex items-center gap-2 mb-3">
           <span className="text-xs font-sans text-[#1A3C34]/60">페이즈:</span>
           <button
             onClick={() => setIsDatingPhase(!isDatingPhase)}
@@ -281,6 +304,78 @@ export default function App() {
             {isDatingPhase ? "소개팅" : "모집"}
           </button>
         </div>
+
+        {/* Notification Tests */}
+        {isSignedUp && (
+          <div className="border-t border-[#1A3C34]/10 pt-3">
+            <div className="text-xs font-sans text-[#1A3C34]/60 mb-2">알림 테스트:</div>
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={async () => {
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const response = await fetch('/api/test/create-notification', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`
+                      },
+                      body: JSON.stringify({ type: 'match_request' })
+                    });
+                    if (response.ok) alert('매칭 신청 알림 생성!');
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+                className="px-2 py-1 bg-pink-500 text-white rounded text-xs hover:bg-pink-600 transition"
+              >
+                💌 매칭 신청
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const response = await fetch('/api/test/create-notification', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`
+                      },
+                      body: JSON.stringify({ type: 'match_accepted' })
+                    });
+                    if (response.ok) alert('매칭 수락 알림 생성!');
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+                className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 transition"
+              >
+                ✅ 매칭 수락
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const response = await fetch('/api/test/create-notification', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`
+                      },
+                      body: JSON.stringify({ type: 'contact_revealed' })
+                    });
+                    if (response.ok) alert('연락처 공개 알림 생성!');
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+                className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition"
+              >
+                📱 연락처 공개
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {currentView === "home" && (
@@ -298,10 +393,18 @@ export default function App() {
               isRegistered={isRegistered}
               onRegister={handleRegister}
               onCancelRegister={handleCancelRegister}
+              onShowNotifications={handleShowNotifications}
             />
           )}
           <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
         </>
+      )}
+
+      {currentView === "notifications" && (
+        <NotificationsView
+          onBack={() => setCurrentView("home")}
+          onNavigateToMatch={handleNotificationNavigateToMatch}
+        />
       )}
 
       {isSignedUp && (
