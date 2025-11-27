@@ -5,12 +5,14 @@ import { toast } from "sonner";
 
 interface Match {
   id: string;
+  profileId?: string;
   userImage: string;
   nickname: string;
   age: number;
   location: string;
   bookTitle: string;
   isUnlocked: boolean;
+  isBlurred?: boolean;
 }
 
 export function MatchList({
@@ -62,14 +64,14 @@ export function MatchList({
         >
           {/* Match Profile Info */}
           <div
-            onClick={() => onProfileClick?.(match.id, "mailbox")}
+            onClick={() => onProfileClick?.((match.profileId || match.id), "mailbox")}
             className="flex items-center gap-3 cursor-pointer hover:bg-[#EAEAEA] p-2 rounded-lg transition-colors -mx-2"
           >
             <div className="w-12 h-12 rounded-full overflow-hidden border border-[#C2C2C2]/60 flex-shrink-0">
               <ImageWithFallback
                 src={match.userImage}
                 alt={match.nickname}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover ${match.isBlurred ? "blur-sm" : ""}`}
               />
             </div>
             <div className="flex-1 min-w-0 text-left">
