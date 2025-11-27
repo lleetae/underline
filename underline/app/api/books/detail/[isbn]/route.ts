@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ALADIN_API_KEY = 'ttbboookbla1908004';
+const ALADIN_API_KEY = process.env.ALADIN_API_KEY;
 
 export async function GET(
     _request: NextRequest,
     { params }: { params: { isbn: string } }
 ) {
     try {
+        // Validate API key
+        if (!ALADIN_API_KEY) {
+            console.error('ALADIN_API_KEY is not configured');
+            return NextResponse.json(
+                { error: '서버 설정 오류가 발생했습니다' },
+                { status: 500 }
+            );
+        }
+
         const { isbn } = params;
 
         if (!isbn) {
