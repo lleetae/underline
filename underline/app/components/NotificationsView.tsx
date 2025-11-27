@@ -21,7 +21,7 @@ interface Notification {
 
 interface NotificationsViewProps {
     onBack: () => void;
-    onNavigateToMatch?: (matchId: string) => void;
+    onNavigateToMatch?: (matchId: string, notificationType: 'match_request' | 'match_accepted' | 'contact_revealed') => void;
 }
 
 export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsViewProps) {
@@ -113,7 +113,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
             await markAsRead(notification.id);
         }
         if (onNavigateToMatch) {
-            onNavigateToMatch(notification.match_id);
+            onNavigateToMatch(notification.match_id, notification.type);
         }
     };
 

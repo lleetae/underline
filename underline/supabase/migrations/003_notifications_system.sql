@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('match_request', 'match_accepted', 'contact_revealed')),
   match_id UUID REFERENCES matches(id) ON DELETE CASCADE,
-  sender_id UUID REFERENCES member(id),
+  sender_id bigint REFERENCES member(id),
   is_read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   metadata JSONB DEFAULT '{}'::jsonb

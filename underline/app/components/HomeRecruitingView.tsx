@@ -57,20 +57,28 @@ export function HomeRecruitingView({
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch unread notification count
+  // Fetch unread notification count with short polling (5 seconds)
   useEffect(() => {
-    if (isSignedUp) {
-      fetchUnreadCount();
-      // Poll every 30 seconds
-      const interval = setInterval(fetchUnreadCount, 30000);
-      return () => clearInterval(interval);
-    }
+    if (!isSignedUp) return;
+
+    // Initial fetch
+    fetchUnreadCount();
+
+    // Poll every 5 seconds for near-real-time updates
+    const interval = setInterval(fetchUnreadCount, 5000);
+
+    return () => clearInterval(interval);
   }, [isSignedUp]);
 
   const fetchUnreadCount = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      // Refresh session to prevent stale session issues
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+
+      if (sessionError || !session) {
+        console.error("Session refresh failed:", sessionError);
+        return;
+      }
 
       const token = session.access_token;
       const response = await fetch('/api/notifications?unread_only=true', {
@@ -209,8 +217,8 @@ export function HomeRecruitingView({
           {/* Primary CTA */}
           <button
             className={`w-full font-sans font-medium py-4 rounded-lg transition-all duration-300 text-base ${isRegistered
-                ? "bg-[#1A3C34] text-white hover:bg-[#1A3C34]/90"
-                : "bg-[#D4AF37] text-white hover:bg-[#D4AF37]/90 shadow-xl shadow-[#D4AF37]/30"
+              ? "bg-[#1A3C34] text-white hover:bg-[#1A3C34]/90"
+              : "bg-[#D4AF37] text-white hover:bg-[#D4AF37]/90 shadow-xl shadow-[#D4AF37]/30"
               }`}
             onClick={isRegistered ? handleCancelClick : handleRegisterClick}
           >
