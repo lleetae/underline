@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Heart, AlertTriangle, Users, Calendar, Sparkles } from "lucide-react";
+import { X, Heart, AlertTriangle } from "lucide-react";
 
 export function CancelRecruitmentModal({
   isOpen,
@@ -47,7 +47,7 @@ export function CancelRecruitmentModal({
               <Heart className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm text-[#1A3C34] font-sans leading-relaxed mb-3">
-                  이번 주 금요일, 당신과 같은 책을 좋아하는 
+                  이번 주 금요일, 당신과 같은 책을 좋아하는
                   사람과의 특별한 만남이 기다리고 있어요.
                 </p>
                 <p className="text-sm text-[#1A3C34]/70 font-sans leading-relaxed">

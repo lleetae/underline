@@ -1,12 +1,8 @@
 import React, { useState } from "react";
-import { Heart, MapPin, BookOpen, Calendar, ArrowLeft } from "lucide-react";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { MatchList } from "./mailbox/MatchList";
-import { BottomNav } from "./mailbox/BottomNav";
 import { MailboxHeader } from "./mailbox/MailboxHeader";
+import { MatchList } from "./mailbox/MatchList";
 import { MailboxTabs } from "./mailbox/MailboxTabs";
 import { RejectConfirmModal } from "./RejectConfirmModal";
-import { CancelMatchModal } from "./CancelMatchModal";
 
 interface SentMatchRequest {
   profileId: string;
@@ -42,7 +38,7 @@ export function MailboxView({
   receivedMatchRequests?: ReceivedMatchRequest[];
   onProfileClick?: (profileId: string, source: "home" | "mailbox") => void;
   activeTab: string;
-  onTabChange: (tab: "matched" | "sent" | "messages") => void;
+  onTabChange: (tab: string) => void;
   onAcceptMatch?: (requestId: string) => void;
   onRejectMatch?: (requestId: string) => void;
 }) {

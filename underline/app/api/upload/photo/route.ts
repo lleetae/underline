@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
         // 3. Upload blurred to PUBLIC bucket
         const blurredFilename = `blurred_${filename}`;
-        const { data: blurredUpload, error: blurredError } = await supabaseAdmin
+        const { error: blurredError } = await supabaseAdmin
             .storage
             .from('profile-photos-blurred')
             .upload(blurredFilename, blurredBuffer, {

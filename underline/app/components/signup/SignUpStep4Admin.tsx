@@ -50,7 +50,7 @@ export function SignUpStep4Admin({
     const checkNudity = async (file: File): Promise<boolean> => {
         try {
             const nsfwjs = await import('nsfwjs');
-            const tf = await import('@tensorflow/tfjs');
+
 
             // Create an image element to load the file
             const img = document.createElement('img');
