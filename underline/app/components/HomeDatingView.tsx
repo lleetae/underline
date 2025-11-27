@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MapPin, BookOpen } from "lucide-react";
+import { MapPin, BookOpen, Bell } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { supabase } from "../lib/supabase";
 
@@ -15,38 +15,96 @@ interface UserProfile {
   reviewExcerpt: string;
 }
 
-export function HomeDatingView({ onProfileClick }: {
+export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, onShowNotifications }: {
   onProfileClick?: (profileId: string, source?: "home" | "mailbox") => void; // Keep as string for routing compatibility, will convert
   isSignedUp?: boolean;
   onShowLoginModal?: () => void;
+  onShowNotifications?: () => void;
 }) {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   // const supabase = createClient(); // Removed local client creation
 
   // Countdown timer for dating period end
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 12,
-    minutes: 0,
-    seconds: 0,
-  });
+  // Calculate time left until next Monday 00:00:00 (End of Sunday)
+  const calculateTimeLeft = () => {
+    const now = new Date();
+    const target = new Date(now);
+
+    // Calculate days until next Monday
+    const currentDay = now.getDay(); // 0: Sun, 1: Mon, ... 6: Sat
+    const daysUntilMonday = (8 - currentDay) % 7;
+    const daysToAdd = daysUntilMonday === 0 ? 7 : daysUntilMonday;
+
+    target.setDate(now.getDate() + daysToAdd);
+    target.setHours(0, 0, 0, 0);
+
+    const difference = target.getTime() - now.getTime();
+
+    if (difference > 0) {
+      const totalHours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      return {
+        hours: totalHours,
+        minutes: minutes,
+        seconds: seconds
+      };
+    }
+
+    return { hours: 0, minutes: 0, seconds: 0 };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
 
     return () => clearInterval(timer);
   }, []);
+
+  // Fetch unread notification count with short polling (5 seconds)
+  useEffect(() => {
+    if (!isSignedUp) return;
+
+    // Initial fetch
+    fetchUnreadCount();
+
+    // Poll every 5 seconds for near-real-time updates
+    const interval = setInterval(fetchUnreadCount, 5000);
+
+    return () => clearInterval(interval);
+  }, [isSignedUp]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      // Refresh session to prevent stale session issues
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+
+      if (sessionError || !session) {
+        console.error("Session refresh failed:", sessionError);
+        return;
+      }
+
+      const token = session.access_token;
+      const response = await fetch('/api/notifications?unread_only=true', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchCandidates = async () => {
@@ -156,17 +214,35 @@ export function HomeDatingView({ onProfileClick }: {
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
-        <div className="flex items-center justify-center px-6 py-4">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="w-8" /> {/* Spacer for centering */}
           <h1 className="font-serif text-2xl text-[#1A3C34] tracking-wide">
             Underline
           </h1>
+          <button
+            onClick={onShowNotifications}
+            className="p-2 hover:bg-[#1A3C34]/5 rounded-full transition-colors relative"
+          >
+            <Bell className="w-5 h-5 text-[#1A3C34]" />
+            {/* Notification badge */}
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#D4AF37] rounded-full border border-[#FCFCFA]"></span>
+            )}
+          </button>
         </div>
 
         {/* Floating Badge - Dating Period Timer */}
         <div className="px-6 pb-3">
-          <div className="bg-gradient-to-r from-[#D4AF37] to-[#C9A641] text-white px-4 py-2 rounded-full shadow-lg shadow-[#D4AF37]/30 flex items-center justify-center gap-2">
+          <div className={`
+            px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500
+            ${timeLeft.hours < 24
+              ? "bg-gradient-to-r from-[#FF6B6B] to-[#FF8E53] shadow-[#FF6B6B]/30 animate-pulse"
+              : "bg-gradient-to-r from-[#D4AF37] to-[#C9A641] shadow-[#D4AF37]/30"
+            }
+          `}>
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-xs font-sans font-medium tracking-wide">
+            <span className="text-xs font-sans font-medium tracking-wide text-white">
+              {timeLeft.hours < 24 ? "마감 임박! " : ""}
               소개팅 기간 종료까지 {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
             </span>
           </div>
