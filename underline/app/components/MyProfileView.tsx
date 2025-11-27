@@ -299,7 +299,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       <ProfileEditView
         profileData={profileData}
         onBack={() => setShowProfileEditView(false)}
-        onSave={async (updatedData) => {
+        onSave={async (updatedData, deletedPhotos) => {
           try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
@@ -307,6 +307,51 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
               return;
             }
 
+            // 1. Delete removed photos via API (Server-side to bypass RLS)
+            if (deletedPhotos && deletedPhotos.length > 0) {
+              const { data: { session } } = await supabase.auth.getSession();
+              const token = session?.access_token;
+
+              for (const photo of deletedPhotos) {
+                const originalPath = photo.originalPath;
+                let blurredPath = null;
+
+                if (photo.blurredUrl || photo.url) {
+                  try {
+                    const url = photo.blurredUrl || photo.url;
+                    const urlObj = new URL(url);
+                    const pathParts = urlObj.pathname.split('/profile-photos-blurred/');
+                    if (pathParts.length > 1) {
+                      blurredPath = pathParts[1];
+                    }
+                  } catch (e) {
+                    console.error("Error parsing URL:", e);
+                  }
+                }
+
+                if (originalPath || blurredPath) {
+                  try {
+                    await fetch('/api/delete/photo', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                      },
+                      body: JSON.stringify({
+                        userId: user.id,
+                        originalPath,
+                        blurredPath
+                      })
+                    });
+                  } catch (e) {
+                    console.error("Failed to delete photo via API:", e);
+                    // Continue with other deletions/updates even if one fails
+                  }
+                }
+              }
+            }
+
+            // 2. Update Database
             const originalUrls = updatedData.profilePhotos.map(p => p.originalPath).filter(Boolean);
             const blurredUrls = updatedData.profilePhotos.map(p => p.blurredUrl || p.url);
 

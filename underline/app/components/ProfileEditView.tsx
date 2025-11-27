@@ -1,16 +1,17 @@
-import React, { useState, useRef } from "react";
-import { ArrowLeft, Save, X, Plus, Shield } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { ArrowLeft, Plus, X, Shield, Save } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 
-export interface Photo {
+interface Photo {
   id: string;
   url: string;
   originalPath?: string;
   blurredUrl?: string;
+  file?: File;
 }
 
-export interface ProfileData {
+interface ProfileData {
   nickname: string;
   gender: string;
   birthDate: string;
@@ -24,19 +25,127 @@ export interface ProfileData {
   profilePhotos: Photo[];
 }
 
-export function ProfileEditView({
-  profileData,
-  onBack,
-  onSave,
-}: {
+interface ProfileEditViewProps {
   profileData: ProfileData;
   onBack: () => void;
-  onSave: (data: ProfileData) => void;
-}) {
+  onSave: (updatedData: ProfileData, deletedPhotos: Photo[]) => Promise<void>;
+}
+
+export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditViewProps) {
   const [formData, setFormData] = useState<ProfileData>(profileData);
+  const [deletedPhotos, setDeletedPhotos] = useState<Photo[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSave = () => {
+  // Fetch signed URLs for original photos on mount
+  useEffect(() => {
+    const fetchSignedUrls = async () => {
+      const { supabase } = await import('../lib/supabase');
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const updatedPhotos = await Promise.all(profileData.profilePhotos.map(async (photo) => {
+        if (photo.originalPath && !photo.file) {
+          try {
+            // Use API to bypass RLS for private bucket access
+            const response = await fetch('/api/photo/signed-url', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ path: photo.originalPath })
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.signedUrl) {
+                return { ...photo, url: data.signedUrl };
+              }
+            }
+          } catch (e) {
+            console.error("Error fetching signed URL:", e);
+          }
+        }
+        return photo;
+      }));
+
+      // Only update if there are changes to avoid infinite loop if we were depending on formData
+      // But here we are updating formData based on initial profileData.
+      // We should probably only do this once.
+      setFormData(prev => ({
+        ...prev,
+        profilePhotos: updatedPhotos
+      }));
+    };
+
+    fetchSignedUrls();
+  }, [profileData.profilePhotos]); // Depend on initial profileData photos
+
+  // Check for changes
+  useEffect(() => {
+    const checkDirty = () => {
+      // 1. Check photos
+      const hasDeletedPhotos = deletedPhotos.length > 0;
+      const hasNewPhotos = formData.profilePhotos.some(p => p.file);
+      // Also check if photo count changed (though deletedPhotos covers this usually, 
+      // but if we just removed one and added one, count might be same but content diff)
+      // Actually, if we delete, it goes to deletedPhotos and removed from formData.
+      // If we add, it has 'file'.
+      // So checking deletedPhotos > 0 OR hasNewPhotos is sufficient for photo changes.
+
+      // Compare current photos with initial profileData photos (excluding new local files)
+      // A more robust photo comparison:
+      // Check if any photo was added (has .file)
+      // Check if any photo was removed (present in deletedPhotos)
+      // Check if the order of existing photos changed (if that's a concern, not currently supported by UI)
+      // For now, `hasDeletedPhotos` and `hasNewPhotos` are good indicators.
+      // We also need to check if the *set* of non-new photos is different.
+      const initialExistingPhotoIds = new Set(profileData.profilePhotos.filter(p => !p.file).map(p => p.id));
+      const currentExistingPhotoIds = new Set(formData.profilePhotos.filter(p => !p.file).map(p => p.id));
+
+      const existingPhotosChanged = initialExistingPhotoIds.size !== currentExistingPhotoIds.size ||
+        ![...initialExistingPhotoIds].every(id => currentExistingPhotoIds.has(id));
+
+
+      if (hasDeletedPhotos || hasNewPhotos || existingPhotosChanged) {
+        setIsDirty(true);
+        return;
+      }
+
+      // 2. Check text fields
+      const isNicknameChanged = formData.nickname !== profileData.nickname;
+      const isBioChanged = formData.bio !== profileData.bio;
+      const isKakaoIdChanged = formData.kakaoId !== profileData.kakaoId;
+      const isLocationChanged = formData.location !== profileData.location;
+      const isReligionChanged = formData.religion !== profileData.religion;
+      const isHeightChanged = formData.height !== profileData.height;
+      const isSmokingChanged = formData.smoking !== profileData.smoking;
+      const isDrinkingChanged = formData.drinking !== profileData.drinking;
+
+      if (
+        isNicknameChanged ||
+        isBioChanged ||
+        isKakaoIdChanged ||
+        isLocationChanged ||
+        isReligionChanged ||
+        isHeightChanged ||
+        isSmokingChanged ||
+        isDrinkingChanged
+      ) {
+        setIsDirty(true);
+      } else {
+        setIsDirty(false);
+      }
+    };
+
+    checkDirty();
+  }, [formData, deletedPhotos, profileData]);
+
+  const handleSave = async () => {
+    if (!isDirty) return; // Prevent saving if no changes
+
     if (formData.profilePhotos.length === 0) {
       toast.error("프로필 사진을 최소 1개 이상 등록해주세요");
       return;
@@ -58,9 +167,70 @@ export function ProfileEditView({
       return;
     }
 
-    onSave(formData);
-    // toast.success("프로필이 저장되었습니다"); // Moved to parent or keep here? Parent should handle success after async save
-    // onBack(); // Parent should handle close
+    setIsSaving(true);
+    const loadingToast = toast.loading("프로필을 저장하고 있습니다...");
+
+    try {
+      // 1. Upload new photos
+      const updatedPhotos = await Promise.all(formData.profilePhotos.map(async (photo) => {
+        if (photo.file) {
+          // Upload this new photo
+          const uploadFormData = new FormData();
+          uploadFormData.append('photo', photo.file);
+
+          // We need userId for the upload API. 
+          // Since we are in a component, we might not have it directly if not passed.
+          // However, the API expects it. We can get it from supabase client or pass it as prop.
+          // For now, let's try to get it from the session in the API call context or assume the API handles it?
+          // Actually the API requires 'userId' in body.
+          // We can fetch session here to get userId.
+          const { supabase } = await import('../lib/supabase');
+          const { data: { session } } = await supabase.auth.getSession();
+
+          if (!session) throw new Error("로그인이 필요합니다");
+
+          uploadFormData.append('userId', session.user.id);
+
+          const response = await fetch('/api/upload/photo', {
+            method: 'POST',
+            body: uploadFormData
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error || 'Upload failed');
+          }
+
+          return {
+            id: photo.id,
+            url: result.blurredUrl,
+            originalPath: result.originalPath,
+            blurredUrl: result.blurredUrl
+            // file property is removed
+          };
+        }
+        return photo;
+      }));
+
+      // 2. Call onSave with updated photo data
+      const finalFormData = {
+        ...formData,
+        profilePhotos: updatedPhotos
+      };
+
+      await onSave(finalFormData, deletedPhotos);
+
+      toast.dismiss(loadingToast);
+      // Success toast is handled by parent or we can do it here
+      // toast.success("프로필이 저장되었습니다"); 
+    } catch (error: any) {
+      console.error("Save failed:", error);
+      toast.dismiss(loadingToast);
+      toast.error(`저장 실패: ${error.message || "알 수 없는 오류"}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddPhoto = () => {
@@ -126,39 +296,14 @@ export function ProfileEditView({
       }
 
       toast.dismiss(loadingToast);
-      const uploadToast = toast.loading("사진을 업로드하고 블러 처리중입니다...");
 
-      // 2. Upload via API (Server-side processing)
-      const { supabase } = await import('../lib/supabase');
-      const { data: { session } } = await supabase.auth.getSession();
+      // 2. Create Local Preview (Deferred Upload)
+      const objectUrl = URL.createObjectURL(file);
 
-      if (!session) {
-        toast.dismiss(uploadToast);
-        toast.error("로그인이 필요합니다. 다시 로그인해주세요.");
-        return;
-      }
-
-      const uploadFormData = new FormData();
-      uploadFormData.append('photo', file);
-      uploadFormData.append('userId', session.user.id);
-
-      const response = await fetch('/api/upload/photo', {
-        method: 'POST',
-        body: uploadFormData
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Upload failed');
-      }
-
-      // 3. Update State
       const newPhoto: Photo = {
-        id: Date.now().toString(), // Temporary ID
-        url: result.blurredUrl,
-        originalPath: result.originalPath,
-        blurredUrl: result.blurredUrl
+        id: Date.now().toString(),
+        url: objectUrl,
+        file: file // Store file for later upload
       };
 
       setFormData(prev => ({
@@ -166,13 +311,10 @@ export function ProfileEditView({
         profilePhotos: [...prev.profilePhotos, newPhoto]
       }));
 
-      toast.dismiss(uploadToast);
-      toast.success("사진이 등록되었습니다");
-
     } catch (error: any) {
-      console.error("Upload failed:", error);
+      console.error("File selection failed:", error);
       toast.dismiss(loadingToast);
-      toast.error(`업로드 실패: ${error.message || "알 수 없는 오류"}`);
+      toast.error("사진 선택 중 오류가 발생했습니다");
     }
   };
 
@@ -181,11 +323,24 @@ export function ProfileEditView({
       toast.error("프로필 사진은 최소 1개 이상 필요합니다");
       return;
     }
+
+    const photoToDelete = formData.profilePhotos.find(p => p.id === id);
+
+    if (photoToDelete) {
+      // Only track for server deletion if it's NOT a new local file
+      if (!photoToDelete.file) {
+        setDeletedPhotos([...deletedPhotos, photoToDelete]);
+      } else {
+        // If it was a local file, revoke the object URL to free memory
+        URL.revokeObjectURL(photoToDelete.url);
+      }
+    }
+
     setFormData({
       ...formData,
       profilePhotos: formData.profilePhotos.filter((photo) => photo.id !== id),
     });
-    toast.success("사진이 삭제되었습니다");
+    // toast.success("사진이 삭제되었습니다"); // Optional, maybe too noisy
   };
 
   return (
@@ -202,11 +357,12 @@ export function ProfileEditView({
             </button>
             <h1 className="font-serif text-2xl text-[#1A3C34]">프로필 수정</h1>
           </div>
+          {/* Save button removed from header */}
         </div>
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div className="flex-1 overflow-y-auto pb-32"> {/* Increased padding bottom for floating button */}
         <div className="px-6 py-6 space-y-6">
           {/* Profile Photos Section */}
           <div className="bg-white border border-[#1A3C34]/10 rounded-xl p-5 shadow-sm">
@@ -493,13 +649,31 @@ export function ProfileEditView({
             </p>
           </div>
 
-          {/* Save Button */}
+        </div>
+      </div>
+
+      {/* Floating Save Button */}
+      <div className="fixed bottom-[70px] left-0 right-0 p-6 bg-gradient-to-t from-[#FCFCFA] via-[#FCFCFA] to-transparent z-50 flex justify-center">
+        <div className="w-full max-w-md">
           <button
             onClick={handleSave}
-            className="w-full bg-[#D4AF37] text-white font-sans font-medium py-4 rounded-lg hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-lg shadow-[#D4AF37]/20 flex items-center justify-center gap-2"
+            disabled={isSaving || !isDirty}
+            className={`w-full font-sans font-medium py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${isDirty
+              ? "bg-[#1A3C34] text-white shadow-[#1A3C34]/20 hover:bg-[#1A3C34]/90"
+              : "bg-[#1A3C34]/20 text-[#1A3C34]/40 shadow-none cursor-not-allowed"
+              }`}
           >
-            <Save className="w-5 h-5" />
-            저장하기
+            {isSaving ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>저장 중...</span>
+              </>
+            ) : (
+              <>
+                <Save className={`w-5 h-5 ${isDirty ? "" : "opacity-50"}`} />
+                <span>변경사항 저장하기</span>
+              </>
+            )}
           </button>
         </div>
       </div>
