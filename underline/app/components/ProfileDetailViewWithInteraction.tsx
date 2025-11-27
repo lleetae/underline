@@ -62,6 +62,7 @@ export function ProfileDetailViewWithInteraction({
 
   const [profile, setProfile] = useState<ProfileDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   // const supabase = createClient(); // Removed local client creation
 
   // Reset scroll position when profileId changes
@@ -133,6 +134,8 @@ export function ProfileDetailViewWithInteraction({
   const existingRequest = sentMatchRequests.find(req => req.profileId === profileId);
   const isRequestSent = !!existingRequest;
 
+
+
   // Helper function to display religion text
   const getReligionText = (religion: string) => {
     const religionMap: { [key: string]: string } = {
@@ -200,6 +203,31 @@ export function ProfileDetailViewWithInteraction({
 
     setIsSendingRequest(true);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Get sender's member id
+      const { data: senderData, error: senderError } = await supabase
+        .from('member')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single();
+
+      if (senderError || !senderData) throw new Error("Sender profile not found");
+
+      // Insert into match_requests table
+      const { error: insertError } = await supabase
+        .from('match_requests')
+        .insert({
+          sender_id: senderData.id,
+          receiver_id: profile.id,
+          letter: letter,
+          status: 'pending'
+        });
+
+      if (insertError) throw insertError;
+
       onMatchRequest({
         profileId: profile.id.toString(),
         nickname: profile.nickname,
@@ -212,6 +240,7 @@ export function ProfileDetailViewWithInteraction({
       setShowLetterModal(false);
       onBack();
     } catch (error) {
+      console.error("Error sending match request:", error);
       toast.error("매칭 신청 중 오류가 발생했습니다.");
     } finally {
       setIsSendingRequest(false);
@@ -350,7 +379,7 @@ export function ProfileDetailViewWithInteraction({
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex flex-col">
       {/* Top Navigation */}
-      <div className="sticky top-0 z-10 bg-[#FCFCFA]/95 backdrop-blur-sm border-b border-[#1A3C34]/10">
+      <div className="relative z-10 bg-[#FCFCFA]/95 backdrop-blur-sm border-b border-[#1A3C34]/10">
         <div className="flex items-center gap-3 px-6 py-4">
           <button
             onClick={onBack}
@@ -366,20 +395,60 @@ export function ProfileDetailViewWithInteraction({
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pb-32">
         {/* Profile Header */}
         <div className="relative">
-          <div className="aspect-[4/5] overflow-hidden">
+          <div className="aspect-[4/5] overflow-hidden relative group">
             <ImageWithFallback
-              src={profile.photos[0]}
+              src={profile.photos[currentPhotoIndex]}
               alt={profile.nickname}
               className="w-full h-full object-cover"
             />
+
+            {/* Photo Navigation Overlay */}
+            {profile.photos.length > 1 && (
+              <>
+                {/* Tap Areas */}
+                <div className="absolute inset-0 flex">
+                  <div
+                    className="w-1/2 h-full z-10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (currentPhotoIndex > 0) {
+                        setCurrentPhotoIndex(prev => prev - 1);
+                      }
+                    }}
+                  />
+                  <div
+                    className="w-1/2 h-full z-10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (currentPhotoIndex < profile.photos.length - 1) {
+                        setCurrentPhotoIndex(prev => prev + 1);
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Progress Indicators */}
+                <div className="absolute top-2 left-2 right-2 flex gap-1 z-20">
+                  {profile.photos.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`h-1 flex-1 rounded-full transition-all duration-300 ${index === currentPhotoIndex
+                        ? "bg-white"
+                        : "bg-white/30"
+                        }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent px-6 py-8">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent px-6 py-8 pointer-events-none">
             <h2 className="text-white font-sans text-2xl font-medium mb-2">
               {profile.nickname}
             </h2>
             <div className="flex items-center gap-4 text-white/90 mb-3">
-              <span className="text-sm font-sans">만 {profile.age}세</span>
+              <span className="text-sm font-sans">{getLocationText(profile.location)}</span>
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm font-sans">{getLocationText(profile.location)}</span>

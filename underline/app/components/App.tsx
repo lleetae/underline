@@ -137,30 +137,72 @@ export default function App() {
   }, []);
 
   const checkProfile = async (userId: string) => {
+    console.log("checkProfile called with:", userId);
     try {
+      console.log("Fetching member profile...");
       const { data, error: _error } = await supabase
         .from('member')
         .select('id')
         .eq('auth_id', userId) // Query by auth_id (UUID) instead of id (BIGINT)
         .single();
 
+      console.log("Member profile result:", data, _error);
+
       if (data) {
         setHasProfile(true);
         setIsSignedUp(true);
 
         // Check application status
-        const { data: applicationData } = await supabase
+        console.log("Checking application status...");
+        const { data: applicationData, error: appError } = await supabase
           .from('dating_applications')
           .select('status')
           .eq('member_id', data.id)
           .single();
+
+        console.log("Application status result:", applicationData, appError);
 
         if (applicationData && applicationData.status === 'active') {
           setIsRegistered(true);
         } else {
           setIsRegistered(false);
         }
+
+        // Fetch received match requests
+        const { data: receivedRequests, error: requestsError } = await supabase
+          .from('match_requests')
+          .select(`
+            id,
+            sender_id,
+            letter,
+            created_at,
+            sender:member!sender_id (
+              id,
+              nickname,
+              age,
+              location,
+              photo_url
+            )
+          `)
+          .eq('receiver_id', data.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (!requestsError && receivedRequests) {
+          const formattedRequests = receivedRequests.map((req: any) => ({
+            id: req.id,
+            profileId: req.sender.id.toString(),
+            nickname: req.sender.nickname,
+            age: req.sender.age,
+            location: req.sender.location,
+            photo: req.sender.photo_url,
+            letter: req.letter,
+            timestamp: new Date(req.created_at)
+          }));
+          setReceivedMatchRequests(formattedRequests);
+        }
       } else {
+        console.log("No profile found");
         setHasProfile(false);
         setIsSignedUp(false);
         setIsRegistered(false);
@@ -168,6 +210,7 @@ export default function App() {
     } catch (error) {
       console.error("Error checking profile:", error);
     } finally {
+      console.log("Setting isLoading to false");
       setIsLoading(false);
     }
   };

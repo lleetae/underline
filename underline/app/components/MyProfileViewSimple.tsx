@@ -306,7 +306,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
                   {profileData.nickname}
                 </h2>
                 <div className="flex items-center gap-3 text-xs text-[#1A3C34]/60 font-sans">
-                  <span>{profileData.gender}</span>
+                  <span>{profileData.gender === 'male' ? '남성' : profileData.gender === 'female' ? '여성' : profileData.gender}</span>
                   <span>·</span>
                   <span>{profileData.birthDate.substring(0, 4)}년생</span>
                 </div>

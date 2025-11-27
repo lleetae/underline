@@ -455,7 +455,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
                 </label>
                 <input
                   type="text"
-                  value={formData.gender}
+                  value={formData.gender === 'male' ? '남성' : formData.gender === 'female' ? '여성' : formData.gender}
                   disabled
                   className="w-full px-4 py-2.5 border border-[#1A3C34]/10 rounded-lg text-[#1A3C34]/40 font-sans text-sm bg-[#1A3C34]/5 cursor-not-allowed"
                 />
