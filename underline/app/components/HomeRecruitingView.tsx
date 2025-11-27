@@ -31,27 +31,38 @@ export function HomeRecruitingView({
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Countdown timer state (example: 2 days, 14 hours, 23 minutes remaining)
-  const [timeLeft, setTimeLeft] = useState({
-    days: 2,
-    hours: 14,
-    minutes: 23,
-    seconds: 45,
-  });
+  // Calculate time left until next Friday 00:00:00
+  const calculateTimeLeft = () => {
+    const now = new Date();
+    const target = new Date(now);
+
+    // Calculate days until next Friday (5)
+    const currentDay = now.getDay(); // 0: Sun, 1: Mon, ... 6: Sat
+    let daysUntilFriday = (5 - currentDay + 7) % 7;
+    if (daysUntilFriday === 0) daysUntilFriday = 7;
+
+    target.setDate(now.getDate() + daysUntilFriday);
+    target.setHours(0, 0, 0, 0);
+
+    const difference = target.getTime() - now.getTime();
+
+    if (difference > 0) {
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      return { days, hours, minutes, seconds };
+    }
+
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else if (prev.days > 0) {
-          return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
 
     return () => clearInterval(timer);
@@ -164,33 +175,34 @@ export function HomeRecruitingView({
         <div className="px-6 py-8 text-center">
           {/* Countdown Timer */}
           <div className="mb-6">
-            <p className="text-sm text-[#1A3C34]/60 font-sans mb-3">
+            <p className={`text-sm font-sans mb-3 ${timeLeft.days === 0 ? "text-[#FF6B6B] font-bold animate-pulse" : "text-[#1A3C34]/60"}`}>
+              {timeLeft.days === 0 ? "마감 임박! " : ""}
               {isRegistered ? "소개팅 오픈까지" : "신청 마감까지"}
             </p>
             <div className="flex items-center justify-center gap-3">
-              <div className="bg-white border border-[#1A3C34]/10 rounded-xl px-4 py-3 shadow-sm min-w-[70px]">
-                <div className="font-serif text-3xl text-[#1A3C34]">
+              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-[#1A3C34]/10"}`}>
+                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[#1A3C34]"}`}>
                   {String(timeLeft.days).padStart(2, '0')}
                 </div>
-                <div className="text-[10px] text-[#1A3C34]/50 font-sans mt-1">
+                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[#1A3C34]/50"}`}>
                   DAY
                 </div>
               </div>
               <div className="font-serif text-2xl text-[#1A3C34]/30">:</div>
-              <div className="bg-white border border-[#1A3C34]/10 rounded-xl px-4 py-3 shadow-sm min-w-[70px]">
-                <div className="font-serif text-3xl text-[#1A3C34]">
+              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-[#1A3C34]/10"}`}>
+                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[#1A3C34]"}`}>
                   {String(timeLeft.hours).padStart(2, '0')}
                 </div>
-                <div className="text-[10px] text-[#1A3C34]/50 font-sans mt-1">
+                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[#1A3C34]/50"}`}>
                   HOUR
                 </div>
               </div>
               <div className="font-serif text-2xl text-[#1A3C34]/30">:</div>
-              <div className="bg-white border border-[#1A3C34]/10 rounded-xl px-4 py-3 shadow-sm min-w-[70px]">
-                <div className="font-serif text-3xl text-[#1A3C34]">
+              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-[#1A3C34]/10"}`}>
+                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[#1A3C34]"}`}>
                   {String(timeLeft.minutes).padStart(2, '0')}
                 </div>
-                <div className="text-[10px] text-[#1A3C34]/50 font-sans mt-1">
+                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[#1A3C34]/50"}`}>
                   MIN
                 </div>
               </div>
@@ -232,10 +244,10 @@ export function HomeRecruitingView({
               : "매주 금요일 밤 8시, 새로운 인연이 시작됩니다"
             }
           </p>
-        </div>
+        </div >
 
         {/* Content Feed */}
-        <div className="px-6 py-6 bg-gradient-to-b from-[#FCFCFA] to-[#F5F5F0]">
+        < div className="px-6 py-6 bg-gradient-to-b from-[#FCFCFA] to-[#F5F5F0]" >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-serif text-xl text-[#1A3C34]">
               지난주 매칭 성공
@@ -311,10 +323,10 @@ export function HomeRecruitingView({
               </div>
             </div>
           </div>
-        </div>
+        </div >
 
         {/* How It Works Section */}
-        <div className="px-6 py-8">
+        < div className="px-6 py-8" >
           <h3 className="font-serif text-xl text-[#1A3C34] mb-6 text-center">
             어떻게 진행되나요?
           </h3>
@@ -359,18 +371,19 @@ export function HomeRecruitingView({
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </div >
+      </div >
 
       {/* Cancel Recruitment Modal */}
-      <CancelRecruitmentModal
+      < CancelRecruitmentModal
         isOpen={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
+        onClose={() => setShowCancelModal(false)
+        }
         onConfirm={() => {
           onCancelRegister();
           setShowCancelModal(false);
         }}
       />
-    </div>
+    </div >
   );
 }

@@ -27,27 +27,43 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
   // const supabase = createClient(); // Removed local client creation
 
   // Countdown timer for dating period end
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 12,
-    minutes: 0,
-    seconds: 0,
-  });
+  // Calculate time left until next Monday 00:00:00 (End of Sunday)
+  const calculateTimeLeft = () => {
+    const now = new Date();
+    const target = new Date(now);
+
+    // Calculate days until next Monday
+    const currentDay = now.getDay(); // 0: Sun, 1: Mon, ... 6: Sat
+    const daysUntilMonday = (8 - currentDay) % 7;
+    const daysToAdd = daysUntilMonday === 0 ? 7 : daysUntilMonday;
+
+    target.setDate(now.getDate() + daysToAdd);
+    target.setHours(0, 0, 0, 0);
+
+    const difference = target.getTime() - now.getTime();
+
+    if (difference > 0) {
+      const totalHours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      return {
+        hours: totalHours,
+        minutes: minutes,
+        seconds: seconds
+      };
+    }
+
+    return { hours: 0, minutes: 0, seconds: 0 };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
 
-    return () => clearInterval(timer);
     return () => clearInterval(timer);
   }, []);
 
@@ -215,9 +231,16 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
 
         {/* Floating Badge - Dating Period Timer */}
         <div className="px-6 pb-3">
-          <div className="bg-gradient-to-r from-[#D4AF37] to-[#C9A641] text-white px-4 py-2 rounded-full shadow-lg shadow-[#D4AF37]/30 flex items-center justify-center gap-2">
+          <div className={`
+            px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500
+            ${timeLeft.hours < 24
+              ? "bg-gradient-to-r from-[#FF6B6B] to-[#FF8E53] shadow-[#FF6B6B]/30 animate-pulse"
+              : "bg-gradient-to-r from-[#D4AF37] to-[#C9A641] shadow-[#D4AF37]/30"
+            }
+          `}>
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-xs font-sans font-medium tracking-wide">
+            <span className="text-xs font-sans font-medium tracking-wide text-white">
+              {timeLeft.hours < 24 ? "마감 임박! " : ""}
               소개팅 기간 종료까지 {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
             </span>
           </div>
