@@ -128,6 +128,7 @@ export default function App() {
       } else {
         setHasProfile(false);
         setIsSignedUp(false);
+        setIsRegistered(false);
         setIsLoading(false);
       }
     });
@@ -146,9 +147,23 @@ export default function App() {
       if (data) {
         setHasProfile(true);
         setIsSignedUp(true);
+
+        // Check application status
+        const { data: applicationData } = await supabase
+          .from('dating_applications')
+          .select('status')
+          .eq('member_id', data.id)
+          .single();
+
+        if (applicationData && applicationData.status === 'active') {
+          setIsRegistered(true);
+        } else {
+          setIsRegistered(false);
+        }
       } else {
         setHasProfile(false);
         setIsSignedUp(false);
+        setIsRegistered(false);
       }
     } catch (error) {
       console.error("Error checking profile:", error);
@@ -217,6 +232,7 @@ export default function App() {
     setSession(null);
     setHasProfile(false);
     setIsSignedUp(false);
+    setIsRegistered(false);
     setCurrentView("home");
   };
 
