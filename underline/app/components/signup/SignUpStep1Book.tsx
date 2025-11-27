@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, BookOpen } from "lucide-react";
+import { Search, BookOpen, ExternalLink } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { toast } from "sonner";
 import { SignUpHeader } from "./SignUpHeader";
@@ -290,6 +290,22 @@ export function SignUpStep1Book({
                                             <p>{selectedBook.publisher}</p>
                                         </div>
                                     </div>
+                                </div>
+
+                                {/* Aladin Attribution */}
+                                <div className="flex justify-end items-center gap-2 mt-2">
+                                    <span className="text-[10px] text-[#1A3C34]/40 font-sans">
+                                        도서 DB 제공 : 알라딘
+                                    </span>
+                                    <a
+                                        href={selectedBook.isbn13 ? `https://www.aladin.co.kr/shop/wproduct.aspx?ISBN=${selectedBook.isbn13}` : `https://www.aladin.co.kr/search/wsearchresult.aspx?SearchTarget=Book&SearchWord=${encodeURIComponent(selectedBook.title)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[10px] text-[#1A3C34]/60 hover:text-[#D4AF37] font-sans flex items-center gap-0.5 transition-colors"
+                                    >
+                                        자세히 보기
+                                        <ExternalLink className="w-3 h-3" />
+                                    </a>
                                 </div>
                             </div>
 

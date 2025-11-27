@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { MapPin, BookOpen } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { supabase } from "../lib/supabase";
 
 interface UserProfile {
-  id: string;
+  id: number; // Changed from string to number
   nickname: string;
   age: number;
   location: string;
@@ -15,10 +16,14 @@ interface UserProfile {
 }
 
 export function HomeDatingView({ onProfileClick }: {
-  onProfileClick?: (profileId: string, source?: "home" | "mailbox") => void;
+  onProfileClick?: (profileId: string, source?: "home" | "mailbox") => void; // Keep as string for routing compatibility, will convert
   isSignedUp?: boolean;
   onShowLoginModal?: () => void;
 }) {
+  const [profiles, setProfiles] = useState<UserProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  // const supabase = createClient(); // Removed local client creation
+
   // Countdown timer for dating period end
   const [timeLeft, setTimeLeft] = useState({
     hours: 12,
@@ -43,74 +48,107 @@ export function HomeDatingView({ onProfileClick }: {
     return () => clearInterval(timer);
   }, []);
 
-  const profiles: UserProfile[] = [
-    {
-      id: "1",
-      nickname: "책읽는소희",
-      age: 26,
-      location: "성수동",
-      photos: ["https://images.unsplash.com/photo-1494790108377-be9c29b29330"],
-      bio: "책을 좋아하는 소희입니다. 다양한 장르의 책을 읽으며 삶의 의미를 찾아가는 중입니다.",
-      bookTitle: "참을 수 없는 존재의 가벼움",
-      bookReview: "가벼움과 무거움 사이에서 인생의 의미를 찾아가는 여정...",
-      reviewExcerpt: "가벼움과 무거움 사이에서 인생의 의미를 찾아가는 여정. 우연과 필연에 대한 철학적 사유가 깊은 울림을 줍니다.",
-    },
-    {
-      id: "2",
-      nickname: "민수",
-      age: 28,
-      location: "한남동",
-      photos: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"],
-      bio: "독서와 음악을 즐기는 민수입니다. 새로운 사람들과의 만남을 통해 다양한 경험을 쌓고 있습니다.",
-      bookTitle: "데미안",
-      bookReview: "새는 알에서 나오려고 투쟁한다. 알은 세계다...",
-      reviewExcerpt: "새는 알에서 나오려고 투쟁한다. 알은 세계다. 태어나려는 자는 하나의 세계를 깨뜨려야 한다.",
-    },
-    {
-      id: "3",
-      nickname: "지은",
-      age: 25,
-      location: "연남동",
-      photos: ["https://images.unsplash.com/photo-1534528741775-53994a69daeb"],
-      bio: "예술을 사랑하는 지은입니다. 창의적인 생각과 표현을 통해 삶의 가치를 찾고 있습니다.",
-      bookTitle: "달과 6펜스",
-      bookReview: "평범한 삶을 버리고 예술을 선택한 한 남자의 이야기...",
-      reviewExcerpt: "달을 보는 사람과 6펜스를 보는 사람. 우리는 각자 다른 것을 추구하며 살아갑니다.",
-    },
-    {
-      id: "4",
-      nickname: "현우",
-      age: 29,
-      location: "망원동",
-      photos: ["https://images.unsplash.com/photo-1500648767791-00dcc994a43e"],
-      bio: "철학을 연구하는 현우입니다. 자유와 통제, 진실과 거짓에 대한 깊은 성찰을 통해 삶의 방향을 찾고 있습니다.",
-      bookTitle: "1984",
-      bookReview: "자유와 통제, 진실과 거짓에 대한 깊은 성찰...",
-      reviewExcerpt: "자유는 2+2=4라고 말할 수 있는 자유다. 이것이 인정되면 다른 모든 것은 따라온다.",
-    },
-    {
-      id: "5",
-      nickname: "서연",
-      age: 27,
-      location: "이태원",
-      photos: ["https://images.unsplash.com/photo-1438761681033-6461ffad8d80"],
-      bio: "여행과 음악을 즐기는 서연입니다. 새로운 문화와 경험을 통해 삶의 풍미를 찾아가는 중입니다.",
-      bookTitle: "연금술사",
-      bookReview: "자신의 운명을 찾아 떠나는 소년의 여정이 주는 감동...",
-      reviewExcerpt: "누군가 무언가를 간절히 원할 때 온 우주가 그 소망이 실현되도록 도와준다.",
-    },
-    {
-      id: "6",
-      nickname: "태양",
-      age: 30,
-      location: "성수동",
-      photos: ["https://images.unsplash.com/photo-1506794778202-cad84cf45f1d"],
-      bio: "자연과 여행을 사랑하는 태양입니다. 자연의 아름다움을 찾아가는 중이며, 삶의 가치를 깊이 생각하고 있습니다.",
-      bookTitle: "어린 왕자",
-      bookReview: "가장 중요한 것은 눈에 보이지 않는다는 진리...",
-      reviewExcerpt: "가장 중요한 것은 눈에 보이지 않아. 마음으로만 볼 수 있어.",
-    },
-  ];
+  useEffect(() => {
+    const fetchCandidates = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch current user's gender using auth_id
+        const { data: currentUserData } = await supabase
+          .from('member')
+          .select('id, gender')
+          .eq('auth_id', user.id)
+          .single();
+
+        const myGender = currentUserData?.gender;
+        const myMemberId = currentUserData?.id;
+
+        // Fetch candidates (excluding myself) and filter by dating_applications existence
+        let query = supabase
+          .from('member')
+          .select(`
+            id,
+            nickname,
+            age,
+            location,
+            photo_url,
+            bio,
+            gender,
+            member_books(
+              book_title,
+              book_review,
+              created_at
+            ),
+            dating_applications!inner(*)
+          `);
+
+        if (myMemberId) {
+          query = query.neq('id', myMemberId);
+        }
+
+        if (myGender) {
+          // Filter for opposite gender
+          query = query.neq('gender', myGender);
+        }
+
+        const { data, error } = await query.limit(20);
+
+        if (error) throw error;
+
+        if (data) {
+          const formattedProfiles: UserProfile[] = data
+            .filter(member => member.member_books && member.member_books.length > 0) // Only show members with books
+            .map(member => {
+              // Sort books by created_at desc to get the latest one
+              // member_books is an array, we need to cast it or handle it safely
+              const books = Array.isArray(member.member_books) ? member.member_books : [member.member_books];
+              const sortedBooks = [...books].sort((a: any, b: any) =>
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              );
+              const latestBook = sortedBooks[0];
+
+              // Handle potential missing fields
+              const nickname = member.nickname || "익명";
+              const age = member.age || 0;
+              const location = member.location || "알 수 없음";
+              const photoUrl = member.photo_url;
+              const bio = member.bio || "";
+
+              // If latestBook is missing (should be filtered out, but for safety)
+              if (!latestBook) return null;
+
+              return {
+                id: member.id,
+                nickname,
+                age,
+                location,
+                photos: photoUrl ? [photoUrl] : [],
+                bio,
+                bookTitle: latestBook.book_title,
+                bookReview: latestBook.book_review,
+                reviewExcerpt: latestBook.book_review.length > 50
+                  ? latestBook.book_review.substring(0, 50) + "..."
+                  : latestBook.book_review
+              };
+            })
+            .filter((p): p is UserProfile => p !== null); // Filter out nulls
+
+          setProfiles(formattedProfiles);
+        }
+      } catch (error) {
+        console.error("Error fetching candidates:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCandidates();
+  }, []);
 
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
@@ -135,79 +173,94 @@ export function HomeDatingView({ onProfileClick }: {
 
       {/* Profile Feed */}
       <div className="flex-1 overflow-y-auto pb-24 px-6 py-4">
-        <div className="grid grid-cols-1 gap-4">
-          {profiles.map((profile) => (
-            <div
-              key={profile.id}
-              onClick={() => onProfileClick?.(profile.id)}
-              className="bg-white border border-[#1A3C34]/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group"
-            >
-              {/* Photo Section */}
-              <div className="relative aspect-[4/5] overflow-hidden">
-                <ImageWithFallback
-                  src={profile.photos[0]}
-                  alt={profile.nickname}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-sm text-[#1A3C34]/60 font-sans">프로필을 불러오는 중...</p>
+          </div>
+        ) : profiles.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 gap-4">
+              {profiles.map((profile) => (
+                <div
+                  key={profile.id}
+                  onClick={() => onProfileClick?.(profile.id.toString())}
+                  className="bg-white border border-[#1A3C34]/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                >
+                  {/* Photo Section */}
+                  <div className="relative aspect-[4/5] overflow-hidden">
+                    <ImageWithFallback
+                      src={profile.photos[0]}
+                      alt={profile.nickname}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
 
-                {/* Gradient Overlay for Text Readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    {/* Gradient Overlay for Text Readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-                {/* Info Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                  <div className="flex items-end justify-between mb-2">
+                    {/* Info Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                      <div className="flex items-end justify-between mb-2">
+                        <div>
+                          <h3 className="font-sans text-xl font-medium mb-1">
+                            {profile.nickname}
+                          </h3>
+                          <p className="text-sm text-white/90 font-sans">
+                            만 {profile.age}세
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 text-white/90">
+                          <MapPin className="w-4 h-4" />
+                          <span className="text-sm font-sans">{profile.location}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bio and Book Review Section */}
+                  <div className="p-5 bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] space-y-4">
+                    {/* Bio */}
                     <div>
-                      <h3 className="font-sans text-xl font-medium mb-1">
-                        {profile.nickname}
-                      </h3>
-                      <p className="text-sm text-white/90 font-sans">
-                        만 {profile.age}세
+                      <h4 className="text-xs text-[#1A3C34]/50 font-sans mb-2">자기소개</h4>
+                      <p className="font-sans text-[#1A3C34] leading-relaxed text-sm line-clamp-2">
+                        {profile.bio}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1 text-white/90">
-                      <MapPin className="w-4 h-4" />
-                      <span className="text-sm font-sans">{profile.location}</span>
+
+                    {/* Divider */}
+                    <div className="h-px bg-[#1A3C34]/10" />
+
+                    {/* Book Review */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <BookOpen className="w-4 h-4 text-[#D4AF37]" />
+                        <h4 className="font-serif text-sm text-[#1A3C34]/80 truncate">
+                          {profile.bookTitle}
+                        </h4>
+                      </div>
+                      <p className="font-serif text-[#1A3C34] leading-relaxed text-sm italic line-clamp-3">
+                        "{profile.reviewExcerpt}"
+                      </p>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Bio and Book Review Section */}
-              <div className="p-5 bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] space-y-4">
-                {/* Bio */}
-                <div>
-                  <h4 className="text-xs text-[#1A3C34]/50 font-sans mb-2">자기소개</h4>
-                  <p className="font-sans text-[#1A3C34] leading-relaxed text-sm">
-                    {profile.bio}
-                  </p>
-                </div>
-
-                {/* Divider */}
-                <div className="h-px bg-[#1A3C34]/10" />
-
-                {/* Book Review */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <BookOpen className="w-4 h-4 text-[#D4AF37]" />
-                    <h4 className="font-serif text-sm text-[#1A3C34]/80">
-                      {profile.bookTitle}
-                    </h4>
-                  </div>
-                  <p className="font-serif text-[#1A3C34] leading-relaxed text-sm italic">
-                    "{profile.reviewExcerpt}"
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* Load More Hint */}
-        <div className="text-center py-8">
-          <p className="text-sm text-[#1A3C34]/40 font-sans">
-            더 많은 프로필이 준비 중입니다
-          </p>
-        </div>
+            {/* Load More Hint */}
+            <div className="text-center py-8">
+              <p className="text-sm text-[#1A3C34]/40 font-sans">
+                더 많은 프로필이 준비 중입니다
+              </p>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-20">
+            <p className="text-sm text-[#1A3C34]/60 font-sans">
+              아직 등록된 프로필이 없습니다.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

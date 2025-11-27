@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowLeft, BookOpen, Edit2, Trash2, Save, X } from "lucide-react";
+import { ArrowLeft, BookOpen, Edit2, Trash2, Save, X, ExternalLink } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 
@@ -10,6 +10,7 @@ interface Book {
   publisher?: string;
   cover: string;
   review: string;
+  isbn13?: string;
 }
 
 export function MyBookDetailView({
@@ -121,6 +122,22 @@ export function MyBookDetailView({
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Aladin Attribution */}
+            <div className="flex justify-end items-center gap-2 mb-4">
+              <span className="text-[10px] text-[#1A3C34]/40 font-sans">
+                도서 DB 제공 : 알라딘
+              </span>
+              <a
+                href={book.isbn13 ? `https://www.aladin.co.kr/shop/wproduct.aspx?ISBN=${book.isbn13}` : `https://www.aladin.co.kr/search/wsearchresult.aspx?SearchTarget=Book&SearchWord=${encodeURIComponent(book.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-[#1A3C34]/60 hover:text-[#D4AF37] font-sans flex items-center gap-0.5 transition-colors"
+              >
+                자세히 보기
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
 
             <div className="h-px bg-[#D4AF37]/30 mb-4" />
