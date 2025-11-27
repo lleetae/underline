@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowLeft, BookOpen, Edit2, Trash2, Save, X } from "lucide-react";
+import { ArrowLeft, BookOpen, Edit2, Trash2, Save, X, ExternalLink } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 
@@ -10,15 +10,16 @@ interface Book {
   publisher?: string;
   cover: string;
   review: string;
+  isbn13?: string;
 }
 
-export function MyBookDetailView({ 
-  book, 
+export function MyBookDetailView({
+  book,
   onBack,
   onUpdate,
   onDelete
-}: { 
-  book: Book; 
+}: {
+  book: Book;
   onBack: () => void;
   onUpdate?: (updatedReview: string) => void;
   onDelete?: () => void;
@@ -54,15 +55,15 @@ export function MyBookDetailView({
       <div className="sticky top-0 z-50 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <button 
-              className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors" 
+            <button
+              className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors"
               onClick={onBack}
             >
               <ArrowLeft className="w-5 h-5 text-[#1A3C34]" />
             </button>
             <h1 className="font-serif text-2xl text-[#1A3C34]">Book Review</h1>
           </div>
-          
+
           {/* Action Buttons */}
           {!isEditing && (
             <div className="flex items-center gap-2">
@@ -112,9 +113,25 @@ export function MyBookDetailView({
                 </div>
               </div>
             </div>
-            
+
+            {/* Aladin Attribution */}
+            <div className="flex justify-end items-center gap-2 mb-4">
+              <span className="text-[10px] text-[#1A3C34]/40 font-sans">
+                도서 DB 제공 : 알라딘
+              </span>
+              <a
+                href={book.isbn13 ? `https://www.aladin.co.kr/shop/wproduct.aspx?ISBN=${book.isbn13}` : `https://www.aladin.co.kr/search/wsearchresult.aspx?SearchTarget=Book&SearchWord=${encodeURIComponent(book.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-[#1A3C34]/60 hover:text-[#D4AF37] font-sans flex items-center gap-0.5 transition-colors"
+              >
+                자세히 보기
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
             <div className="h-px bg-[#D4AF37]/30 mb-4" />
-            
+
             <div className="flex items-center gap-2 mb-3">
               <BookOpen className="w-4 h-4 text-[#D4AF37]" />
               <h3 className="font-serif text-base text-[#1A3C34]">나의 감상</h3>
@@ -133,7 +150,7 @@ export function MyBookDetailView({
                   placeholder="감상문을 작성해주세요..."
                 />
               </div>
-              
+
               {/* Edit Action Buttons - Below Textarea */}
               <div className="flex gap-3">
                 <button
