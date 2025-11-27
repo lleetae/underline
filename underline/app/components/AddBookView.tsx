@@ -316,13 +316,19 @@ export function AddBookView({
                 <textarea
                   value={bookReview}
                   onChange={(e) => setBookReview(e.target.value)}
+                  maxLength={10000}
                   rows={10}
                   className="w-full px-4 py-3 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-serif text-sm focus:outline-none focus:border-[#D4AF37] transition-colors resize-none bg-white leading-relaxed"
                   placeholder="이 책이 당신에게 어떤 의미인가요?&#10;&#10;당신의 마음을 움직인 문장이나 생각을 자유롭게 적어주세요..."
                 />
-                <p className="text-xs text-[#1A3C34]/40 mt-2 font-sans italic">
-                  이 감상문은 다른 사람들에게 공개되며, 매칭의 시작점이 됩니다
-                </p>
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-[#1A3C34]/40 font-sans italic">
+                    이 감상문은 다른 사람들에게 공개되며, 매칭의 시작점이 됩니다
+                  </p>
+                  <p className="text-xs text-[#1A3C34]/60 font-sans text-right">
+                    {bookReview.length} / 10,000
+                  </p>
+                </div>
               </div>
 
               {/* Complete Button */}
