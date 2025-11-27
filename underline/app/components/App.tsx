@@ -180,8 +180,10 @@ export default function App() {
               id,
               nickname,
               age,
+              birth_date,
               location,
-              photo_url
+              photo_url,
+              photos
             )
           `)
           .eq('receiver_id', data.id)
@@ -189,16 +191,28 @@ export default function App() {
           .order('created_at', { ascending: false });
 
         if (!requestsError && receivedRequests) {
-          const formattedRequests = receivedRequests.map((req: any) => ({
-            id: req.id,
-            profileId: req.sender.id.toString(),
-            nickname: req.sender.nickname,
-            age: req.sender.age,
-            location: req.sender.location,
-            photo: req.sender.photo_url,
-            letter: req.letter,
-            timestamp: new Date(req.created_at)
-          }));
+          const formattedRequests = receivedRequests.map((req: any) => {
+            // Handle photos: check photos array first, then photo_url
+            const photos = req.sender.photos && req.sender.photos.length > 0
+              ? req.sender.photos
+              : (req.sender.photo_url ? [req.sender.photo_url] : []);
+
+            // Handle age: use age if available, otherwise calculate from birth_date
+            const age = req.sender.age || (req.sender.birth_date
+              ? new Date().getFullYear() - parseInt(req.sender.birth_date.substring(0, 4))
+              : 0);
+
+            return {
+              id: req.id,
+              profileId: req.sender.id.toString(),
+              nickname: req.sender.nickname,
+              age: age,
+              location: req.sender.location,
+              photo: photos[0] || "",
+              letter: req.letter,
+              timestamp: new Date(req.created_at)
+            };
+          });
           setReceivedMatchRequests(formattedRequests);
         }
       } else {

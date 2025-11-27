@@ -97,6 +97,20 @@ export function MailboxView({
     }
   };
 
+  // Helper function to display location text
+  const getLocationText = (location: string) => {
+    const locationMap: { [key: string]: string } = {
+      seoul: "서울",
+      busan: "부산",
+      incheon: "인천",
+      daegu: "대구",
+      daejeon: "대전",
+      gwangju: "광주",
+      other: "기타"
+    };
+    return locationMap[location] || location;
+  };
+
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
       <MailboxHeader onShowNotifications={onShowNotifications} unreadCount={unreadCount} />
@@ -140,7 +154,7 @@ export function MailboxView({
                             </span>
                           </div>
                           <p className="text-xs text-[#1A3C34]/50 font-sans">
-                            {request.location}
+                            {getLocationText(request.location)}
                           </p>
                         </div>
                       </div>
@@ -219,7 +233,7 @@ export function MailboxView({
                           </span>
                         </div>
                         <p className="text-xs text-[#1A3C34]/50 font-sans">
-                          {request.location}
+                          {getLocationText(request.location)}
                         </p>
                       </div>
                       <div className="text-right">
