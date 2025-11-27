@@ -132,6 +132,11 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       if (memberError) throw memberError;
 
       if (member) {
+        const originalPhotos = member.photo_urls_original || [];
+        const blurredPhotos = member.photo_urls_blurred || [];
+        // Use blurred photos if available, otherwise fallback to legacy photos
+        const displayPhotos = blurredPhotos.length > 0 ? blurredPhotos : (member.photos || []);
+
         setProfileData({
           nickname: member.nickname,
           gender: member.gender,
@@ -143,9 +148,11 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
           drinking: member.drinking,
           bio: member.bio,
           kakaoId: member.kakao_id,
-          profilePhotos: (member.photos || []).map((url: string, index: number) => ({
+          profilePhotos: displayPhotos.map((url: string, index: number) => ({
             id: index.toString(),
-            url: url
+            url: url,
+            originalPath: originalPhotos[index],
+            blurredUrl: url
           }))
         });
       }
@@ -210,10 +217,24 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
           ));
           setSelectedBook({ ...selectedBook, review: updatedReview });
         }}
-        onDelete={() => {
-          setBooks(books.filter(b => b.id !== selectedBook.id));
-          setSelectedBook(null);
+        onDelete={async () => {
+          try {
+            const { error } = await supabase
+              .from('member_books')
+              .delete()
+              .eq('id', selectedBook.id);
+
+            if (error) throw error;
+
+            setBooks(books.filter(b => b.id !== selectedBook.id));
+            setSelectedBook(null);
+          } catch (error) {
+            console.error("Error deleting book:", error);
+            toast.error("책 삭제에 실패했습니다");
+            throw error; // Re-throw to let child component know
+          }
         }}
+        isLastBook={books.length <= 1}
       />
     );
   }
@@ -278,9 +299,38 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       <ProfileEditView
         profileData={profileData}
         onBack={() => setShowProfileEditView(false)}
-        onSave={(updatedData) => {
-          setProfileData(updatedData);
-          setShowProfileEditView(false);
+        onSave={async (updatedData) => {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+              toast.error("로그인이 필요합니다");
+              return;
+            }
+
+            const originalUrls = updatedData.profilePhotos.map(p => p.originalPath).filter(Boolean);
+            const blurredUrls = updatedData.profilePhotos.map(p => p.blurredUrl || p.url);
+
+            const { error } = await supabase
+              .from('member')
+              .update({
+                nickname: updatedData.nickname,
+                bio: updatedData.bio,
+                kakao_id: updatedData.kakaoId,
+                photo_urls_original: originalUrls,
+                photo_urls_blurred: blurredUrls,
+                photos: blurredUrls // Update legacy column for compatibility
+              })
+              .eq('id', user.id);
+
+            if (error) throw error;
+
+            setProfileData(updatedData);
+            setShowProfileEditView(false);
+            toast.success("프로필이 저장되었습니다");
+          } catch (error) {
+            console.error("Error saving profile:", error);
+            toast.error("프로필 저장에 실패했습니다");
+          }
         }}
       />
     );

@@ -1,11 +1,13 @@
-import React, { useState } from "react";
-import { ArrowLeft, Save, X, Plus } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { ArrowLeft, Save, X, Plus, Shield } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 
 export interface Photo {
   id: string;
   url: string;
+  originalPath?: string;
+  blurredUrl?: string;
 }
 
 export interface ProfileData {
@@ -32,6 +34,7 @@ export function ProfileEditView({
   onSave: (data: ProfileData) => void;
 }) {
   const [formData, setFormData] = useState<ProfileData>(profileData);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
     if (formData.profilePhotos.length === 0) {
@@ -56,8 +59,8 @@ export function ProfileEditView({
     }
 
     onSave(formData);
-    toast.success("프로필이 저장되었습니다");
-    onBack();
+    // toast.success("프로필이 저장되었습니다"); // Moved to parent or keep here? Parent should handle success after async save
+    // onBack(); // Parent should handle close
   };
 
   const handleAddPhoto = () => {
@@ -65,7 +68,112 @@ export function ProfileEditView({
       toast.error("프로필 사진은 최대 5개까지 등록할 수 있습니다");
       return;
     }
-    toast.info("프로필 사진 추가 기능은 준비 중입니다");
+    fileInputRef.current?.click();
+  };
+
+  const checkNudity = async (file: File): Promise<boolean> => {
+    try {
+      const nsfwjs = await import('nsfwjs');
+
+      // Create an image element to load the file
+      const img = document.createElement('img');
+      const objectUrl = URL.createObjectURL(file);
+
+      return new Promise((resolve) => {
+        img.onload = async () => {
+          try {
+            const model = await nsfwjs.load();
+            const predictions = await model.classify(img);
+
+            // Check for Porn or Hentai with high probability
+            const isNsfw = predictions.some(p =>
+              (p.className === 'Porn' || p.className === 'Hentai') && p.probability > 0.6
+            );
+
+            URL.revokeObjectURL(objectUrl);
+            resolve(isNsfw);
+          } catch (error) {
+            console.error("NSFW check error:", error);
+            URL.revokeObjectURL(objectUrl);
+            resolve(false); // Fail safe
+          }
+        };
+        img.src = objectUrl;
+      });
+    } catch (error) {
+      console.error("Failed to load NSFW model:", error);
+      return false;
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input
+    e.target.value = '';
+
+    const loadingToast = toast.loading("사진을 검사하고 있습니다...");
+
+    try {
+      // 1. Check Nudity
+      const isNsfw = await checkNudity(file);
+
+      if (isNsfw) {
+        toast.dismiss(loadingToast);
+        toast.error("부적절한 이미지가 감지되었습니다");
+        return;
+      }
+
+      toast.dismiss(loadingToast);
+      const uploadToast = toast.loading("사진을 업로드하고 블러 처리중입니다...");
+
+      // 2. Upload via API (Server-side processing)
+      const { supabase } = await import('../lib/supabase');
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        toast.dismiss(uploadToast);
+        toast.error("로그인이 필요합니다. 다시 로그인해주세요.");
+        return;
+      }
+
+      const uploadFormData = new FormData();
+      uploadFormData.append('photo', file);
+      uploadFormData.append('userId', session.user.id);
+
+      const response = await fetch('/api/upload/photo', {
+        method: 'POST',
+        body: uploadFormData
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      // 3. Update State
+      const newPhoto: Photo = {
+        id: Date.now().toString(), // Temporary ID
+        url: result.blurredUrl,
+        originalPath: result.originalPath,
+        blurredUrl: result.blurredUrl
+      };
+
+      setFormData(prev => ({
+        ...prev,
+        profilePhotos: [...prev.profilePhotos, newPhoto]
+      }));
+
+      toast.dismiss(uploadToast);
+      toast.success("사진이 등록되었습니다");
+
+    } catch (error: any) {
+      console.error("Upload failed:", error);
+      toast.dismiss(loadingToast);
+      toast.error(`업로드 실패: ${error.message || "알 수 없는 오류"}`);
+    }
   };
 
   const handleDeletePhoto = (id: string) => {
@@ -109,6 +217,14 @@ export function ProfileEditView({
               </span>
             </div>
 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept="image/*"
+              className="hidden"
+            />
+
             <div className="grid grid-cols-3 gap-3">
               {/* Existing Photos */}
               {formData.profilePhotos.map((photo, index) => (
@@ -146,7 +262,13 @@ export function ProfileEditView({
               )}
             </div>
 
-            <p className="text-xs text-[#1A3C34]/60 font-sans mt-3 leading-relaxed">
+            <div className="flex items-center gap-1.5 mt-3">
+              <Shield className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <p className="text-xs text-[#1A3C34]/40 font-sans">
+                AI 부적절한 사진 검사 활성화
+              </p>
+            </div>
+            <p className="text-xs text-[#1A3C34]/60 font-sans mt-1 leading-relaxed">
               <span className="text-[#D4AF37]">최소 1장</span> 이상, <span className="text-[#D4AF37]">최대 5장</span>까지 등록 가능합니다
             </p>
           </div>

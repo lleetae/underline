@@ -17,12 +17,14 @@ export function MyBookDetailView({
   book,
   onBack,
   onUpdate,
-  onDelete
+  onDelete,
+  isLastBook = false
 }: {
   book: Book;
   onBack: () => void;
   onUpdate?: (updatedReview: string) => void;
-  onDelete?: () => void;
+  onDelete?: () => Promise<void>;
+  isLastBook?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedReview, setEditedReview] = useState(book.review);
@@ -43,10 +45,18 @@ export function MyBookDetailView({
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
-    onDelete?.();
+  const handleDelete = async () => {
+    await onDelete?.();
     setShowDeleteModal(false);
     toast.success("책이 삭제되었습니다");
+  };
+
+  const handleDeleteClick = () => {
+    if (isLastBook) {
+      toast.error("최소 1권의 책은 남겨두어야 합니다");
+      return;
+    }
+    setShowDeleteModal(true);
   };
 
   return (
@@ -74,7 +84,7 @@ export function MyBookDetailView({
                 <Edit2 className="w-4 h-4 text-[#D4AF37]" />
               </button>
               <button
-                onClick={() => setShowDeleteModal(true)}
+                onClick={handleDeleteClick}
                 className="p-2 hover:bg-red-50 rounded-full transition-colors"
               >
                 <Trash2 className="w-4 h-4 text-red-500" />
