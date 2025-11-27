@@ -21,7 +21,7 @@ export function MailboxHeader({ onShowNotifications, unreadCount = 0 }: { onShow
 
       <div className="px-6 pb-4">
         <div className="bg-[#1A3C34]/5 px-4 py-2.5 rounded-md flex items-center justify-center text-xs font-sans font-medium text-[#1A3C34]/70 tracking-wide">
-          매주 일요일 00:00에 초기화됩니다
+          매주 목요일 23:59에 초기화 됩니다
         </div>
       </div>
     </div>
