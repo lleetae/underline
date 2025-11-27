@@ -13,6 +13,7 @@ interface AladinBook {
     cover: string;
     description: string;
     categoryName?: string;
+    pageCount?: number;
 }
 
 export interface Step1Data {
@@ -22,6 +23,7 @@ export interface Step1Data {
     isbn13: string;
     bookAuthor: string;
     bookGenre: string;
+    pageCount?: number;
 }
 
 export function SignUpStep1Book({
@@ -96,7 +98,8 @@ export function SignUpStep1Book({
                     isbn13: item.isbn13,
                     cover: item.cover,
                     description: item.description || "",
-                    categoryName: item.categoryName
+                    categoryName: item.categoryName,
+                    pageCount: item.subInfo?.itemPage || 0
                 }));
                 setSearchResults(books);
                 toast.success(`${books.length}개의 검색 결과를 찾았습니다`);
@@ -128,7 +131,8 @@ export function SignUpStep1Book({
                     ...book,
                     description: detailBook.description || book.description,
                     cover: detailBook.cover || book.cover,
-                    categoryName: detailBook.categoryName || book.categoryName
+                    categoryName: detailBook.categoryName || book.categoryName,
+                    pageCount: detailBook.subInfo?.itemPage || book.pageCount || 0
                 });
             } else {
                 setSelectedBook(book);
@@ -157,7 +161,8 @@ export function SignUpStep1Book({
             bookReview: bookReview,
             isbn13: selectedBook.isbn13,
             bookAuthor: selectedBook.author,
-            bookGenre: selectedBook.categoryName || "기타"
+            bookGenre: selectedBook.categoryName || "기타",
+            pageCount: selectedBook.pageCount || 0
         });
     };
 
