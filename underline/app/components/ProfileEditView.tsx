@@ -83,6 +83,16 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
     fetchSignedUrls();
   }, [profileData.profilePhotos]); // Depend on initial profileData photos
 
+  // Sync Kakao ID from props (for background decryption updates)
+  useEffect(() => {
+    if (profileData.kakaoId !== formData.kakaoId) {
+      setFormData(prev => ({
+        ...prev,
+        kakaoId: profileData.kakaoId
+      }));
+    }
+  }, [profileData.kakaoId]);
+
   // Check for changes
   useEffect(() => {
     const checkDirty = () => {
