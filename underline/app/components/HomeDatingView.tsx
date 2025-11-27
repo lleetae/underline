@@ -231,9 +231,16 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
 
         {/* Floating Badge - Dating Period Timer */}
         <div className="px-6 pb-3">
-          <div className="bg-gradient-to-r from-[#D4AF37] to-[#C9A641] text-white px-4 py-2 rounded-full shadow-lg shadow-[#D4AF37]/30 flex items-center justify-center gap-2">
+          <div className={`
+            px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500
+            ${timeLeft.hours < 24
+              ? "bg-gradient-to-r from-[#FF6B6B] to-[#FF8E53] shadow-[#FF6B6B]/30 animate-pulse"
+              : "bg-gradient-to-r from-[#D4AF37] to-[#C9A641] shadow-[#D4AF37]/30"
+            }
+          `}>
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-xs font-sans font-medium tracking-wide">
+            <span className="text-xs font-sans font-medium tracking-wide text-white">
+              {timeLeft.hours < 24 ? "마감 임박! " : ""}
               소개팅 기간 종료까지 {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
             </span>
           </div>
