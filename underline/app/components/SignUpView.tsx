@@ -86,20 +86,27 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
           smoking: fullUserData.smoking,
           drinking: fullUserData.drinking,
           bio: fullUserData.bio,
-          phone_number: "000-0000-0000", // Placeholder or remove column constraint later
           kakao_id: encryptedKakaoId, // ✅ Now encrypted
-
-          // Book Info
-          book_title: fullUserData.bookTitle,
-          book_cover: fullUserData.bookCover,
-          book_review: fullUserData.bookReview,
-          book_isbn13: fullUserData.isbn13,
-
           // Photos (Filter out nulls and map to URLs)
           photos: fullUserData.photos.filter(p => p.url).map(p => p.url)
         });
 
       if (error) throw error;
+
+      // Insert into member_books
+      const { error: bookError } = await supabase
+        .from('member_books')
+        .insert({
+          member_id: user.id,
+          book_title: fullUserData.bookTitle,
+          book_author: fullUserData.bookAuthor,
+          book_cover: fullUserData.bookCover,
+          book_genre: fullUserData.bookGenre,
+          book_isbn13: fullUserData.isbn13,
+          book_review: fullUserData.bookReview
+        });
+
+      if (bookError) throw bookError;
 
       toast.success("회원가입이 완료되었습니다!");
       onComplete?.();

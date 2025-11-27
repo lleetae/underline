@@ -18,10 +18,6 @@ export type Database = {
                 Row: {
                     bio: string
                     birth_date: string
-                    book_cover: string | null
-                    book_isbn13: string | null
-                    book_review: string | null
-                    book_title: string | null
                     created_at: string
                     drinking: string
                     gender: string
@@ -38,10 +34,6 @@ export type Database = {
                 Insert: {
                     bio: string
                     birth_date: string
-                    book_cover?: string | null
-                    book_isbn13?: string | null
-                    book_review?: string | null
-                    book_title?: string | null
                     created_at?: string
                     drinking: string
                     gender: string
@@ -58,10 +50,6 @@ export type Database = {
                 Update: {
                     bio?: string
                     birth_date?: string
-                    book_cover?: string | null
-                    book_isbn13?: string | null
-                    book_review?: string | null
-                    book_title?: string | null
                     created_at?: string
                     drinking?: string
                     gender?: string
@@ -76,6 +64,50 @@ export type Database = {
                     smoking?: string
                 }
                 Relationships: []
+            }
+            member_books: {
+                Row: {
+                    id: string
+                    member_id: string
+                    book_title: string
+                    book_author: string | null
+                    book_cover: string | null
+                    book_genre: string | null
+                    book_isbn13: string | null
+                    book_review: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    member_id: string
+                    book_title: string
+                    book_author?: string | null
+                    book_cover?: string | null
+                    book_genre?: string | null
+                    book_isbn13?: string | null
+                    book_review?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    member_id?: string
+                    book_title?: string
+                    book_author?: string | null
+                    book_cover?: string | null
+                    book_genre?: string | null
+                    book_isbn13?: string | null
+                    book_review?: string | null
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "member_books_member_id_fkey"
+                        columns: ["member_id"]
+                        isOneToOne: false
+                        referencedRelation: "member"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
         }
         Views: {
