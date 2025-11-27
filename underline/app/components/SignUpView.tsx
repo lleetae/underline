@@ -73,10 +73,11 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
         return;
       }
 
-      const { error } = await supabase
+      const { data: newMember, error } = await supabase
         .from('member')
         .insert({
-          id: user.id, // Link to Auth User
+          auth_id: user.id, // Link to Auth User via auth_id
+          // id: user.id, // REMOVED: Let DB auto-increment integer ID
           nickname: fullUserData.nickname,
           gender: fullUserData.gender,
           birth_date: fullUserData.birthDate,
@@ -91,15 +92,19 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
           photos: fullUserData.photos.filter(p => p.blurredUrl).map(p => p.blurredUrl), // Default to blurred for public
           photo_urls_original: fullUserData.photos.filter(p => p.originalPath).map(p => p.originalPath),
           photo_urls_blurred: fullUserData.photos.filter(p => p.blurredUrl).map(p => p.blurredUrl)
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      // Insert into member_books
+      if (!newMember) throw new Error("Failed to create member");
+
+      // Insert into member_books using the new integer ID
       const { error: bookError } = await supabase
         .from('member_books')
         .insert({
-          member_id: user.id,
+          member_id: newMember.id, // Use the integer ID from the new member
           book_title: fullUserData.bookTitle,
           book_author: fullUserData.bookAuthor,
           book_cover: fullUserData.bookCover,

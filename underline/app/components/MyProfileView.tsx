@@ -126,7 +126,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       const { data: member, error: memberError } = await supabase
         .from('member')
         .select('*')
-        .eq('id', user.id)
+        .eq('auth_id', user.id) // Query by auth_id
         .single();
 
       if (memberError) throw memberError;
@@ -158,29 +158,30 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       }
 
       // 2. Fetch Member Books
-      const { data: memberBooks, error: booksError } = await supabase
-        .from('member_books')
-        .select('*')
-        .eq('member_id', user.id)
-        .order('created_at', { ascending: false });
+      if (member) {
+        const { data: memberBooks, error: booksError } = await supabase
+          .from('member_books')
+          .select('*')
+          .eq('member_id', member.id) // Use integer member.id
+          .order('created_at', { ascending: false });
 
-      if (booksError) throw booksError;
+        if (booksError) throw booksError;
 
-      if (memberBooks) {
-        const mappedBooks: Book[] = memberBooks.map(b => ({
-          id: b.id,
-          title: b.book_title,
-          author: b.book_author || "Unknown",
-          publisher: "", // Not stored in DB currently
-          cover: b.book_cover || "",
-          review: b.book_review || "",
-          reviewPreview: (b.book_review || "").split('\n')[0].slice(0, 80) + "...",
-          pageCount: b.page_count || 0,
-          isbn13: b.book_isbn13
-        }));
-        setBooks(mappedBooks);
+        if (memberBooks) {
+          const mappedBooks: Book[] = memberBooks.map(b => ({
+            id: b.id,
+            title: b.book_title,
+            author: b.book_author || "Unknown",
+            publisher: "", // Not stored in DB currently
+            cover: b.book_cover || "",
+            review: b.book_review || "",
+            reviewPreview: (b.book_review || "").split('\n')[0].slice(0, 80) + "...",
+            pageCount: b.page_count || 0,
+            isbn13: b.book_isbn13
+          }));
+          setBooks(mappedBooks);
+        }
       }
-
     } catch (error) {
       console.error("Error fetching profile:", error);
       toast.error("프로필 정보를 불러오는데 실패했습니다");
@@ -251,11 +252,20 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
               return;
             }
 
+            // Fetch member ID first
+            const { data: memberData } = await supabase
+              .from('member')
+              .select('id')
+              .eq('auth_id', user.id)
+              .single();
+
+            if (!memberData) throw new Error("Member not found");
+
             // Save to database
             const { data, error } = await supabase
               .from('member_books')
               .insert({
-                member_id: user.id,
+                member_id: memberData.id, // Use integer ID
                 book_title: newBookData.title,
                 book_author: newBookData.author,
                 book_cover: newBookData.cover,
@@ -365,7 +375,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
                 photo_urls_blurred: blurredUrls,
                 photos: blurredUrls // Update legacy column for compatibility
               })
-              .eq('id', user.id);
+              .eq('auth_id', user.id); // Update by auth_id
 
             if (error) throw error;
 
