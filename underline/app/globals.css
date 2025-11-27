@@ -1985,43 +1985,70 @@
 
 :root {
   --font-size: 16px;
-  --background: #fff;
-  --foreground: oklch(.145 0 0);
-  --card: #fff;
-  --card-foreground: oklch(.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(.95 .0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
-  --destructive: #d4183d;
-  --destructive-foreground: #fff;
-  --border: #0000001a;
+  /* Background & Foreground */
+  --background: #FAFAFA;
+  --foreground: #171717;
+  
+  /* Card */
+  --card: #FFFFFF;
+  --card-foreground: #171717;
+  
+  /* Popover */
+  --popover: #FFFFFF;
+  --popover-foreground: #171717;
+  
+  /* Primary (Red Accent) */
+  --primary: #CC0000;
+  --primary-foreground: #FAFAFA;
+  
+  /* Secondary (Silver) */
+  --secondary: #C2C2C2;
+  --secondary-foreground: #171717;
+  
+  /* Muted (Soft fills) */
+  --muted: #EAEAEA;
+  --muted-foreground: #333333;
+  
+  /* Accent (Red for CTAs and badges) */
+  --accent: #CC0000;
+  --accent-foreground: #FAFAFA;
+  
+  /* Destructive (Same as accent red) */
+  --destructive: #CC0000;
+  --destructive-foreground: #FAFAFA;
+  
+  /* Borders & Inputs */
+  --border: #C2C2C2;
   --input: transparent;
-  --input-background: #f3f3f5;
-  --switch-background: #cbced4;
+  --input-background: #F0F0F0;
+  --switch-background: #C2C2C2;
+  
+  /* Font Weights */
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: oklch(.708 0 0);
-  --chart-1: oklch(.646 .222 41.116);
-  --chart-2: oklch(.6 .118 184.704);
-  --chart-3: oklch(.398 .07 227.392);
-  --chart-4: oklch(.828 .189 84.429);
-  --chart-5: oklch(.769 .188 70.08);
+  
+  /* Ring (Focus indicator) */
+  --ring: #CC0000;
+  
+  /* Charts (Optional - using variations of the color scheme) */
+  --chart-1: #CC0000;
+  --chart-2: #171717;
+  --chart-3: #333333;
+  --chart-4: #C2C2C2;
+  --chart-5: #B30000;
+  
+  /* Border Radius */
   --radius: .625rem;
-  --sidebar: oklch(.985 0 0);
-  --sidebar-foreground: oklch(.145 0 0);
-  --sidebar-primary: #030213;
-  --sidebar-primary-foreground: oklch(.985 0 0);
-  --sidebar-accent: oklch(.97 0 0);
-  --sidebar-accent-foreground: oklch(.205 0 0);
-  --sidebar-border: oklch(.922 0 0);
-  --sidebar-ring: oklch(.708 0 0);
+  
+  /* Sidebar */
+  --sidebar: #FAFAFA;
+  --sidebar-foreground: #171717;
+  --sidebar-primary: #CC0000;
+  --sidebar-primary-foreground: #FAFAFA;
+  --sidebar-accent: #F0F0F0;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #C2C2C2;
+  --sidebar-ring: #CC0000;
 }
 
 .dark {

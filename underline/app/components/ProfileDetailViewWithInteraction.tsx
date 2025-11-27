@@ -290,8 +290,8 @@ export function ProfileDetailViewWithInteraction({
     return (
       <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex items-center justify-center">
         <div className="flex flex-col items-center">
-          <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin mb-3"></div>
-          <p className="text-sm text-[#1A3C34]/60 font-sans">프로필 정보를 불러오는 중...</p>
+          <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p className="text-sm text-[var(--foreground)]/60 font-sans">프로필 정보를 불러오는 중...</p>
         </div>
       </div>
     );
@@ -301,10 +301,10 @@ export function ProfileDetailViewWithInteraction({
     return (
       <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex items-center justify-center">
         <div className="flex flex-col items-center">
-          <p className="text-sm text-[#1A3C34]/60 font-sans">프로필을 찾을 수 없습니다.</p>
+          <p className="text-sm text-[var(--foreground)]/60 font-sans">프로필을 찾을 수 없습니다.</p>
           <button
             onClick={onBack}
-            className="mt-4 px-4 py-2 bg-[#1A3C34] text-white rounded-lg text-sm font-sans"
+            className="mt-4 px-4 py-2 bg-[var(--foreground)] text-white rounded-lg text-sm font-sans"
           >
             돌아가기
           </button>
@@ -318,15 +318,15 @@ export function ProfileDetailViewWithInteraction({
     return (
       <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-50 bg-[#FCFCFA]/95 backdrop-blur-sm border-b border-[#1A3C34]/10">
+        <div className="sticky top-0 z-50 bg-[#FCFCFA]/95 backdrop-blur-sm border-b border-[var(--foreground)]/10">
           <div className="flex items-center gap-3 px-6 py-4">
             <button
               onClick={handleCloseBookDetail}
-              className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors"
+              className="p-1 hover:bg-[var(--foreground)]/5 rounded-full transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-[#1A3C34]" />
+              <ArrowLeft className="w-5 h-5 text-[var(--foreground)]" />
             </button>
-            <h1 className="font-sans text-base text-[#1A3C34]">책 감상문</h1>
+            <h1 className="font-sans text-base text-[var(--foreground)]">책 감상문</h1>
           </div>
         </div>
 
@@ -335,7 +335,7 @@ export function ProfileDetailViewWithInteraction({
           <div className="px-6 py-8 space-y-6">
             {/* Book Header */}
             <div className="flex gap-4 items-start">
-              <div className="w-24 h-36 flex-shrink-0 rounded-lg overflow-hidden border border-[#1A3C34]/10 shadow-lg">
+              <div className="w-24 h-36 flex-shrink-0 rounded-lg overflow-hidden border border-[var(--foreground)]/10 shadow-lg">
                 <ImageWithFallback
                   src={selectedBook.cover}
                   alt={selectedBook.title}
@@ -343,13 +343,13 @@ export function ProfileDetailViewWithInteraction({
                 />
               </div>
               <div className="flex-1">
-                <h2 className="font-serif text-xl text-[#1A3C34] mb-2">{selectedBook.title}</h2>
-                <p className="text-sm text-[#1A3C34]/60 font-sans mb-4">{selectedBook.author}</p>
+                <h2 className="font-serif text-xl text-[var(--foreground)] mb-2">{selectedBook.title}</h2>
+                <p className="text-sm text-[var(--foreground)]/60 font-sans mb-4">{selectedBook.author}</p>
               </div>
             </div>
 
             {/* Review */}
-            <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[#D4AF37]/20 rounded-xl p-6 shadow-sm relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-6 shadow-sm relative overflow-hidden">
               <div
                 className="absolute inset-0 opacity-[0.03] pointer-events-none"
                 style={{
@@ -357,7 +357,7 @@ export function ProfileDetailViewWithInteraction({
                 }}
               />
 
-              <div className="relative z-10 font-serif text-[#1A3C34] leading-relaxed whitespace-pre-wrap break-words">
+              <div className="relative z-10 font-serif text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words">
                 {selectedBook.review}
               </div>
             </div>
@@ -367,18 +367,18 @@ export function ProfileDetailViewWithInteraction({
             {/* Already Sent Notice */}
             {!disableMatching && isRequestSent && existingRequest && (
               <div>
-                <div className="flex items-start gap-3 bg-gradient-to-br from-[#D4AF37]/10 to-[#D4AF37]/5 border border-[#D4AF37]/30 rounded-lg p-4 mb-3">
-                  <Heart className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 bg-gradient-to-br from-[var(--primary)]/10 to-[var(--primary)]/5 border border-[var(--primary)]/30 rounded-lg p-4 mb-3">
+                  <Heart className="w-5 h-5 text-[var(--primary)] flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm text-[#1A3C34] font-sans font-medium mb-2">
+                    <p className="text-sm text-[var(--foreground)] font-sans font-medium mb-2">
                       내가 보낸 편지
                     </p>
-                    <div className="bg-white/60 rounded-lg p-3 border border-[#D4AF37]/20">
-                      <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap break-words">
+                    <div className="bg-white/60 rounded-lg p-3 border border-[var(--primary)]/20">
+                      <p className="font-serif text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words">
                         {existingRequest.letter}
                       </p>
                     </div>
-                    <p className="text-xs text-[#1A3C34]/50 font-sans mt-2">
+                    <p className="text-xs text-[var(--foreground)]/50 font-sans mt-2">
                       {new Date(existingRequest.timestamp).toLocaleString('ko-KR', {
                         month: 'long',
                         day: 'numeric',
@@ -416,15 +416,15 @@ export function ProfileDetailViewWithInteraction({
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex flex-col">
       {/* Top Navigation */}
-      <div className="relative z-10 bg-[#FCFCFA]/95 backdrop-blur-sm border-b border-[#1A3C34]/10">
+      <div className="relative z-10 bg-[#FCFCFA]/95 backdrop-blur-sm border-b border-[var(--foreground)]/10">
         <div className="flex items-center gap-3 px-6 py-4">
           <button
             onClick={onBack}
-            className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors"
+            className="p-1 hover:bg-[var(--foreground)]/5 rounded-full transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-[#1A3C34]" />
+            <ArrowLeft className="w-5 h-5 text-[var(--foreground)]" />
           </button>
-          <h1 className="font-sans text-base text-[#1A3C34]">상대프로필</h1>
+          <h1 className="font-sans text-base text-[var(--foreground)]">상대프로필</h1>
         </div>
       </div>
 
@@ -495,27 +495,27 @@ export function ProfileDetailViewWithInteraction({
         </div>
 
         {/* Additional Info Grid */}
-        <div className="px-6 py-4 border-b border-[#1A3C34]/10">
+        <div className="px-6 py-4 border-b border-[var(--foreground)]/10">
           <div className="grid grid-cols-4 gap-2">
-            <div className="bg-white border border-[#1A3C34]/10 rounded-lg p-3 text-center">
-              <p className="text-xs text-[#1A3C34]/50 font-sans mb-1">종교</p>
-              <p className="text-sm text-[#1A3C34] font-sans font-medium">
+            <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
+              <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">종교</p>
+              <p className="text-sm text-[var(--foreground)] font-sans font-medium">
                 {getReligionText(profile.religion)}
               </p>
             </div>
-            <div className="bg-white border border-[#1A3C34]/10 rounded-lg p-3 text-center">
-              <p className="text-xs text-[#1A3C34]/50 font-sans mb-1">키</p>
-              <p className="text-sm text-[#1A3C34] font-sans font-medium">{profile.height}</p>
+            <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
+              <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">키</p>
+              <p className="text-sm text-[var(--foreground)] font-sans font-medium">{profile.height}</p>
             </div>
-            <div className="bg-white border border-[#1A3C34]/10 rounded-lg p-3 text-center">
-              <p className="text-xs text-[#1A3C34]/50 font-sans mb-1">흡연</p>
-              <p className="text-sm text-[#1A3C34] font-sans font-medium">
+            <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
+              <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">흡연</p>
+              <p className="text-sm text-[var(--foreground)] font-sans font-medium">
                 {getSmokingText(profile.smoking)}
               </p>
             </div>
-            <div className="bg-white border border-[#1A3C34]/10 rounded-lg p-3 text-center">
-              <p className="text-xs text-[#1A3C34]/50 font-sans mb-1">음주</p>
-              <p className="text-sm text-[#1A3C34] font-sans font-medium">
+            <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
+              <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">음주</p>
+              <p className="text-sm text-[var(--foreground)] font-sans font-medium">
                 {getDrinkingText(profile.drinking)}
               </p>
             </div>
@@ -523,17 +523,17 @@ export function ProfileDetailViewWithInteraction({
         </div>
 
         {/* Bio Section */}
-        <div className="px-6 py-6 border-b border-[#1A3C34]/10">
-          <h3 className="font-sans text-sm text-[#1A3C34]/60 mb-2">자기소개</h3>
-          <p className="text-[#1A3C34] font-sans leading-relaxed">{profile.bio}</p>
+        <div className="px-6 py-6 border-b border-[var(--foreground)]/10">
+          <h3 className="font-sans text-sm text-[var(--foreground)]/60 mb-2">자기소개</h3>
+          <p className="text-[var(--foreground)] font-sans leading-relaxed">{profile.bio}</p>
         </div>
 
         {/* Book Shelf Section */}
         <div className="px-6 py-8">
           <div className="flex items-center gap-2 mb-6">
-            <BookOpen className="w-5 h-5 text-[#D4AF37]" />
-            <h3 className="font-serif text-xl text-[#1A3C34]">나의 책장 {profile.books.length}권</h3>
-            <div className="h-px flex-1 bg-[#D4AF37]/20 ml-2" />
+            <BookOpen className="w-5 h-5 text-[var(--primary)]" />
+            <h3 className="font-serif text-xl text-[var(--foreground)]">나의 책장 {profile.books.length}권</h3>
+            <div className="h-px flex-1 bg-[var(--primary)]/20 ml-2" />
           </div>
 
           {/* Book Grid */}
@@ -542,7 +542,7 @@ export function ProfileDetailViewWithInteraction({
               <button
                 key={book.id}
                 onClick={() => handleBookClick(book)}
-                className="group relative aspect-[2/3] rounded-lg overflow-hidden border border-[#1A3C34]/10 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
+                className="group relative aspect-[2/3] rounded-lg overflow-hidden border border-[var(--foreground)]/10 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
               >
                 <ImageWithFallback
                   src={book.cover}
@@ -560,10 +560,10 @@ export function ProfileDetailViewWithInteraction({
 
           {/* Instruction */}
           {!disableMatching && !isRequestSent && (
-            <div className="flex items-start gap-3 bg-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-lg p-4">
-              <Heart className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 bg-[var(--primary)]/5 border border-[var(--primary)]/20 rounded-lg p-4">
+              <Heart className="w-5 h-5 text-[var(--primary)] flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm text-[#1A3C34] font-sans leading-relaxed">
+                <p className="text-sm text-[var(--foreground)] font-sans leading-relaxed">
                   책을 선택하면 감상문을 읽을 수 있습니다.
                 </p>
               </div>
@@ -573,18 +573,18 @@ export function ProfileDetailViewWithInteraction({
           {/* Already Sent Notice */}
           {!disableMatching && isRequestSent && existingRequest && (
             <div>
-              <div className="flex items-start gap-3 bg-gradient-to-br from-[#D4AF37]/10 to-[#D4AF37]/5 border border-[#D4AF37]/30 rounded-lg p-4 mb-3">
-                <Heart className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 bg-gradient-to-br from-[var(--primary)]/10 to-[var(--primary)]/5 border border-[var(--primary)]/30 rounded-lg p-4 mb-3">
+                <Heart className="w-5 h-5 text-[var(--primary)] flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-[#1A3C34] font-sans font-medium mb-2">
+                  <p className="text-sm text-[var(--foreground)] font-sans font-medium mb-2">
                     내가 보낸 편지
                   </p>
-                  <div className="bg-white/60 rounded-lg p-3 border border-[#D4AF37]/20">
-                    <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap break-words">
+                  <div className="bg-white/60 rounded-lg p-3 border border-[var(--primary)]/20">
+                    <p className="font-serif text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words">
                       {existingRequest.letter}
                     </p>
                   </div>
-                  <p className="text-xs text-[#1A3C34]/50 font-sans mt-2">
+                  <p className="text-xs text-[var(--foreground)]/50 font-sans mt-2">
                     {new Date(existingRequest.timestamp).toLocaleString('ko-KR', {
                       month: 'long',
                       day: 'numeric',
@@ -605,7 +605,7 @@ export function ProfileDetailViewWithInteraction({
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-6 pb-8">
           <button
             onClick={handleOpenLetterModal}
-            className="w-full max-w-md mx-auto bg-[#D4AF37] text-white font-sans font-medium py-4 rounded-xl hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-2xl shadow-[#D4AF37]/30 flex items-center justify-center gap-2"
+            className="w-full max-w-md mx-auto bg-[var(--primary)] text-white font-sans font-medium py-4 rounded-xl hover:bg-[var(--primary)]/90 transition-all duration-300 shadow-2xl shadow-[var(--primary)]/30 flex items-center justify-center gap-2"
           >
             <Send className="w-5 h-5" />
             <span>매칭 신청하기</span>

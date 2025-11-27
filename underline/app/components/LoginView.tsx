@@ -15,16 +15,16 @@ export function LoginView() {
     return (
         <div className="w-full min-h-screen bg-[#FCFCFA] flex flex-col items-center justify-center px-6 relative overflow-hidden">
             {/* Background Decoration */}
-            <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-[#D4AF37]/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] bg-[#1A3C34]/5 rounded-full blur-3xl" />
+            <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-[var(--primary)]/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] bg-[var(--foreground)]/5 rounded-full blur-3xl" />
 
             <div className="w-full max-w-md space-y-12 relative z-10">
                 {/* Logo / Title Area */}
                 <div className="text-center space-y-4">
-                    <h1 className="font-serif text-4xl text-[#1A3C34] tracking-tight">
+                    <h1 className="font-serif text-4xl text-[var(--foreground)] tracking-tight">
                         Underline
                     </h1>
-                    <p className="text-[#1A3C34]/60 font-sans text-sm leading-relaxed">
+                    <p className="text-[var(--foreground)]/60 font-sans text-sm leading-relaxed">
                         책 속의 문장으로 이어지는<br />
                         깊이 있는 만남
                     </p>
@@ -41,7 +41,7 @@ export function LoginView() {
                     </button>
 
                     <div className="text-center">
-                        <p className="text-[10px] text-[#1A3C34]/40 font-sans">
+                        <p className="text-[10px] text-[var(--foreground)]/40 font-sans">
                             계속 진행함으로써 Underline의 이용약관 및<br />
                             개인정보 처리방침에 동의합니다.
                         </p>

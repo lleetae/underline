@@ -33,7 +33,7 @@ export function LoginModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative bg-gradient-to-br from-[#1A3C34] to-[#2A4C44] px-6 py-8 text-white">
+        <div className="relative bg-gradient-to-br from-[var(--foreground)] to-[#2A4C44] px-6 py-8 text-white">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition-colors"
@@ -60,7 +60,7 @@ export function LoginModal({
           </div>
 
           {/* Additional Info */}
-          <p className="text-center text-xs text-[#1A3C34]/40 font-sans mt-6">
+          <p className="text-center text-xs text-[var(--foreground)]/40 font-sans mt-6">
             계속 진행함으로써 Underline의 이용약관 및<br />
             개인정보 처리방침에 동의합니다.
           </p>
