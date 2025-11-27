@@ -16,6 +16,7 @@ interface Book {
   reviewPreview: string;
   review: string;
   pageCount: number;
+  isbn13?: string;
 }
 
 function TotalPagesStats({ books }: { books: Book[] }) {
@@ -174,7 +175,8 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
           cover: b.book_cover || "",
           review: b.book_review || "",
           reviewPreview: (b.book_review || "").split('\n')[0].slice(0, 80) + "...",
-          pageCount: b.page_count || 0
+          pageCount: b.page_count || 0,
+          isbn13: b.book_isbn13
         }));
         setBooks(mappedBooks);
       }
@@ -275,7 +277,8 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
               cover: newBookData.cover,
               review: newBookData.review,
               reviewPreview: newBookData.review.split('\n')[0].slice(0, 80) + "...",
-              pageCount: newBookData.pageCount || 0
+              pageCount: newBookData.pageCount || 0,
+              isbn13: newBookData.isbn13
             };
             setBooks([...books, newBook]);
             setShowAddBookView(false);
