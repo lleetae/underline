@@ -1,16 +1,18 @@
 import React from "react";
-import { Lock, Link as LinkIcon, Copy } from "lucide-react";
+import { Lock, Copy } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { toast } from "sonner";
 
 interface Match {
   id: string;
+  profileId: string;
   userImage: string;
   nickname: string;
   age: number;
   location: string;
   bookTitle: string;
   isUnlocked: boolean;
+  isBlurred?: boolean;
 }
 
 export function MatchList({
@@ -62,14 +64,14 @@ export function MatchList({
         >
           {/* Match Profile Info */}
           <div
-            onClick={() => onProfileClick?.(match.id, "mailbox")}
+            onClick={() => onProfileClick?.(match.profileId, "mailbox")}
             className="flex items-center gap-3 cursor-pointer hover:bg-[#1A3C34]/5 p-2 rounded-lg transition-colors -mx-2"
           >
             <div className="w-12 h-12 rounded-full overflow-hidden border border-[#1A3C34]/10 flex-shrink-0">
               <ImageWithFallback
                 src={match.userImage}
                 alt={match.nickname}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover ${match.isBlurred ? 'blur-sm' : ''}`}
               />
             </div>
             <div className="flex-1 min-w-0 text-left">
@@ -87,16 +89,7 @@ export function MatchList({
             </div>
           </div>
 
-          {/* Context */}
-          <div className="text-center space-y-1 border-t border-[#1A3C34]/10 pt-6">
-            <div className="flex items-center justify-center gap-1.5 text-xs text-[#1A3C34]/60 font-sans">
-              <LinkIcon className="w-3 h-3 text-[#D4AF37]" />
-              <span>매칭된 책</span>
-            </div>
-            <p className="font-serif text-lg text-[#1A3C34]">
-              {match.bookTitle}
-            </p>
-          </div>
+
 
           {/* Contact Info Area */}
           <div className="relative bg-[#1A3C34]/5 rounded-lg p-4 text-center overflow-hidden">

@@ -195,7 +195,8 @@ export default function App() {
               location: req.sender.location,
               photo: photos[0] || "",
               letter: req.letter,
-              timestamp: new Date(req.created_at)
+              timestamp: new Date(req.created_at),
+              isBlurred: true // Received requests are blurred
             };
           });
           setReceivedMatchRequests(formattedRequests);
@@ -240,7 +241,8 @@ export default function App() {
               location: req.receiver.location,
               photo: photos[0] || "",
               letter: req.letter,
-              timestamp: new Date(req.created_at)
+              timestamp: new Date(req.created_at),
+              isBlurred: true // Sent requests are blurred
             };
           });
           setSentMatchRequests(formattedSentRequests);
@@ -271,10 +273,22 @@ export default function App() {
             const isSender = match.sender_id === data.id;
             const partner = isSender ? match.receiver : match.sender;
 
+            // Helper to get original photo URL
+            const getOriginalPhotoUrl = (url: string) => {
+              if (!url) return "";
+              if (url.includes("profile-photos-blurred")) {
+                return url.replace("profile-photos-blurred", "profile-photos-original").replace("blurred_", "");
+              }
+              return url;
+            };
+
             // Handle photos
-            const photos = partner.photos && partner.photos.length > 0
+            let photos = partner.photos && partner.photos.length > 0
               ? partner.photos
               : (partner.photo_url ? [partner.photo_url] : []);
+
+            // Transform to original URLs for matches
+            photos = photos.map((p: string) => getOriginalPhotoUrl(p));
 
             // Handle age
             const age = partner.age || (partner.birth_date
@@ -292,13 +306,15 @@ export default function App() {
 
             return {
               id: match.id,
+              profileId: partner.id.toString(),
               userImage: photos[0] || "",
               nickname: partner.nickname,
               age: age,
               location: getLocationText(partner.location),
               bookTitle: match.letter ? (match.letter.length > 20 ? match.letter.substring(0, 20) + "..." : match.letter) : "매칭된 책", // Use letter as fallback
               isUnlocked: false, // Default to locked for now
-              contactId: "kakao_id_placeholder" // Placeholder
+              contactId: "kakao_id_placeholder", // Placeholder
+              isBlurred: false // Matched profiles are NOT blurred
             };
           });
           setMatches(formattedMatches);
@@ -668,6 +684,7 @@ export default function App() {
                 onBack={handleBackFromProfileDetail}
                 onMatchRequest={handleMatchRequest}
                 sentMatchRequests={sentMatchRequests}
+                isMatched={matches.some(m => m.profileId === selectedProfileId)} // Check if matched
                 disableMatching={profileSource === "mailbox"}
               />
             </div>

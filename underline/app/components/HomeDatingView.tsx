@@ -256,7 +256,7 @@ id,
                     <ImageWithFallback
                       src={profile.photos[0]}
                       alt={profile.nickname}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 blur-md"
                     />
 
                     {/* Gradient Overlay for Text Readability */}

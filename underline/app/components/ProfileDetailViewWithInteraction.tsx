@@ -32,7 +32,8 @@ export function ProfileDetailViewWithInteraction({
   onBack,
   onMatchRequest,
   sentMatchRequests = [],
-  disableMatching = false
+  disableMatching = false,
+  isMatched = false // New prop
 }: {
   profileId: string;
   onBack: () => void;
@@ -54,6 +55,7 @@ export function ProfileDetailViewWithInteraction({
     timestamp: Date;
   }>;
   disableMatching?: boolean;
+  isMatched?: boolean;
 }) {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showLetterModal, setShowLetterModal] = useState(false);
@@ -105,6 +107,18 @@ export function ProfileDetailViewWithInteraction({
             review: book.book_review
           }));
 
+          let photos = memberData.photos && memberData.photos.length > 0 ? memberData.photos : (memberData.photo_url ? [memberData.photo_url] : []);
+
+          // If matched, show original photos
+          if (isMatched) {
+            photos = photos.map((url: string) => {
+              if (url && url.includes("profile-photos-blurred")) {
+                return url.replace("profile-photos-blurred", "profile-photos-original").replace("blurred_", "");
+              }
+              return url;
+            });
+          }
+
           setProfile({
             id: memberData.id,
             nickname: memberData.nickname || "익명",
@@ -115,7 +129,7 @@ export function ProfileDetailViewWithInteraction({
             smoking: memberData.smoking || "non-smoker",
             drinking: memberData.drinking || "non-drinker",
             bio: memberData.bio || "",
-            photos: memberData.photos && memberData.photos.length > 0 ? memberData.photos : (memberData.photo_url ? [memberData.photo_url] : []),
+            photos: photos,
             books: books
           });
         }
@@ -422,7 +436,7 @@ export function ProfileDetailViewWithInteraction({
             <ImageWithFallback
               src={profile.photos[currentPhotoIndex]}
               alt={profile.nickname}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover ${!isMatched && !disableMatching ? 'blur-md' : ''}`}
             />
 
             {/* Photo Navigation Overlay */}
