@@ -166,6 +166,23 @@ export function ProfileDetailViewWithInteraction({
     return drinkingMap[drinking] || drinking;
   };
 
+  // Helper function to display location text
+  const getLocationText = (location: string) => {
+    const locationMap: { [key: string]: string } = {
+      seoul: "서울",
+      busan: "부산",
+      incheon: "인천",
+      daegu: "대구",
+      daejeon: "대전",
+      gwangju: "광주",
+      ulsan: "울산",
+      sejong: "세종",
+      gyeonggi: "경기",
+      other: "기타"
+    };
+    return locationMap[location] || location;
+  };
+
   const handleBookClick = (book: Book) => {
     setSelectedBook(book);
   };
@@ -365,7 +382,7 @@ export function ProfileDetailViewWithInteraction({
               <span className="text-sm font-sans">만 {profile.age}세</span>
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
-                <span className="text-sm font-sans">{profile.location}</span>
+                <span className="text-sm font-sans">{getLocationText(profile.location)}</span>
               </div>
             </div>
           </div>
