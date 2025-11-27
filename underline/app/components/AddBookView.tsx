@@ -162,12 +162,12 @@ export function AddBookView({
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
+      <div className="sticky top-0 z-50 bg-[#FCFCFA] border-b border-[var(--foreground)]/10">
         <div className="flex items-center gap-3 px-6 py-4">
-          <button className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5 text-[#1A3C34]" />
+          <button className="p-1 hover:bg-[var(--foreground)]/5 rounded-full transition-colors" onClick={onBack}>
+            <ArrowLeft className="w-5 h-5 text-[var(--foreground)]" />
           </button>
-          <h1 className="font-serif text-2xl text-[#1A3C34]">책 추가</h1>
+          <h1 className="font-serif text-2xl text-[var(--foreground)]">책 추가</h1>
         </div>
       </div>
 
@@ -178,7 +178,7 @@ export function AddBookView({
             <>
               {/* Search Section */}
               <div>
-                <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                <label className="block text-sm text-[var(--foreground)]/70 font-sans mb-2">
                   책 검색
                 </label>
                 <div className="flex gap-2">
@@ -187,19 +187,19 @@ export function AddBookView({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && searchBooks()}
-                    className="flex-1 px-4 py-2.5 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors"
+                    className="flex-1 px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors"
                     placeholder="책 제목 또는 저자명을 입력하세요"
                   />
                   <button
                     onClick={searchBooks}
                     disabled={isSearching}
-                    className="px-4 py-2.5 bg-[#1A3C34] text-white hover:bg-[#1A3C34]/90 rounded-lg transition-all duration-300 font-sans text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2.5 bg-[var(--foreground)] text-white hover:bg-[var(--foreground)]/90 rounded-lg transition-all duration-300 font-sans text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Search className="w-4 h-4" />
                     검색
                   </button>
                 </div>
-                <p className="text-xs text-[#1A3C34]/40 mt-1.5 font-sans">
+                <p className="text-xs text-[var(--foreground)]/40 mt-1.5 font-sans">
                   당신의 서재에 추가할 책을 찾아보세요
                 </p>
               </div>
@@ -207,7 +207,7 @@ export function AddBookView({
               {/* Search Results */}
               {searchResults.length > 0 && (
                 <div>
-                  <h3 className="font-sans text-sm text-[#1A3C34]/70 mb-3">
+                  <h3 className="font-sans text-sm text-[var(--foreground)]/70 mb-3">
                     검색 결과 ({searchResults.length}권)
                   </h3>
                   <div className="space-y-3">
@@ -215,7 +215,7 @@ export function AddBookView({
                       <button
                         key={index}
                         onClick={() => handleBookClick(book)}
-                        className="w-full bg-white border border-[#1A3C34]/10 rounded-lg p-4 hover:border-[#D4AF37] hover:shadow-md transition-all duration-300 text-left"
+                        className="w-full bg-white border border-[var(--foreground)]/10 rounded-lg p-4 hover:border-[var(--primary)] hover:shadow-md transition-all duration-300 text-left"
                       >
                         <div className="flex gap-3">
                           <ImageWithFallback
@@ -224,13 +224,13 @@ export function AddBookView({
                             className="w-16 h-22 object-cover rounded shadow-sm flex-shrink-0"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-serif text-sm text-[#1A3C34] mb-1 truncate">
+                            <h4 className="font-serif text-sm text-[var(--foreground)] mb-1 truncate">
                               {book.title}
                             </h4>
-                            <p className="text-xs text-[#1A3C34]/60 font-sans mb-0.5 truncate">
+                            <p className="text-xs text-[var(--foreground)]/60 font-sans mb-0.5 truncate">
                               {book.author}
                             </p>
-                            <p className="text-xs text-[#1A3C34]/40 font-sans truncate">
+                            <p className="text-xs text-[var(--foreground)]/40 font-sans truncate">
                               {book.publisher} · {book.pubDate}
                             </p>
                           </div>
@@ -243,24 +243,24 @@ export function AddBookView({
 
               {isSearching && (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-sm text-[#1A3C34]/60 font-sans">검색 중...</p>
+                  <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-sm text-[var(--foreground)]/60 font-sans">검색 중...</p>
                 </div>
               )}
 
               {!isSearching && searchQuery && searchResults.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <BookOpen className="w-12 h-12 text-[#1A3C34]/20 mb-3" />
-                  <p className="text-sm text-[#1A3C34]/60 font-sans">검색 결과가 없습니다</p>
+                  <BookOpen className="w-12 h-12 text-[var(--foreground)]/20 mb-3" />
+                  <p className="text-sm text-[var(--foreground)]/60 font-sans">검색 결과가 없습니다</p>
                 </div>
               )}
             </>
           ) : (
             <>
               {/* Selected Book Display */}
-              <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[#D4AF37]/20 rounded-xl p-5 shadow-sm">
+              <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-serif text-lg text-[#1A3C34]">선택한 책</h3>
+                  <h3 className="font-serif text-lg text-[var(--foreground)]">선택한 책</h3>
                   <button
                     onClick={() => {
                       setSelectedBook(null);
@@ -268,7 +268,7 @@ export function AddBookView({
                       setSearchResults([]);
                       setSearchQuery("");
                     }}
-                    className="text-xs text-[#1A3C34]/60 hover:text-[#D4AF37] font-sans transition-colors"
+                    className="text-xs text-[var(--foreground)]/60 hover:text-[var(--primary)] font-sans transition-colors"
                   >
                     다시 선택
                   </button>
@@ -281,8 +281,8 @@ export function AddBookView({
                     className="w-28 h-38 object-cover rounded-lg shadow-md flex-shrink-0"
                   />
                   <div className="flex-1">
-                    <h4 className="font-serif text-base text-[#1A3C34] mb-2">{selectedBook.title}</h4>
-                    <div className="space-y-1 text-xs text-[#1A3C34]/70 font-sans">
+                    <h4 className="font-serif text-base text-[var(--foreground)] mb-2">{selectedBook.title}</h4>
+                    <div className="space-y-1 text-xs text-[var(--foreground)]/70 font-sans">
                       <p>{selectedBook.author}</p>
                       <p>{selectedBook.publisher}</p>
                     </div>
@@ -291,14 +291,14 @@ export function AddBookView({
 
                 {/* Aladin Attribution */}
                 <div className="flex justify-end items-center gap-2 mt-2">
-                  <span className="text-[10px] text-[#1A3C34]/40 font-sans">
+                  <span className="text-[10px] text-[var(--foreground)]/40 font-sans">
                     도서 DB 제공 : 알라딘
                   </span>
                   <a
                     href={selectedBook.isbn13 ? `https://www.aladin.co.kr/shop/wproduct.aspx?ISBN=${selectedBook.isbn13}` : `https://www.aladin.co.kr/search/wsearchresult.aspx?SearchTarget=Book&SearchWord=${encodeURIComponent(selectedBook.title)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[10px] text-[#1A3C34]/60 hover:text-[#D4AF37] font-sans flex items-center gap-0.5 transition-colors"
+                    className="text-[10px] text-[var(--foreground)]/60 hover:text-[var(--primary)] font-sans flex items-center gap-0.5 transition-colors"
                   >
                     자세히 보기
                     <ExternalLink className="w-3 h-3" />
@@ -307,10 +307,10 @@ export function AddBookView({
               </div>
 
               {/* Review Section */}
-              <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[#D4AF37]/20 rounded-xl p-5 shadow-sm">
+              <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
-                  <h3 className="font-serif text-lg text-[#1A3C34]">책 감상문</h3>
-                  <div className="h-px flex-1 bg-[#D4AF37]/30" />
+                  <h3 className="font-serif text-lg text-[var(--foreground)]">책 감상문</h3>
+                  <div className="h-px flex-1 bg-[var(--primary)]/30" />
                 </div>
 
                 <textarea
@@ -318,14 +318,14 @@ export function AddBookView({
                   onChange={(e) => setBookReview(e.target.value)}
                   maxLength={10000}
                   rows={10}
-                  className="w-full px-4 py-3 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-serif text-sm focus:outline-none focus:border-[#D4AF37] transition-colors resize-none bg-white leading-relaxed"
+                  className="w-full px-4 py-3 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-serif text-sm focus:outline-none focus:border-[var(--primary)] transition-colors resize-none bg-white leading-relaxed"
                   placeholder="이 책이 당신에게 어떤 의미인가요?&#10;&#10;당신의 마음을 움직인 문장이나 생각을 자유롭게 적어주세요..."
                 />
                 <div className="mt-2 space-y-1">
-                  <p className="text-xs text-[#1A3C34]/40 font-sans italic">
+                  <p className="text-xs text-[var(--foreground)]/40 font-sans italic">
                     이 감상문은 다른 사람들에게 공개되며, 매칭의 시작점이 됩니다
                   </p>
-                  <p className="text-xs text-[#1A3C34]/60 font-sans text-right">
+                  <p className="text-xs text-[var(--foreground)]/60 font-sans text-right">
                     {bookReview.length} / 10,000
                   </p>
                 </div>
@@ -336,7 +336,7 @@ export function AddBookView({
                 <button
                   onClick={handleComplete}
                   disabled={!bookReview.trim()}
-                  className="w-full bg-[#D4AF37] text-white font-sans font-medium py-4 rounded-lg hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-lg shadow-[#D4AF37]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-[var(--primary)] text-white font-sans font-medium py-4 rounded-lg hover:bg-[var(--primary)]/90 transition-all duration-300 shadow-lg shadow-[var(--primary)]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <Check className="w-5 h-5" />
                   책 추가하기

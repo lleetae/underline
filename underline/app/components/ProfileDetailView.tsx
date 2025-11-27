@@ -13,12 +13,12 @@ export function ProfileDetailView() {
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] pb-20">
         {/* Top Navigation */}
-        <div className="sticky top-0 z-40 flex items-center justify-between px-6 py-4 bg-[#FCFCFA]/80 backdrop-blur-md border-b border-[#1A3C34]/5">
-          <button className="p-2 -ml-2 rounded-full hover:bg-[#1A3C34]/5 transition-colors text-[#1A3C34]">
+        <div className="sticky top-0 z-40 flex items-center justify-between px-6 py-4 bg-[#FCFCFA]/80 backdrop-blur-md border-b border-[var(--foreground)]/5">
+          <button className="p-2 -ml-2 rounded-full hover:bg-[var(--foreground)]/5 transition-colors text-[var(--foreground)]">
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <span className="font-sans text-xs font-medium tracking-widest uppercase text-[#1A3C34]/40">Profile</span>
-          <button className="p-2 -mr-2 rounded-full hover:bg-[#1A3C34]/5 transition-colors text-[#1A3C34]">
+          <span className="font-sans text-xs font-medium tracking-widest uppercase text-[var(--foreground)]/40">Profile</span>
+          <button className="p-2 -mr-2 rounded-full hover:bg-[var(--foreground)]/5 transition-colors text-[var(--foreground)]">
             <MoreHorizontal className="w-6 h-6" />
           </button>
         </div>

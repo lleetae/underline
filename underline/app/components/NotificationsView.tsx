@@ -120,13 +120,13 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
     const getNotificationIcon = (type: string) => {
         switch (type) {
             case 'match_request':
-                return <Heart className="w-5 h-5 text-[#D4AF37]" />;
+                return <Heart className="w-5 h-5 text-[var(--primary)]" />;
             case 'match_accepted':
-                return <Heart className="w-5 h-5 text-[#D4AF37] fill-[#D4AF37]" />;
+                return <Heart className="w-5 h-5 text-[var(--primary)] fill-[var(--primary)]" />;
             case 'contact_revealed':
-                return <CreditCard className="w-5 h-5 text-[#D4AF37]" />;
+                return <CreditCard className="w-5 h-5 text-[var(--primary)]" />;
             default:
-                return <Bell className="w-5 h-5 text-[#D4AF37]" />;
+                return <Bell className="w-5 h-5 text-[var(--primary)]" />;
         }
     };
 
@@ -162,7 +162,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
     if (loading) {
         return (
             <div className="w-full max-w-md mx-auto min-h-screen bg-[#FCFCFA] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
             </div>
         );
     }
@@ -170,19 +170,19 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
     return (
         <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
+            <div className="sticky top-0 z-10 bg-[#FCFCFA] border-b border-[var(--foreground)]/10">
                 <div className="flex items-center justify-between px-6 py-4">
                     <button
                         onClick={onBack}
-                        className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors"
+                        className="p-1 hover:bg-[var(--foreground)]/5 rounded-full transition-colors"
                     >
-                        <ArrowLeft className="w-5 h-5 text-[#1A3C34]" />
+                        <ArrowLeft className="w-5 h-5 text-[var(--foreground)]" />
                     </button>
-                    <h1 className="font-serif text-2xl text-[#1A3C34]">알림</h1>
+                    <h1 className="font-serif text-2xl text-[var(--foreground)]">알림</h1>
                     {unreadCount > 0 && (
                         <button
                             onClick={markAllAsRead}
-                            className="text-xs text-[#D4AF37] font-sans hover:underline"
+                            className="text-xs text-[var(--primary)] font-sans hover:underline"
                         >
                             모두 읽음
                         </button>
@@ -196,31 +196,31 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                 {notifications.length === 0 ? (
                     // Empty State
                     <div className="flex flex-col items-center justify-center py-20 px-6">
-                        <div className="w-16 h-16 rounded-full bg-[#D4AF37]/10 flex items-center justify-center mb-4">
-                            <Bell className="w-8 h-8 text-[#D4AF37]/40" />
+                        <div className="w-16 h-16 rounded-full bg-[var(--primary)]/10 flex items-center justify-center mb-4">
+                            <Bell className="w-8 h-8 text-[var(--primary)]/40" />
                         </div>
-                        <h3 className="font-serif text-xl text-[#1A3C34] mb-2">
+                        <h3 className="font-serif text-xl text-[var(--foreground)] mb-2">
                             알림이 없습니다
                         </h3>
-                        <p className="text-sm text-[#1A3C34]/60 font-sans text-center leading-relaxed">
+                        <p className="text-sm text-[var(--foreground)]/60 font-sans text-center leading-relaxed">
                             새로운 매칭 신청이나 소식이 있으면<br />
                             여기에 알려드릴게요
                         </p>
                     </div>
                 ) : (
                     // Notification List
-                    <div className="divide-y divide-[#1A3C34]/5">
+                    <div className="divide-y divide-[var(--foreground)]/5">
                         {notifications.map((notification) => (
                             <button
                                 key={notification.id}
                                 onClick={() => handleNotificationClick(notification)}
-                                className={`w-full px-6 py-4 flex gap-4 hover:bg-[#FCFCFA]/50 transition-colors text-left ${!notification.is_read ? 'bg-[#D4AF37]/5' : ''
+                                className={`w-full px-6 py-4 flex gap-4 hover:bg-[#FCFCFA]/50 transition-colors text-left ${!notification.is_read ? 'bg-[var(--primary)]/5' : ''
                                     }`}
                             >
                                 {/* Sender Photo */}
                                 <div className="flex-shrink-0">
                                     {notification.sender?.photo_urls_blurred?.[0] ? (
-                                        <div className="w-12 h-12 rounded-full overflow-hidden border border-[#1A3C34]/10">
+                                        <div className="w-12 h-12 rounded-full overflow-hidden border border-[var(--foreground)]/10">
                                             <ImageWithFallback
                                                 src={notification.sender.photo_urls_blurred[0]}
                                                 alt="Sender"
@@ -228,8 +228,8 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                                             />
                                         </div>
                                     ) : (
-                                        <div className="w-12 h-12 rounded-full bg-[#1A3C34]/5 border border-[#1A3C34]/10 flex items-center justify-center">
-                                            <User className="w-6 h-6 text-[#1A3C34]/30" />
+                                        <div className="w-12 h-12 rounded-full bg-[var(--foreground)]/5 border border-[var(--foreground)]/10 flex items-center justify-center">
+                                            <User className="w-6 h-6 text-[var(--foreground)]/30" />
                                         </div>
                                     )}
                                 </div>
@@ -238,14 +238,14 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-start gap-2 mb-1">
                                         {getNotificationIcon(notification.type)}
-                                        <p className="flex-1 text-sm text-[#1A3C34] font-sans leading-relaxed">
+                                        <p className="flex-1 text-sm text-[var(--foreground)] font-sans leading-relaxed">
                                             {getNotificationMessage(notification)}
                                         </p>
                                         {!notification.is_read && (
-                                            <div className="flex-shrink-0 w-2 h-2 bg-[#D4AF37] rounded-full mt-1" />
+                                            <div className="flex-shrink-0 w-2 h-2 bg-[var(--primary)] rounded-full mt-1" />
                                         )}
                                     </div>
-                                    <p className="text-xs text-[#1A3C34]/40 font-sans">
+                                    <p className="text-xs text-[var(--foreground)]/40 font-sans">
                                         {getTimeAgo(notification.created_at)}
                                     </p>
                                 </div>

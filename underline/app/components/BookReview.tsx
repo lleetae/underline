@@ -23,8 +23,8 @@ const SelectableSentence = ({
       className={cn(
         "cursor-pointer transition-all duration-300 decoration-clone px-0.5 rounded-sm",
         isSelected
-          ? "font-bold text-[#1A3C34] bg-no-repeat bg-bottom bg-[length:100%_0.5em] bg-gradient-to-t from-[#D4AF37]/40 to-[#D4AF37]/40"
-          : "text-[#1A3C34]/80 hover:text-[#1A3C34] hover:bg-[#1A3C34]/5"
+          ? "font-bold text-[var(--foreground)] bg-no-repeat bg-bottom bg-[length:100%_0.5em] bg-gradient-to-t from-[var(--primary)]/40 to-[var(--primary)]/40"
+          : "text-[var(--foreground)]/80 hover:text-[var(--foreground)] hover:bg-[var(--foreground)]/5"
       )}
     >
       {text}
@@ -56,10 +56,10 @@ export function BookReview({ coverUrl, selectedQuote, onQuoteSelect }: BookRevie
   ];
 
   return (
-    <div className="w-full max-w-md px-6 pb-32 text-[#1A3C34]">
+    <div className="w-full max-w-md px-6 pb-32 text-[var(--foreground)]">
       <div className="flex flex-col gap-8">
-        <div className="border-t border-[#1A3C34]/10 pt-12">
-          <h2 className="text-xs font-sans tracking-[0.2em] uppercase text-[#D4AF37] mb-6 text-center">
+        <div className="border-t border-[var(--foreground)]/10 pt-12">
+          <h2 className="text-xs font-sans tracking-[0.2em] uppercase text-[var(--primary)] mb-6 text-center">
             My Life Book
           </h2>
           
@@ -85,7 +85,7 @@ export function BookReview({ coverUrl, selectedQuote, onQuoteSelect }: BookRevie
           </div>
         </div>
 
-        <div className="font-serif text-[1.05rem] leading-loose text-[#1A3C34]/90 space-y-6 break-keep">
+        <div className="font-serif text-[1.05rem] leading-loose text-[var(--foreground)]/90 space-y-6 break-keep">
           {paragraphs.map((paragraphSentences, pIndex) => (
             <p key={pIndex}>
               {paragraphSentences.map((sentence, sIndex) => {

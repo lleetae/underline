@@ -514,17 +514,17 @@ export default function App() {
   // 2. Default -> Main App (Home)
   // If not logged in, isSignedUp is false, so Home view handles it.
   return (
-    <div className="min-h-screen bg-[#FCFCFA] flex justify-center selection:bg-[#D4AF37]/20">
+    <div className="min-h-screen bg-[#FCFCFA] flex justify-center selection:bg-[var(--primary)]/20">
       {/* Dev Tools - Toggle Recruiting/Dating Phase + Test Notifications */}
-      <div className="fixed top-4 right-4 z-50 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 border border-[#1A3C34]/20 max-w-xs">
+      <div className="fixed top-4 right-4 z-50 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 border border-[var(--foreground)]/20 max-w-xs">
         {/* Phase Toggle */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs font-sans text-[#1A3C34]/60">페이즈:</span>
+          <span className="text-xs font-sans text-[var(--foreground)]/60">페이즈:</span>
           <button
             onClick={() => setIsDatingPhase(!isDatingPhase)}
             className={`px-3 py-1.5 rounded-md text-xs font-sans font-medium transition-all ${isDatingPhase
-              ? "bg-[#D4AF37] text-white"
-              : "bg-[#1A3C34] text-white"
+              ? "bg-[var(--primary)] text-white"
+              : "bg-[var(--foreground)] text-white"
               }`}
           >
             {isDatingPhase ? "소개팅" : "모집"}
@@ -533,8 +533,8 @@ export default function App() {
 
         {/* Notification Tests */}
         {isSignedUp && (
-          <div className="border-t border-[#1A3C34]/10 pt-3">
-            <div className="text-xs font-sans text-[#1A3C34]/60 mb-2">알림 테스트:</div>
+          <div className="border-t border-[var(--foreground)]/10 pt-3">
+            <div className="text-xs font-sans text-[var(--foreground)]/60 mb-2">알림 테스트:</div>
             <div className="flex flex-col gap-1.5">
               <button
                 onClick={async () => {

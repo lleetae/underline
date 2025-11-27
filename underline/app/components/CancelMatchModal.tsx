@@ -24,7 +24,7 @@ export function CancelMatchModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative bg-gradient-to-br from-[#1A3C34] to-[#2A4C44] px-6 py-8 text-white">
+        <div className="relative bg-gradient-to-br from-[var(--foreground)] to-[#2A4C44] px-6 py-8 text-white">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition-colors"
@@ -33,7 +33,7 @@ export function CancelMatchModal({
           </button>
 
           <div className="flex items-center gap-3 mb-2">
-            <AlertCircle className="w-6 h-6 text-[#D4AF37]" />
+            <AlertCircle className="w-6 h-6 text-[var(--primary)]" />
             <h2 className="font-serif text-2xl">매칭 신청 취소</h2>
           </div>
           <p className="text-sm text-white/80 font-sans">
@@ -44,11 +44,11 @@ export function CancelMatchModal({
         {/* Content */}
         <div className="px-6 py-8">
           {/* Info Box */}
-          <div className="bg-gradient-to-br from-[#D4AF37]/10 to-[#D4AF37]/5 border-2 border-[#D4AF37]/30 rounded-xl p-5 mb-6">
-            <p className="text-xs text-[#1A3C34] font-sans leading-relaxed mb-2 font-medium">
+          <div className="bg-gradient-to-br from-[var(--primary)]/10 to-[var(--primary)]/5 border-2 border-[var(--primary)]/30 rounded-xl p-5 mb-6">
+            <p className="text-xs text-[var(--foreground)] font-sans leading-relaxed mb-2 font-medium">
               💡 <span className="font-medium">알아두세요</span>
             </p>
-            <ul className="space-y-1.5 text-xs text-[#1A3C34] font-sans">
+            <ul className="space-y-1.5 text-xs text-[var(--foreground)] font-sans">
               <li>• 취소하면 상대방의 받은 편지함에서 사라집니다</li>
               <li>• 같은 프로필에 다시 신청할 수 있습니다</li>
               <li>• 상대방이 이미 확인했다면 아쉬움이 남을 수 있어요</li>
@@ -59,13 +59,13 @@ export function CancelMatchModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-3.5 bg-[#D4AF37] text-white rounded-lg font-sans font-medium hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-lg shadow-[#D4AF37]/30"
+              className="flex-1 py-3.5 bg-[var(--primary)] text-white rounded-lg font-sans font-medium hover:bg-[var(--primary)]/90 transition-all duration-300 shadow-lg shadow-[var(--primary)]/30"
             >
               계속 신청하기
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 py-3.5 border-2 border-[#1A3C34]/20 text-[#1A3C34]/60 rounded-lg font-sans font-medium hover:bg-[#1A3C34]/5 transition-colors"
+              className="flex-1 py-3.5 border-2 border-[var(--foreground)]/20 text-[var(--foreground)]/60 rounded-lg font-sans font-medium hover:bg-[var(--foreground)]/5 transition-colors"
             >
               취소할게요
             </button>

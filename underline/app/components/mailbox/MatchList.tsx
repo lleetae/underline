@@ -24,7 +24,7 @@ export function MatchList({
 }) {
   if (!matches || matches.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-[#1A3C34]/40 text-sm font-sans">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--foreground)]/40 text-sm font-sans">
         <p>아직 매칭된 상대가 없습니다.</p>
       </div>
     );
@@ -60,14 +60,14 @@ export function MatchList({
       {matches.map((match) => (
         <div
           key={match.id}
-          className="bg-white border border-[#1A3C34]/10 rounded-xl p-5 shadow-sm flex flex-col gap-5"
+          className="bg-white border border-[var(--foreground)]/10 rounded-xl p-5 shadow-sm flex flex-col gap-5"
         >
           {/* Match Profile Info */}
           <div
             onClick={() => onProfileClick?.(match.profileId, "mailbox")}
-            className="flex items-center gap-3 cursor-pointer hover:bg-[#1A3C34]/5 p-2 rounded-lg transition-colors -mx-2"
+            className="flex items-center gap-3 cursor-pointer hover:bg-[var(--foreground)]/5 p-2 rounded-lg transition-colors -mx-2"
           >
-            <div className="w-12 h-12 rounded-full overflow-hidden border border-[#1A3C34]/10 flex-shrink-0">
+            <div className="w-12 h-12 rounded-full overflow-hidden border border-[var(--foreground)]/10 flex-shrink-0">
               <ImageWithFallback
                 src={match.userImage}
                 alt={match.nickname}
@@ -76,14 +76,14 @@ export function MatchList({
             </div>
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-baseline gap-2 mb-0.5">
-                <h3 className="font-sans font-bold text-base text-[#1A3C34]">
+                <h3 className="font-sans font-bold text-base text-[var(--foreground)]">
                   {match.nickname}
                 </h3>
-                <span className="text-xs text-[#1A3C34]/60 font-sans">
+                <span className="text-xs text-[var(--foreground)]/60 font-sans">
                   만 {match.age}세
                 </span>
               </div>
-              <p className="text-xs text-[#1A3C34]/50 font-sans">
+              <p className="text-xs text-[var(--foreground)]/50 font-sans">
                 {match.location}
               </p>
             </div>
@@ -92,18 +92,18 @@ export function MatchList({
 
 
           {/* Contact Info Area */}
-          <div className="relative bg-[#1A3C34]/5 rounded-lg p-4 text-center overflow-hidden">
+          <div className="relative bg-white border-2 border-[var(--foreground)]/10 rounded-xl p-4 text-center overflow-hidden">
             {match.isUnlocked ? (
               <div className="space-y-1">
-                <p className="text-sm font-bold text-[#1A3C34]">카카오톡 ID: underline_lover</p>
+                <p className="text-sm font-bold text-[var(--foreground)]">카카오톡 ID: underline_lover</p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-1 space-y-1.5">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <Lock className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span className="text-xs font-medium text-[#1A3C34]/60">연락처 잠금</span>
+                  <Lock className="w-3.5 h-3.5 text-[var(--primary)]" />
+                  <span className="text-xs font-medium text-[var(--foreground)]/60">연락처 잠금</span>
                 </div>
-                <p className="text-sm font-bold text-[#1A3C34] tracking-wider">카카오톡 ID: *******</p>
+                <p className="text-sm font-bold text-[var(--foreground)] tracking-wider">카카오톡 ID: *******</p>
               </div>
             )}
           </div>
@@ -111,10 +111,10 @@ export function MatchList({
           {/* Action */}
           {!match.isUnlocked && (
             <div className="space-y-2">
-              <button className="w-full border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white font-sans font-medium py-3 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2">
+              <button className="w-full bg-[var(--primary)] text-white hover:bg-[#b30000] font-sans font-medium py-3.5 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2 shadow-lg shadow-[var(--primary)]/20">
                 연락처 잠금해제 (9,900원)
               </button>
-              <p className="text-[10px] text-center text-[#1A3C34]/40">
+              <p className="text-[10px] text-center text-[var(--foreground)]/40">
                 * 한 명이 결제하면 두 분 모두에게 연락처가 공개됩니다.
               </p>
             </div>
@@ -123,7 +123,7 @@ export function MatchList({
           {match.isUnlocked && (
             <button
               onClick={handleCopyContact}
-              className="w-full bg-[#1A3C34] text-white font-sans font-medium py-3 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2 hover:bg-[#1A3C34]/90"
+              className="w-full bg-[var(--foreground)] text-white font-sans font-medium py-3 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2 hover:bg-[var(--foreground)]/90"
             >
               <Copy className="w-4 h-4" />
               연락처 복사하기
