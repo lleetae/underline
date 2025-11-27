@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, MapPin, BookOpen, Heart } from "lucide-react";
+import { ArrowLeft, MapPin, BookOpen, Heart, Send } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
-import { CancelMatchModal } from "./CancelMatchModal";
+import { MatchRequestLetterModal } from "./MatchRequestLetterModal";
 import { supabase } from "../lib/supabase";
 
 interface Book {
@@ -31,7 +31,6 @@ export function ProfileDetailViewWithInteraction({
   profileId,
   onBack,
   onMatchRequest,
-  onCancelMatchRequest,
   sentMatchRequests = [],
   disableMatching = false
 }: {
@@ -43,24 +42,22 @@ export function ProfileDetailViewWithInteraction({
     age: number;
     location: string;
     photo: string;
-    sentence: string;
+    letter: string;
   }) => void;
-  onCancelMatchRequest?: (profileId: string) => void;
   sentMatchRequests?: Array<{
     profileId: string;
     nickname: string;
     age: number;
     location: string;
     photo: string;
-    sentence: string;
+    letter: string;
     timestamp: Date;
   }>;
   disableMatching?: boolean;
 }) {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const [selectedSentence, setSelectedSentence] = useState<string | null>(null);
-  const [showActionSheet, setShowActionSheet] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showLetterModal, setShowLetterModal] = useState(false);
+  const [isSendingRequest, setIsSendingRequest] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [profile, setProfile] = useState<ProfileDetailData | null>(null);
@@ -175,51 +172,36 @@ export function ProfileDetailViewWithInteraction({
 
   const handleCloseBookDetail = () => {
     setSelectedBook(null);
-    setSelectedSentence(null);
   };
 
-  const handleSentenceClick = (sentence: string) => {
-    setSelectedSentence(sentence);
-    setShowActionSheet(true);
+  const handleOpenLetterModal = () => {
+    setShowLetterModal(true);
   };
 
-  const handleSendRequest = () => {
-    if (selectedSentence && onMatchRequest && profile) {
+  const handleSendLetter = async (letter: string) => {
+    if (!onMatchRequest || !profile) return;
+
+    setIsSendingRequest(true);
+    try {
       onMatchRequest({
-        profileId: profile.id.toString(), // Convert back to string for callback
+        profileId: profile.id.toString(),
         nickname: profile.nickname,
         age: profile.age,
         location: profile.location,
         photo: profile.photos[0],
-        sentence: selectedSentence,
+        letter: letter,
       });
       toast.success("매칭 신청이 전송되었습니다!");
-      setShowActionSheet(false);
+      setShowLetterModal(false);
       onBack();
+    } catch (error) {
+      toast.error("매칭 신청 중 오류가 발생했습니다.");
+    } finally {
+      setIsSendingRequest(false);
     }
   };
 
-  const handleCancelRequest = () => {
-    setSelectedSentence(null);
-    setShowActionSheet(false);
-  };
 
-  const handleOpenCancelModal = () => {
-    setShowCancelModal(true);
-  };
-
-  const handleCloseCancelModal = () => {
-    setShowCancelModal(false);
-  };
-
-  const handleConfirmCancelRequest = () => {
-    if (onCancelMatchRequest && profile) {
-      onCancelMatchRequest(profile.id.toString()); // Convert back to string for callback
-      toast.success("매칭 신청이 취소되었습니다!");
-      setShowCancelModal(false);
-      onBack();
-    }
-  };
 
   if (isLoading) {
     return (
@@ -250,8 +232,6 @@ export function ProfileDetailViewWithInteraction({
 
   // Book Detail View
   if (selectedBook) {
-    const sentences = selectedBook.review.split(/(?<=[.!?])\s+/);
-
     return (
       <div className="w-full max-w-md relative shadow-2xl shadow-black/5 h-full bg-[#FCFCFA] flex flex-col">
         {/* Header */}
@@ -282,11 +262,6 @@ export function ProfileDetailViewWithInteraction({
               <div className="flex-1">
                 <h2 className="font-serif text-xl text-[#1A3C34] mb-2">{selectedBook.title}</h2>
                 <p className="text-sm text-[#1A3C34]/60 font-sans mb-4">{selectedBook.author}</p>
-                {!disableMatching && !isRequestSent && (
-                  <p className="text-xs text-[#D4AF37] font-sans">
-                    문장을 클릭하여 매칭 신청하세요
-                  </p>
-                )}
               </div>
             </div>
 
@@ -299,38 +274,12 @@ export function ProfileDetailViewWithInteraction({
                 }}
               />
 
-              <div className="relative z-10 font-serif text-[#1A3C34] leading-relaxed space-y-4">
-                {sentences.map((sentence, index) => {
-                  const isSelected = selectedSentence === sentence.trim();
-                  return (
-                    <span key={index}>
-                      <span
-                        onClick={() => !disableMatching && !isRequestSent && handleSentenceClick(sentence.trim())}
-                        className={`${!disableMatching && !isRequestSent ? 'cursor-pointer' : 'cursor-default'} transition-all duration-300 inline ${isSelected
-                          ? "bg-[#D4AF37]/20 border-b-2 border-[#D4AF37] font-semibold px-1 -mx-1"
-                          : !disableMatching && !isRequestSent ? "hover:bg-[#D4AF37]/10 rounded px-1 -mx-1" : ""
-                          }`}
-                      >
-                        {sentence}
-                      </span>
-                      {index < sentences.length - 1 && " "}
-                    </span>
-                  );
-                })}
+              <div className="relative z-10 font-serif text-[#1A3C34] leading-relaxed whitespace-pre-wrap">
+                {selectedBook.review}
               </div>
             </div>
 
-            {/* Instruction */}
-            {!disableMatching && !isRequestSent && (
-              <div className="flex items-start gap-3 bg-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-lg p-4">
-                <Heart className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm text-[#1A3C34] font-sans leading-relaxed">
-                    마음에 드는 문장을 클릭해보세요. 그 문장으로 매칭 신청을 보낼 수 있습니다.
-                  </p>
-                </div>
-              </div>
-            )}
+
 
             {/* Already Sent Notice */}
             {!disableMatching && isRequestSent && existingRequest && (
@@ -339,11 +288,11 @@ export function ProfileDetailViewWithInteraction({
                   <Heart className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm text-[#1A3C34] font-sans font-medium mb-2">
-                      신청 완료된 문장
+                      내가 보낸 편지
                     </p>
                     <div className="bg-white/60 rounded-lg p-3 border border-[#D4AF37]/20">
-                      <p className="font-serif text-sm text-[#1A3C34] italic leading-relaxed">
-                        "{existingRequest.sentence}"
+                      <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap">
+                        {existingRequest.letter}
                       </p>
                     </div>
                     <p className="text-xs text-[#1A3C34]/50 font-sans mt-2">
@@ -356,69 +305,12 @@ export function ProfileDetailViewWithInteraction({
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={handleOpenCancelModal}
-                  className="w-full py-3.5 bg-white border-2 border-[#1A3C34]/20 text-[#1A3C34] rounded-lg font-sans font-medium hover:bg-[#1A3C34]/5 transition-colors"
-                >
-                  신청 취소하기
-                </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* Action Sheet */}
-        {showActionSheet && (
-          <div
-            className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm flex items-end"
-            onClick={handleCancelRequest}
-          >
-            <div
-              className="w-full bg-white rounded-t-3xl shadow-2xl animate-slide-up"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-6 py-8">
-                <div className="w-12 h-1.5 bg-[#1A3C34]/10 rounded-full mx-auto mb-6" />
 
-                <h3 className="font-serif text-xl text-[#1A3C34] mb-4 text-center">
-                  이 문장으로 매칭 신청을 하시겠습니까?
-                </h3>
-
-                <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[#D4AF37]/30 rounded-xl p-5 mb-6">
-                  <p className="font-serif text-[#1A3C34] leading-relaxed text-center italic">
-                    "{selectedSentence}"
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleCancelRequest}
-                    className="flex-1 py-3.5 border-2 border-[#1A3C34]/20 text-[#1A3C34] rounded-lg font-sans font-medium hover:bg-[#1A3C34]/5 transition-colors"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={handleSendRequest}
-                    className="flex-1 py-3.5 bg-[#D4AF37] text-white rounded-lg font-sans font-medium hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-lg shadow-[#D4AF37]/30"
-                  >
-                    신청하기
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Cancel Match Modal */}
-        {showCancelModal && (
-          <CancelMatchModal
-            isOpen={showCancelModal}
-            onClose={handleCloseCancelModal}
-            onConfirm={handleConfirmCancelRequest}
-            nickname={profile.nickname}
-            sentence={existingRequest?.sentence || ""}
-          />
-        )}
 
         <style>{`
           @keyframes slide-up {
@@ -549,7 +441,7 @@ export function ProfileDetailViewWithInteraction({
               <Heart className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm text-[#1A3C34] font-sans leading-relaxed">
-                  책을 선택하면 감상문을 읽을 수 있습니다. 마음에 드는 문장으로 매칭 신청을 보내보세요.
+                  책을 선택하면 감상문을 읽을 수 있습니다.
                 </p>
               </div>
             </div>
@@ -562,11 +454,11 @@ export function ProfileDetailViewWithInteraction({
                 <Heart className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm text-[#1A3C34] font-sans font-medium mb-2">
-                    신청 완료된 문장
+                    내가 보낸 편지
                   </p>
                   <div className="bg-white/60 rounded-lg p-3 border border-[#D4AF37]/20">
-                    <p className="font-serif text-sm text-[#1A3C34] italic leading-relaxed">
-                      "{existingRequest.sentence}"
+                    <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap">
+                      {existingRequest.letter}
                     </p>
                   </div>
                   <p className="text-xs text-[#1A3C34]/50 font-sans mt-2">
@@ -579,27 +471,34 @@ export function ProfileDetailViewWithInteraction({
                   </p>
                 </div>
               </div>
-              <button
-                onClick={handleOpenCancelModal}
-                className="w-full py-3.5 bg-white border-2 border-[#1A3C34]/20 text-[#1A3C34] rounded-lg font-sans font-medium hover:bg-[#1A3C34]/5 transition-colors"
-              >
-                신청 취소하기
-              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Cancel Match Modal */}
-      {showCancelModal && (
-        <CancelMatchModal
-          isOpen={showCancelModal}
-          onClose={handleCloseCancelModal}
-          onConfirm={handleConfirmCancelRequest}
-          nickname={profile.nickname}
-          sentence={existingRequest?.sentence || ""}
-        />
+
+      {/* Floating Match Request Button */}
+      {!disableMatching && !isRequestSent && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-6 pb-8">
+          <button
+            onClick={handleOpenLetterModal}
+            className="w-full max-w-md mx-auto bg-[#D4AF37] text-white font-sans font-medium py-4 rounded-xl hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-2xl shadow-[#D4AF37]/30 flex items-center justify-center gap-2"
+          >
+            <Send className="w-5 h-5" />
+            <span>매칭 신청하기</span>
+          </button>
+        </div>
       )}
+
+      {/* Letter Modal */}
+      <MatchRequestLetterModal
+        isOpen={showLetterModal}
+        onClose={() => setShowLetterModal(false)}
+        onSend={handleSendLetter}
+        recipientNickname={profile.nickname}
+        recipientPhoto={profile.photos[0]}
+        isSending={isSendingRequest}
+      />
     </div>
   );
 }

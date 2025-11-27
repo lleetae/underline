@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MapPin, BookOpen } from "lucide-react";
+import { MapPin, BookOpen, Bell } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { supabase } from "../lib/supabase";
 
@@ -15,13 +15,15 @@ interface UserProfile {
   reviewExcerpt: string;
 }
 
-export function HomeDatingView({ onProfileClick }: {
+export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, onShowNotifications }: {
   onProfileClick?: (profileId: string, source?: "home" | "mailbox") => void; // Keep as string for routing compatibility, will convert
   isSignedUp?: boolean;
   onShowLoginModal?: () => void;
+  onShowNotifications?: () => void;
 }) {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   // const supabase = createClient(); // Removed local client creation
 
   // Countdown timer for dating period end
@@ -46,7 +48,47 @@ export function HomeDatingView({ onProfileClick }: {
     }, 1000);
 
     return () => clearInterval(timer);
+    return () => clearInterval(timer);
   }, []);
+
+  // Fetch unread notification count with short polling (5 seconds)
+  useEffect(() => {
+    if (!isSignedUp) return;
+
+    // Initial fetch
+    fetchUnreadCount();
+
+    // Poll every 5 seconds for near-real-time updates
+    const interval = setInterval(fetchUnreadCount, 5000);
+
+    return () => clearInterval(interval);
+  }, [isSignedUp]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      // Refresh session to prevent stale session issues
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+
+      if (sessionError || !session) {
+        console.error("Session refresh failed:", sessionError);
+        return;
+      }
+
+      const token = session.access_token;
+      const response = await fetch('/api/notifications?unread_only=true', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchCandidates = async () => {
@@ -154,10 +196,21 @@ export function HomeDatingView({ onProfileClick }: {
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
-        <div className="flex items-center justify-center px-6 py-4">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="w-8" /> {/* Spacer for centering */}
           <h1 className="font-serif text-2xl text-[#1A3C34] tracking-wide">
             Underline
           </h1>
+          <button
+            onClick={onShowNotifications}
+            className="p-2 hover:bg-[#1A3C34]/5 rounded-full transition-colors relative"
+          >
+            <Bell className="w-5 h-5 text-[#1A3C34]" />
+            {/* Notification badge */}
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#D4AF37] rounded-full border border-[#FCFCFA]"></span>
+            )}
+          </button>
         </div>
 
         {/* Floating Badge - Dating Period Timer */}
