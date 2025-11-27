@@ -31,27 +31,38 @@ export function HomeRecruitingView({
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Countdown timer state (example: 2 days, 14 hours, 23 minutes remaining)
-  const [timeLeft, setTimeLeft] = useState({
-    days: 2,
-    hours: 14,
-    minutes: 23,
-    seconds: 45,
-  });
+  // Calculate time left until next Friday 00:00:00
+  const calculateTimeLeft = () => {
+    const now = new Date();
+    const target = new Date(now);
+
+    // Calculate days until next Friday (5)
+    const currentDay = now.getDay(); // 0: Sun, 1: Mon, ... 6: Sat
+    let daysUntilFriday = (5 - currentDay + 7) % 7;
+    if (daysUntilFriday === 0) daysUntilFriday = 7;
+
+    target.setDate(now.getDate() + daysUntilFriday);
+    target.setHours(0, 0, 0, 0);
+
+    const difference = target.getTime() - now.getTime();
+
+    if (difference > 0) {
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      return { days, hours, minutes, seconds };
+    }
+
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else if (prev.days > 0) {
-          return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
 
     return () => clearInterval(timer);
