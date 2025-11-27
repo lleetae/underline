@@ -25,12 +25,15 @@ export function SignUpStep4Admin({
 }) {
     const [kakaoId, setKakaoId] = useState(initialData?.kakaoId || "");
     const [photos, setPhotos] = useState<PhotoSlot[]>(initialData?.photos || [
-        { id: "1", url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330" },
+        { id: "1", url: null },
         { id: "2", url: null },
         { id: "3", url: null },
         { id: "4", url: null },
         { id: "5", url: null },
     ]);
+
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
 
     const handleAddPhoto = (id: string) => {
         const uploadedCount = photos.filter(p => p.url !== null).length;
@@ -38,7 +41,111 @@ export function SignUpStep4Admin({
             toast.error("최대 5장까지 등록할 수 있습니다");
             return;
         }
-        toast.info("사진 업로드 기능은 준비 중입니다");
+        setActiveSlotId(id);
+        fileInputRef.current?.click();
+    };
+
+    const checkNudity = async (file: File): Promise<boolean> => {
+        try {
+            const nsfwjs = await import('nsfwjs');
+            const tf = await import('@tensorflow/tfjs');
+
+            // Create an image element to load the file
+            const img = document.createElement('img');
+            const objectUrl = URL.createObjectURL(file);
+
+            return new Promise((resolve) => {
+                img.onload = async () => {
+                    try {
+                        const model = await nsfwjs.load();
+                        const predictions = await model.classify(img);
+
+                        // Check for Porn or Hentai with high probability
+                        const isNsfw = predictions.some(p =>
+                            (p.className === 'Porn' || p.className === 'Hentai') && p.probability > 0.6
+                        );
+
+                        URL.revokeObjectURL(objectUrl);
+                        resolve(isNsfw);
+                    } catch (error) {
+                        console.error("NSFW check error:", error);
+                        URL.revokeObjectURL(objectUrl);
+                        resolve(false); // Fail safe
+                    }
+                };
+                img.src = objectUrl;
+            });
+        } catch (error) {
+            console.error("Failed to load NSFW model:", error);
+            return false;
+        }
+    };
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !activeSlotId) return;
+
+        // Reset input
+        e.target.value = '';
+
+        const loadingToast = toast.loading("사진을 검사하고 있습니다...");
+
+        try {
+            // 1. Check Nudity
+            const isNsfw = await checkNudity(file);
+
+            if (isNsfw) {
+                toast.dismiss(loadingToast);
+                toast.error("부적절한 이미지가 감지되었습니다");
+                return;
+            }
+
+            toast.dismiss(loadingToast);
+            const uploadToast = toast.loading("사진을 업로드하고 있습니다...");
+
+            // 2. Upload to Supabase
+            const { supabase } = await import('../../lib/supabase');
+
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                toast.dismiss(loadingToast);
+                toast.error("로그인이 필요합니다. 다시 로그인해주세요.");
+                return;
+            }
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+            const filePath = `${session.user.id}/${fileName}`; // Organize by user ID
+
+            const { error: uploadError } = await supabase.storage
+                .from('profile-photos')
+                .upload(filePath, file);
+
+            if (uploadError) {
+                console.error("Supabase Upload Error:", uploadError);
+                throw uploadError;
+            }
+
+            // 3. Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('profile-photos')
+                .getPublicUrl(filePath);
+
+            // 4. Update State
+            setPhotos(photos.map(photo =>
+                photo.id === activeSlotId ? { ...photo, url: publicUrl } : photo
+            ));
+
+            toast.dismiss(uploadToast);
+            toast.success("사진이 등록되었습니다");
+
+        } catch (error: any) {
+            console.error("Upload failed:", error);
+            toast.dismiss(loadingToast);
+            toast.error(`업로드 실패: ${error.message || "알 수 없는 오류"}`);
+        } finally {
+            setActiveSlotId(null);
+        }
     };
 
     const handleRemovePhoto = (id: string) => {
@@ -75,6 +182,15 @@ export function SignUpStep4Admin({
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto">
                 <div className="px-6 py-6 space-y-6">
+
+                    {/* Hidden File Input */}
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                        accept="image/*"
+                        className="hidden"
+                    />
 
                     {/* KakaoTalk ID */}
                     <div>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowLeft, Search, BookOpen, X, Check } from "lucide-react";
+import { Search, BookOpen } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { toast } from "sonner";
 import { SignUpHeader } from "./SignUpHeader";
@@ -12,6 +12,7 @@ interface AladinBook {
     isbn13: string;
     cover: string;
     description: string;
+    categoryName?: string;
 }
 
 export interface Step1Data {
@@ -19,6 +20,8 @@ export interface Step1Data {
     bookCover: string;
     bookReview: string;
     isbn13: string;
+    bookAuthor: string;
+    bookGenre: string;
 }
 
 export function SignUpStep1Book({
@@ -36,16 +39,16 @@ export function SignUpStep1Book({
     const [selectedBook, setSelectedBook] = useState<AladinBook | null>(
         initialData?.bookTitle ? {
             title: initialData.bookTitle,
-            author: "", // These might be missing if restoring from partial state, but that's okay for now
+            author: initialData.bookAuthor || "",
             publisher: "",
             pubDate: "",
             isbn13: initialData.isbn13 || "",
             cover: initialData.bookCover || "",
-            description: ""
+            description: "",
+            categoryName: initialData.bookGenre || ""
         } : null
     );
     const [bookReview, setBookReview] = useState(initialData?.bookReview || "");
-    const [showDetail, setShowDetail] = useState(false);
 
     // Mock data for testing (CORS 우회용)
     const mockBooks: AladinBook[] = [
@@ -56,7 +59,8 @@ export function SignUpStep1Book({
             pubDate: "1990-01-01",
             isbn13: "9788937462511",
             cover: "https://image.aladin.co.kr/product/46/25/cover/8937462516_1.jpg",
-            description: "밀란 쿤데라의 대표작. 존재의 무거움과 가벼움에 대한 철학적 성찰을 담은 소설."
+            description: "밀란 쿤데라의 대표작. 존재의 무거움과 가벼움에 대한 철학적 성찰을 담은 소설.",
+            categoryName: "소설/시/희곡"
         },
         {
             title: "데미안",
@@ -65,7 +69,8 @@ export function SignUpStep1Book({
             pubDate: "2000-01-01",
             isbn13: "9788937460883",
             cover: "https://image.aladin.co.kr/product/46/8/cover/8937460882_1.jpg",
-            description: "자아를 찾아가는 젊은이의 성장 소설. 헤르만 헤세의 명작."
+            description: "자아를 찾아가는 젊은이의 성장 소설. 헤르만 헤세의 명작.",
+            categoryName: "소설/시/희곡"
         }
     ];
 
@@ -79,7 +84,7 @@ export function SignUpStep1Book({
 
         try {
             // 로컬 백엔드 API 호출
-            const response = await fetch(`http://localhost:3001/api/books/search?query=${encodeURIComponent(searchQuery)}`);
+            const response = await fetch(`http://localhost:3000/api/books/search?query=${encodeURIComponent(searchQuery)}`);
             const data = await response.json();
 
             if (data.item && data.item.length > 0) {
@@ -90,7 +95,8 @@ export function SignUpStep1Book({
                     pubDate: item.pubDate,
                     isbn13: item.isbn13,
                     cover: item.cover,
-                    description: item.description || ""
+                    description: item.description || "",
+                    categoryName: item.categoryName
                 }));
                 setSearchResults(books);
                 toast.success(`${books.length}개의 검색 결과를 찾았습니다`);
@@ -113,7 +119,7 @@ export function SignUpStep1Book({
     const handleBookClick = async (book: AladinBook) => {
         try {
             // 로컬 백엔드 API 호출
-            const response = await fetch(`http://localhost:3001/api/books/detail/${book.isbn13}`);
+            const response = await fetch(`http://localhost:3000/api/books/detail/${book.isbn13}`);
             const data = await response.json();
 
             if (data.item && data.item.length > 0) {
@@ -121,7 +127,8 @@ export function SignUpStep1Book({
                 setSelectedBook({
                     ...book,
                     description: detailBook.description || book.description,
-                    cover: detailBook.cover || book.cover
+                    cover: detailBook.cover || book.cover,
+                    categoryName: detailBook.categoryName || book.categoryName
                 });
             } else {
                 setSelectedBook(book);
@@ -131,12 +138,6 @@ export function SignUpStep1Book({
             setSelectedBook(book);
         }
 
-        setShowDetail(true);
-    };
-
-    const handleSelectBook = () => {
-        if (!selectedBook) return;
-        setShowDetail(false);
         toast.success("책이 선택되었습니다");
     };
 
@@ -154,7 +155,9 @@ export function SignUpStep1Book({
             bookTitle: selectedBook.title,
             bookCover: selectedBook.cover,
             bookReview: bookReview,
-            isbn13: selectedBook.isbn13
+            isbn13: selectedBook.isbn13,
+            bookAuthor: selectedBook.author,
+            bookGenre: selectedBook.categoryName || "기타"
         });
     };
 
@@ -165,61 +168,6 @@ export function SignUpStep1Book({
                 totalSteps={4}
                 onBack={onBack}
             />
-
-            {/* Book Detail Modal */}
-            {showDetail && selectedBook && (
-                <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-                    <div className="bg-[#FCFCFA] rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-2xl">
-                        <div className="sticky top-0 bg-[#FCFCFA] border-b border-[#1A3C34]/10 px-6 py-4 flex items-center justify-between">
-                            <h3 className="font-serif text-lg text-[#1A3C34]">책 상세 정보</h3>
-                            <button
-                                onClick={() => setShowDetail(false)}
-                                className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors"
-                            >
-                                <X className="w-5 h-5 text-[#1A3C34]" />
-                            </button>
-                        </div>
-
-                        <div className="px-6 py-6 space-y-4">
-                            <div className="flex gap-4">
-                                <div className="flex-shrink-0">
-                                    <ImageWithFallback
-                                        src={selectedBook.cover}
-                                        alt={selectedBook.title}
-                                        className="w-32 h-44 object-cover rounded-lg shadow-md"
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-serif text-lg text-[#1A3C34] mb-2">{selectedBook.title}</h4>
-                                    <div className="space-y-1 text-sm text-[#1A3C34]/70 font-sans">
-                                        <p>저자: {selectedBook.author}</p>
-                                        <p>출판사: {selectedBook.publisher}</p>
-                                        <p>출간일: {selectedBook.pubDate}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {selectedBook.description && (
-                                <div>
-                                    <h5 className="font-sans text-sm text-[#1A3C34]/70 mb-2">책 소개</h5>
-                                    <p className="text-sm text-[#1A3C34] font-sans leading-relaxed">
-                                        {selectedBook.description}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="sticky bottom-0 bg-[#FCFCFA] border-t border-[#1A3C34]/10 px-6 py-4">
-                            <button
-                                onClick={handleSelectBook}
-                                className="w-full bg-[#D4AF37] text-white font-sans font-medium py-3 rounded-lg hover:bg-[#D4AF37]/90 transition-all duration-300"
-                            >
-                                이 책으로 선택
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto">
