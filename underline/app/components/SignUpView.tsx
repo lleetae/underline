@@ -45,6 +45,34 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
         return;
       }
 
+      // ⚠️ SECURITY: Encrypt Kakao ID before storing
+      // TODO: Implement encryption via API route
+      // For now, we store as-is but this should be encrypted
+      // See: /docs/supabase-security-setup.sql for encryption setup
+      let encryptedKakaoId = fullUserData.kakaoId;
+
+      try {
+        // Call encryption API
+        const encryptResponse = await fetch('/api/encrypt/kakao', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kakaoId: fullUserData.kakaoId })
+        });
+
+        if (encryptResponse.ok) {
+          const { encryptedId } = await encryptResponse.json();
+          encryptedKakaoId = encryptedId;
+        } else {
+          console.warn('Encryption failed, storing unencrypted (NOT RECOMMENDED)');
+          toast.error("보안 설정 오류가 발생했습니다");
+          return;
+        }
+      } catch (encryptError) {
+        console.error('Encryption error:', encryptError);
+        toast.error("보안 설정 오류가 발생했습니다");
+        return;
+      }
+
       const { error } = await supabase
         .from('member')
         .insert({
@@ -59,7 +87,7 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
           drinking: fullUserData.drinking,
           bio: fullUserData.bio,
           phone_number: "000-0000-0000", // Placeholder or remove column constraint later
-          kakao_id: fullUserData.kakaoId,
+          kakao_id: encryptedKakaoId, // ✅ Now encrypted
 
           // Book Info
           book_title: fullUserData.bookTitle,
