@@ -13,37 +13,20 @@ interface Match {
   isUnlocked: boolean;
 }
 
-export function MatchList({ onProfileClick }: { onProfileClick?: (profileId: string, source: "home" | "mailbox") => void }) {
-  // Mock Data - 더미 데이터 추가
-  const matches: Match[] = [
-    {
-      id: "match1",
-      userImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-      nickname: "책읽는여름",
-      age: 28,
-      location: "서울 성동구",
-      bookTitle: "참을 수 없는 존재의 가벼움",
-      isUnlocked: false,
-    },
-    {
-      id: "match2",
-      userImage: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
-      nickname: "산책하는사람",
-      age: 30,
-      location: "서울 강남구",
-      bookTitle: "데미안",
-      isUnlocked: true,
-    },
-    {
-      id: "match3",
-      userImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
-      nickname: "커피애호가",
-      age: 27,
-      location: "서울 마포구",
-      bookTitle: "노르웨이의 숲",
-      isUnlocked: false,
-    },
-  ];
+export function MatchList({
+  matches = [],
+  onProfileClick
+}: {
+  matches?: Match[];
+  onProfileClick?: (profileId: string, source: "home" | "mailbox") => void;
+}) {
+  if (!matches || matches.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-[#1A3C34]/40 text-sm font-sans">
+        <p>아직 매칭된 상대가 없습니다.</p>
+      </div>
+    );
+  }
 
   const handleCopyContact = () => {
     const contactInfo = "underline_lover";

@@ -10,7 +10,7 @@ import { HomeDatingView } from "./HomeDatingView";
 import { NotificationsView } from "./NotificationsView";
 import { BottomNav } from "./mailbox/BottomNav";
 import { LoginModal } from "./LoginModal";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { Session } from "@supabase/supabase-js";
 
@@ -35,35 +35,7 @@ export default function App() {
     photo: string;
     letter: string;
     timestamp: Date;
-  }>>([
-    {
-      profileId: "profile1",
-      nickname: "책읽는여름",
-      age: 28,
-      location: "서울 성동구",
-      photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-      letter: "안녕하세요. 프로필을 보다가 '참을 수 없는 존재의 가벼움'을 좋아하신다는 점이 인상 깊어서 매칭 신청을 보냅니다. 저도 그 책을 읽고 많은 생각을 했거든요. 특히 '가벼움과 무거움'에 대한 주제로 이야기를 나눠보고 싶습니다.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    },
-    {
-      profileId: "profile2",
-      nickname: "산책하는사람",
-      age: 30,
-      location: "서울 강남구",
-      photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
-      letter: "데미안을 읽으셨군요! 저에게도 인생 책 중 하나입니다. '새는 알에서 나오려고 투쟁한다'는 구절을 가장 좋아해요. 혹시 어떤 구절을 가장 좋아하시나요? 책 취향이 비슷해 보여서 꼭 한번 대화 나눠보고 싶습니다.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    },
-    {
-      profileId: "37",
-      nickname: "소설가지망생",
-      age: 27,
-      location: "서울 마포구",
-      photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
-      letter: "안녕하세요! 에리히 프롬의 '사랑의 기술'을 읽으신 걸 보고 반가워서 연락드립니다. 사랑에 대한 깊이 있는 고찰을 좋아하시는 것 같아요. 저도 최근에 다시 읽고 있는데, 함께 독서 모임이나 이야기를 나누면 좋을 것 같아 신청합니다.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    },
-  ]);
+  }>>([]);
 
   const [receivedMatchRequests, setReceivedMatchRequests] = useState<Array<{
     id: string;
@@ -74,38 +46,18 @@ export default function App() {
     photo: string;
     letter: string;
     timestamp: Date;
-  }>>([
-    {
-      id: "received1",
-      profileId: "38",
-      nickname: "철학하는여자",
-      age: 29,
-      location: "서울 용산구",
-      photo: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
-      letter: "안녕하세요~ 프로필에 적힌 책 취향이 저랑 너무 비슷해서 놀랐어요! 저도 주말마다 북카페 찾아다니는 걸 좋아하는데, 혹시 추천해주실 만한 곳이 있나요? 같이 책 이야기 나누고 싶어요.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 45),
-    },
-    {
-      id: "received2",
-      profileId: "39",
-      nickname: "문학소녀",
-      age: 26,
-      location: "서울 종로구",
-      photo: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df",
-      letter: "반갑습니다. '코스모스'를 인생 책으로 꼽으셨더라고요. 저도 우주와 과학에 관심이 많습니다. '우리는 모두 별의 먼지'라는 말을 참 좋아하는데, 이런 주제로 깊은 대화를 나눠보고 싶어서 신청합니다.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    },
-    {
-      id: "received3",
-      profileId: "36",
-      nickname: "심리학도",
-      age: 31,
-      location: "서울 서초구",
-      photo: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e",
-      letter: "여행 에세이를 좋아하시는군요! '진정한 여행은 새로운 눈을 갖는 것'이라는 말에 깊이 공감합니다. 저도 여행 다니며 글 쓰는 걸 좋아해요. 서로의 여행 경험과 책 이야기를 공유하면 즐거울 것 같습니다.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
-    },
-  ]);
+  }>>([]);
+
+  const [matches, setMatches] = useState<Array<{
+    id: string;
+    userImage: string;
+    nickname: string;
+    age: number;
+    location: string;
+    bookTitle: string;
+    isUnlocked: boolean;
+    contactId?: string;
+  }>>([]);
 
   // Check Auth State
   useEffect(() => {
@@ -143,7 +95,7 @@ export default function App() {
       const { data, error: _error } = await supabase
         .from('member')
         .select('id')
-        .eq('auth_id', userId) // Query by auth_id (UUID) instead of id (BIGINT)
+        .eq('auth_id', userId)
         .single();
 
       console.log("Member profile result:", data, _error);
@@ -215,6 +167,110 @@ export default function App() {
           });
           setReceivedMatchRequests(formattedRequests);
         }
+
+        // Fetch sent match requests
+        const { data: sentRequests, error: sentRequestsError } = await supabase
+          .from('match_requests')
+          .select(`
+            id,
+            receiver_id,
+            letter,
+            created_at,
+            receiver:member!receiver_id (
+              id,
+              nickname,
+              age,
+              birth_date,
+              location,
+              photo_url,
+              photos
+            )
+          `)
+          .eq('sender_id', data.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (!sentRequestsError && sentRequests) {
+          const formattedSentRequests = sentRequests.map((req: any) => {
+            const photos = req.receiver.photos && req.receiver.photos.length > 0
+              ? req.receiver.photos
+              : (req.receiver.photo_url ? [req.receiver.photo_url] : []);
+
+            const age = req.receiver.age || (req.receiver.birth_date
+              ? new Date().getFullYear() - parseInt(req.receiver.birth_date.substring(0, 4))
+              : 0);
+
+            return {
+              profileId: req.receiver.id.toString(),
+              nickname: req.receiver.nickname,
+              age: age,
+              location: req.receiver.location,
+              photo: photos[0] || "",
+              letter: req.letter,
+              timestamp: new Date(req.created_at)
+            };
+          });
+          setSentMatchRequests(formattedSentRequests);
+        }
+
+        // Fetch matches (accepted requests)
+        console.log("Fetching matches...");
+        const { data: matchesData, error: matchesError } = await supabase
+          .from('match_requests')
+          .select(`
+            id,
+            sender_id,
+            receiver_id,
+            status,
+            letter,
+            created_at,
+            sender:member!sender_id (id, nickname, age, birth_date, location, photo_url, photos),
+            receiver:member!receiver_id (id, nickname, age, birth_date, location, photo_url, photos)
+          `)
+          .or(`sender_id.eq.${data.id},receiver_id.eq.${data.id}`)
+          .eq('status', 'accepted')
+          .order('created_at', { ascending: false });
+
+        console.log("Matches fetch result:", matchesData, matchesError);
+
+        if (!matchesError && matchesData) {
+          const formattedMatches = matchesData.map((match: any) => {
+            const isSender = match.sender_id === data.id;
+            const partner = isSender ? match.receiver : match.sender;
+
+            // Handle photos
+            const photos = partner.photos && partner.photos.length > 0
+              ? partner.photos
+              : (partner.photo_url ? [partner.photo_url] : []);
+
+            // Handle age
+            const age = partner.age || (partner.birth_date
+              ? new Date().getFullYear() - parseInt(partner.birth_date.substring(0, 4))
+              : 0);
+
+            // Helper for location
+            const getLocationText = (location: string) => {
+              const locationMap: { [key: string]: string } = {
+                seoul: "서울", busan: "부산", incheon: "인천", daegu: "대구",
+                daejeon: "대전", gwangju: "광주", other: "기타"
+              };
+              return locationMap[location] || location;
+            };
+
+            return {
+              id: match.id,
+              userImage: photos[0] || "",
+              nickname: partner.nickname,
+              age: age,
+              location: getLocationText(partner.location),
+              bookTitle: match.letter ? (match.letter.length > 20 ? match.letter.substring(0, 20) + "..." : match.letter) : "매칭된 책", // Use letter as fallback
+              isUnlocked: false, // Default to locked for now
+              contactId: "kakao_id_placeholder" // Placeholder
+            };
+          });
+          setMatches(formattedMatches);
+        }
+
       } else {
         console.log("No profile found");
         setHasProfile(false);
@@ -293,13 +349,43 @@ export default function App() {
     setCurrentView("home");
   };
 
-  const handleAcceptMatch = (requestId: string) => {
-    setReceivedMatchRequests(prev => prev.filter(req => req.id !== requestId));
-    setMailboxActiveTab("matched");
+  const handleAcceptMatch = async (requestId: string) => {
+    try {
+      const { error } = await supabase
+        .from('match_requests')
+        .update({ status: 'accepted' })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast.success("매칭이 수락되었습니다!");
+
+      // Refresh data
+      if (session?.user.id) {
+        checkProfile(session.user.id);
+      }
+      setMailboxActiveTab("matched");
+    } catch (error) {
+      console.error("Error accepting match:", error);
+      toast.error("매칭 수락에 실패했습니다");
+    }
   };
 
-  const handleRejectMatch = (requestId: string) => {
-    setReceivedMatchRequests(prev => prev.filter(req => req.id !== requestId));
+  const handleRejectMatch = async (requestId: string) => {
+    try {
+      const { error } = await supabase
+        .from('match_requests')
+        .update({ status: 'rejected' })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast.success("매칭을 거절했습니다");
+      setReceivedMatchRequests(prev => prev.filter(req => req.id !== requestId));
+    } catch (error) {
+      console.error("Error rejecting match:", error);
+      toast.error("매칭 거절에 실패했습니다");
+    }
   };
 
   const handleLoginSuccess = () => {
@@ -483,6 +569,7 @@ export default function App() {
               <MailboxView
                 sentMatchRequests={sentMatchRequests}
                 receivedMatchRequests={receivedMatchRequests}
+                matches={matches}
                 onProfileClick={handleProfileClick}
                 activeTab={mailboxActiveTab}
                 onTabChange={(tab) => setMailboxActiveTab(tab as "matched" | "sent" | "messages")}
@@ -500,6 +587,7 @@ export default function App() {
               <MailboxView
                 sentMatchRequests={sentMatchRequests}
                 receivedMatchRequests={receivedMatchRequests}
+                matches={matches}
                 onProfileClick={handleProfileClick}
                 activeTab={mailboxActiveTab}
                 onTabChange={(tab) => setMailboxActiveTab(tab as "matched" | "sent" | "messages")}

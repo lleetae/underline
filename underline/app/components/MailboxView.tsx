@@ -26,9 +26,21 @@ interface ReceivedMatchRequest {
   timestamp: Date;
 }
 
+interface Match {
+  id: string;
+  userImage: string;
+  nickname: string;
+  age: number;
+  location: string;
+  bookTitle: string;
+  isUnlocked: boolean;
+  contactId?: string;
+}
+
 export function MailboxView({
   sentMatchRequests,
   receivedMatchRequests,
+  matches,
   onProfileClick,
   activeTab,
   onTabChange,
@@ -38,6 +50,7 @@ export function MailboxView({
 }: {
   sentMatchRequests?: SentMatchRequest[];
   receivedMatchRequests?: ReceivedMatchRequest[];
+  matches?: Match[];
   onProfileClick?: (profileId: string, source: "home" | "mailbox") => void;
   activeTab: string;
   onTabChange: (tab: string) => void;
@@ -202,7 +215,7 @@ export function MailboxView({
             )}
           </div>
         ) : activeTab === "matched" ? (
-          <MatchList onProfileClick={onProfileClick} />
+          <MatchList matches={matches} onProfileClick={onProfileClick} />
         ) : activeTab === "sent" ? (
           <div className="px-6 py-4">
             {sentMatchRequests && sentMatchRequests.length > 0 ? (
