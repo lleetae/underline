@@ -139,7 +139,7 @@ export default function App() {
       const { data, error: _error } = await supabase
         .from('member')
         .select('id')
-        .eq('id', userId)
+        .eq('auth_id', userId) // Query by auth_id (UUID) instead of id (BIGINT)
         .single();
 
       if (data) {
