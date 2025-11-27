@@ -117,7 +117,6 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        // Handle not logged in - maybe redirect or show empty?
         setLoading(false);
         return;
       }
@@ -126,7 +125,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       const { data: member, error: memberError } = await supabase
         .from('member')
         .select('*')
-        .eq('auth_id', user.id) // Query by auth_id
+        .eq('auth_id', user.id)
         .single();
 
       if (memberError) throw memberError;
@@ -134,34 +133,9 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       if (member) {
         const originalPhotos = member.photo_urls_original || [];
         const blurredPhotos = member.photo_urls_blurred || [];
-        // Use blurred photos if available, otherwise fallback to legacy photos
         const displayPhotos = blurredPhotos.length > 0 ? blurredPhotos : (member.photos || []);
 
-        // Decrypt Kakao ID
-        let decryptedKakaoId = member.kakao_id;
-        if (member.kakao_id) {
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-
-            const response = await fetch('/api/decrypt/kakao', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({ encryptedId: member.kakao_id })
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              decryptedKakaoId = data.decryptedId;
-            }
-          } catch (e) {
-            console.error("Error decrypting Kakao ID:", e);
-          }
-        }
-
+        // Initial Profile Data (without decrypted Kakao ID)
         setProfileData({
           nickname: member.nickname,
           gender: member.gender,
@@ -172,7 +146,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
           smoking: member.smoking,
           drinking: member.drinking,
           bio: member.bio,
-          kakaoId: decryptedKakaoId,
+          kakaoId: member.kakao_id, // Keep encrypted initially
           profilePhotos: displayPhotos.map((url: string, index: number) => ({
             id: index.toString(),
             url: url,
@@ -180,15 +154,42 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
             blurredUrl: url
           }))
         });
-      }
 
-      // 2. Fetch Member Books
-      if (member) {
-        const { data: memberBooks, error: booksError } = await supabase
+        // 2. Parallel Operations: Fetch Books & Decrypt Kakao ID
+        const booksPromise = supabase
           .from('member_books')
           .select('*')
-          .eq('member_id', member.id) // Use integer member.id
+          .eq('member_id', member.id)
           .order('created_at', { ascending: false });
+
+        // Decrypt Kakao ID in background (not blocking UI)
+        if (member.kakao_id) {
+          (async () => {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              const token = session?.access_token;
+
+              const response = await fetch('/api/decrypt/kakao', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ encryptedId: member.kakao_id })
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                setProfileData(prev => ({ ...prev, kakaoId: data.decryptedId }));
+              }
+            } catch (e) {
+              console.error("Error decrypting Kakao ID in background:", e);
+            }
+          })();
+        }
+
+        // Wait for books only
+        const { data: memberBooks, error: booksError } = await booksPromise;
 
         if (booksError) throw booksError;
 
@@ -197,7 +198,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
             id: b.id,
             title: b.book_title,
             author: b.book_author || "Unknown",
-            publisher: "", // Not stored in DB currently
+            publisher: "",
             cover: b.book_cover || "",
             review: b.book_review || "",
             reviewPreview: (b.book_review || "").split('\n')[0].slice(0, 80) + "...",
