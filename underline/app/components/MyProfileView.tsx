@@ -208,10 +208,24 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
           ));
           setSelectedBook({ ...selectedBook, review: updatedReview });
         }}
-        onDelete={() => {
-          setBooks(books.filter(b => b.id !== selectedBook.id));
-          setSelectedBook(null);
+        onDelete={async () => {
+          try {
+            const { error } = await supabase
+              .from('member_books')
+              .delete()
+              .eq('id', selectedBook.id);
+
+            if (error) throw error;
+
+            setBooks(books.filter(b => b.id !== selectedBook.id));
+            setSelectedBook(null);
+          } catch (error) {
+            console.error("Error deleting book:", error);
+            toast.error("책 삭제에 실패했습니다");
+            throw error; // Re-throw to let child component know
+          }
         }}
+        isLastBook={books.length <= 1}
       />
     );
   }
