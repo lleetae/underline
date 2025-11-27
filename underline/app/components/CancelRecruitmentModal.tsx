@@ -22,7 +22,7 @@ export function CancelRecruitmentModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative bg-gradient-to-br from-[#1A3C34] to-[#2A4C44] px-6 py-8 text-white">
+        <div className="relative bg-gradient-to-br from-[#171717] to-[#171717] px-6 py-8 text-white">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition-colors"
@@ -31,7 +31,7 @@ export function CancelRecruitmentModal({
           </button>
 
           <div className="flex items-center gap-3 mb-2">
-            <AlertTriangle className="w-6 h-6 text-[#D4AF37]" />
+            <AlertTriangle className="w-6 h-6 text-[#CC0000]" />
             <h2 className="font-serif text-2xl">소개팅 신청 취소</h2>
           </div>
           <p className="text-sm text-white/80 font-sans">
@@ -42,15 +42,15 @@ export function CancelRecruitmentModal({
         {/* Content */}
         <div className="px-6 py-8">
           {/* Warning Message */}
-          <div className="bg-gradient-to-br from-[#D4AF37]/10 to-[#D4AF37]/5 border-2 border-[#D4AF37]/30 rounded-xl p-5 mb-6">
+          <div className="bg-gradient-to-br from-[#CC0000]/10 to-[#CC0000]/5 border-2 border-[#CC0000]/30 rounded-xl p-5 mb-6">
             <div className="flex gap-3">
-              <Heart className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
+              <Heart className="w-5 h-5 text-[#CC0000] flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm text-[#1A3C34] font-sans leading-relaxed mb-3">
+                <p className="text-sm text-[#171717] font-sans leading-relaxed mb-3">
                   이번 주 금요일, 당신과 같은 책을 좋아하는
                   사람과의 특별한 만남이 기다리고 있어요.
                 </p>
-                <p className="text-sm text-[#1A3C34]/70 font-sans leading-relaxed">
+                <p className="text-sm text-[#171717]/70 font-sans leading-relaxed">
                   정말 포기하시겠습니까?
                 </p>
               </div>
@@ -61,13 +61,13 @@ export function CancelRecruitmentModal({
           <div className="flex flex-col gap-3">
             <button
               onClick={onClose}
-              className="w-full py-3.5 bg-[#D4AF37] text-white rounded-lg font-sans font-medium hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-lg shadow-[#D4AF37]/30"
+              className="w-full py-3.5 bg-[#CC0000] text-white rounded-lg font-sans font-medium hover:bg-[#CC0000]/90 transition-all duration-300 shadow-lg shadow-[#CC0000]/30"
             >
               계속 참여하기
             </button>
             <button
               onClick={onConfirm}
-              className="w-full py-3 border-2 border-[#1A3C34]/20 text-[#1A3C34]/60 rounded-lg font-sans font-medium hover:bg-[#1A3C34]/5 transition-colors text-sm"
+              className="w-full py-3 border-2 border-[#171717]/20 text-[#171717]/60 rounded-lg font-sans font-medium hover:bg-[#171717]/5 transition-colors text-sm"
             >
               취소하기
             </button>

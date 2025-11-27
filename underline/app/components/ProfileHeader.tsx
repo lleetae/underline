@@ -18,7 +18,7 @@ export function ProfileHeader({
   intro,
 }: ProfileHeaderProps) {
   return (
-    <div className="flex flex-col items-center text-[#1A3C34] animate-in fade-in duration-700 slide-in-from-bottom-4">
+    <div className="flex flex-col items-center text-[#171717] animate-in fade-in duration-700 slide-in-from-bottom-4">
       <div className="w-full max-w-md px-6 pt-4 pb-8">
         <div className="relative w-full aspect-[3/4] overflow-hidden rounded-sm mb-8 shadow-sm">
           <ImageWithFallback
@@ -39,7 +39,7 @@ export function ProfileHeader({
             <span>{location}</span>
           </div>
 
-          <p className="text-sm leading-relaxed opacity-80 font-sans max-w-xs mx-auto text-[#1A3C34]/90">
+          <p className="text-sm leading-relaxed opacity-80 font-sans max-w-xs mx-auto text-[#171717]/90">
             {intro}
           </p>
         </div>

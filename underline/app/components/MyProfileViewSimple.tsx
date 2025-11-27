@@ -265,16 +265,16 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
   };
 
   return (
-    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FAFAFA] flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
+      <div className="sticky top-0 z-10 bg-[#FAFAFA] border-b border-[#171717]/10">
         <div className="flex items-center justify-between px-6 py-4">
-          <h1 className="font-serif text-2xl text-[#1A3C34]">My Profile</h1>
+          <h1 className="font-serif text-2xl text-[#171717]">My Profile</h1>
           <button
             onClick={() => setShowLogoutModal(true)}
-            className="p-2 hover:bg-[#1A3C34]/5 rounded-full transition-colors"
+            className="p-2 hover:bg-[#171717]/5 rounded-full transition-colors"
           >
-            <LogOut className="w-5 h-5 text-[#1A3C34]" />
+            <LogOut className="w-5 h-5 text-[#171717]" />
           </button>
         </div>
       </div>
@@ -283,11 +283,11 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       <div className="flex-1 overflow-y-auto pb-6">
         {/* Profile Summary Card */}
         <div className="px-6 pt-6 pb-4">
-          <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[#D4AF37]/20 rounded-xl p-5 shadow-sm">
+          <div className="bg-white border border-[#C2C2C2]/60 rounded-xl p-5 shadow-sm">
             <div className="flex items-center gap-4 mb-4">
               {/* Profile Photo */}
               {profileData.profilePhoto ? (
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#D4AF37]/30 flex-shrink-0">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#CC0000]/30 flex-shrink-0">
                   <ImageWithFallback
                     src={profileData.profilePhoto}
                     alt="Profile"
@@ -295,24 +295,24 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
                   />
                 </div>
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 border-2 border-[#D4AF37]/30 flex items-center justify-center flex-shrink-0">
-                  <User className="w-10 h-10 text-[#D4AF37]/40" />
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#CC0000]/20 to-[#CC0000]/5 border-2 border-[#CC0000]/30 flex items-center justify-center flex-shrink-0">
+                  <User className="w-10 h-10 text-[#CC0000]/40" />
                 </div>
               )}
 
               {/* Profile Info */}
               <div className="flex-1 min-w-0">
-                <h2 className="font-serif text-xl text-[#1A3C34] mb-1">
+                <h2 className="font-serif text-xl text-[#171717] mb-1">
                   {profileData.nickname}
                 </h2>
-                <div className="flex items-center gap-3 text-xs text-[#1A3C34]/60 font-sans">
+                <div className="flex items-center gap-3 text-xs text-[#171717]/60 font-sans">
                   <span>{profileData.gender === 'male' ? '남성' : profileData.gender === 'female' ? '여성' : profileData.gender}</span>
                   <span>·</span>
                   <span>{profileData.birthDate.substring(0, 4)}년생</span>
                 </div>
                 <div className="flex items-center gap-1 mt-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span className="text-xs text-[#1A3C34]/70 font-sans">
+                  <MapPin className="w-3.5 h-3.5 text-[#CC0000]" />
+                  <span className="text-xs text-[#171717]/70 font-sans">
                     {locationMap[profileData.location]}
                   </span>
                 </div>
@@ -321,7 +321,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
 
             {/* Bio Preview */}
             <div className="mb-4">
-              <p className="text-sm text-[#1A3C34]/80 font-sans leading-relaxed line-clamp-2">
+              <p className="text-sm text-[#171717]/80 font-sans leading-relaxed line-clamp-2">
                 {profileData.bio}
               </p>
             </div>
@@ -329,7 +329,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
             {/* Edit Profile Button */}
             <button
               onClick={() => setShowProfileEditView(true)}
-              className="w-full bg-white border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white font-sans font-medium py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+              className="w-full bg-white border border-[#CC0000] text-[#CC0000] hover:bg-[#CC0000] hover:text-white font-sans font-medium py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
             >
               <Edit3 className="w-4 h-4" />
               프로필 수정하기
@@ -340,8 +340,8 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
         {/* My Library */}
         <div className="px-6 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-serif text-xl text-[#1A3C34]">My Library</h2>
-            <div className="flex items-center gap-1.5 text-sm text-[#1A3C34]/60 font-sans">
+            <h2 className="font-serif text-xl text-[#171717]">My Library</h2>
+            <div className="flex items-center gap-1.5 text-sm text-[#171717]/60 font-sans">
               <BookIcon className="w-4 h-4" />
               <span>{books.length}권</span>
             </div>
@@ -352,17 +352,17 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
             {/* Add New Book Button - First Position */}
             <button
               onClick={() => setShowAddBookView(true)}
-              className="aspect-[2/3] border-2 border-dashed border-[#D4AF37] rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#D4AF37]/5 transition-colors"
+              className="aspect-[2/3] border-2 border-dashed border-[#CC0000] rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#CC0000]/5 transition-colors"
             >
-              <Plus className="w-6 h-6 text-[#D4AF37]" />
-              <span className="text-xs text-[#D4AF37] font-sans">책 추가</span>
+              <Plus className="w-6 h-6 text-[#CC0000]" />
+              <span className="text-xs text-[#CC0000] font-sans">책 추가</span>
             </button>
 
             {/* Books */}
             {books.map((book) => (
               <button
                 key={book.id}
-                className="aspect-[2/3] rounded-lg overflow-hidden border border-[#1A3C34]/10 hover:border-[#D4AF37] hover:shadow-lg transition-all cursor-pointer"
+                className="aspect-[2/3] rounded-lg overflow-hidden border border-[#171717]/10 hover:border-[#CC0000] hover:shadow-lg transition-all cursor-pointer"
                 onClick={() => setSelectedBook(book)}
               >
                 <ImageWithFallback
@@ -375,10 +375,10 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
           </div>
 
           {/* Library Stats */}
-          <div className="mt-6 bg-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-lg p-4">
-            <p className="text-xs text-center text-[#1A3C34]/70 font-sans leading-relaxed">
+          <div className="mt-6 bg-[#CC0000]/5 border border-[#CC0000]/20 rounded-lg p-4">
+            <p className="text-xs text-center text-[#171717]/70 font-sans leading-relaxed">
               책을 추가하면 다른 사람들에게 당신의 취향이 공개되며,<br />
-              <span className="text-[#D4AF37]">더 잘 맞는 매칭을 찾을 수 있습니다</span>
+              <span className="text-[#CC0000]">더 잘 맞는 매칭을 찾을 수 있습니다</span>
             </p>
           </div>
         </div>
@@ -387,25 +387,25 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       {/* Logout Modal */}
       {showLogoutModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
-          <div className="bg-[#FCFCFA] p-8 rounded-2xl shadow-2xl max-w-sm w-full border border-[#1A3C34]/10">
-            <h2 className="font-serif text-xl text-[#1A3C34] mb-3">
+          <div className="bg-[#FAFAFA] p-8 rounded-2xl shadow-2xl max-w-sm w-full border border-[#171717]/10">
+            <h2 className="font-serif text-xl text-[#171717] mb-3">
               정말 로그아웃하시나요?
             </h2>
-            <p className="text-sm text-[#1A3C34]/70 font-sans mb-6 leading-relaxed">
+            <p className="text-sm text-[#171717]/70 font-sans mb-6 leading-relaxed">
               로그아웃하시면 진행 중인 매칭 신청과<br />
               받은 메시지를 확인할 수 없습니다.<br />
-              <span className="text-[#D4AF37]">혹시 모를 인연을 놓치실 수도 있어요.</span>
+              <span className="text-[#CC0000]">혹시 모를 인연을 놓치실 수도 있어요.</span>
             </p>
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="w-full py-3.5 bg-[#D4AF37] text-white font-sans rounded-lg hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-sm"
+                className="w-full py-3.5 bg-[#CC0000] text-white font-sans rounded-lg hover:bg-[#CC0000]/90 transition-all duration-300 shadow-sm"
               >
                 계속 사용하기
               </button>
               <button
                 onClick={handleLogout}
-                className="w-full py-3 border border-[#1A3C34]/20 text-[#1A3C34]/60 font-sans rounded-lg hover:bg-[#1A3C34]/5 transition-colors text-sm"
+                className="w-full py-3 border border-[#171717]/20 text-[#171717]/60 font-sans rounded-lg hover:bg-[#171717]/5 transition-colors text-sm"
               >
                 로그아웃
               </button>

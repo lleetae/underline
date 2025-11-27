@@ -41,6 +41,14 @@
     * 마음에 드는 상대에게 **"짧은 첫인사(Short Greeting)"**와 함께 신청.
 * **Interaction:** 매칭 수락 시 사진 공개 (Blur -> Unveil).
 
+### 4.4 UI Color Palette (현재 적용)
+* Background: `#FAFAFA` (Off White), 필요 시 `#EAEAEA`–`#F0F0F0` 연회색 필로 카드/배경 보조.
+* Text: `#171717`(헤더·헤비), `#333333`(본문).
+* Border/Divider/Disabled: `#C2C2C2`.
+* Accent: `#CC0000` (주요 버튼/뱃지), Hover/Dark: `#b30000`.
+* Selection: `rgba(204, 0, 0, 0.15)` 배경 + `#171717` 텍스트.
+* Guideline: 포인트는 CTA/뱃지/중요 아이콘에만 제한적으로 사용, 나머지는 모노톤으로 컨텐츠 가독성에 집중.
+
 ## 5. Functional Specifications
 
 | Feature | Description | Requirement |

@@ -142,28 +142,15 @@ export function HomeRecruitingView({
   ];
 
   return (
-    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FAFAFA] flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
+      <div className="sticky top-0 z-10 bg-[#FAFAFA] border-b border-[#333333]/10">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="w-8" /> {/* Spacer for centering */}
-          <h1 className="font-serif text-2xl text-[#1A3C34] tracking-wide">
+          <h1 className="font-serif text-2xl text-[#333333] tracking-wide">
             Underline
           </h1>
-          <button
-            onClick={onShowNotifications}
-            className="p-2 hover:bg-[#1A3C34]/5 rounded-full transition-colors relative"
-          >
-            <Bell className="w-5 h-5 text-[#1A3C34]" />
-            {/* Notification badge */}
-            {unreadCount > 0 && (
-              <div className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-[#D4AF37] rounded-full flex items-center justify-center">
-                <span className="text-[10px] text-white font-sans font-medium px-1">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              </div>
-            )}
-          </button>
+          <MailboxHeaderButton unreadCount={unreadCount} onShowNotifications={onShowNotifications} />
         </div>
       </div>
 
@@ -173,34 +160,34 @@ export function HomeRecruitingView({
         <div className="px-6 py-8 text-center">
           {/* Countdown Timer */}
           <div className="mb-6">
-            <p className={`text-sm font-sans mb-3 ${timeLeft.days === 0 ? "text-[#FF6B6B] font-bold animate-pulse" : "text-[#1A3C34]/60"}`}>
+            <p className={`text-sm font-sans mb-3 ${timeLeft.days === 0 ? "text-[#FF6B6B] font-bold animate-pulse" : "text-[#333333]/60"}`}>
               {timeLeft.days === 0 ? "마감 임박! " : ""}
               {isRegistered ? "소개팅 오픈까지" : "신청 마감까지"}
             </p>
             <div className="flex items-center justify-center gap-3">
-              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-[#1A3C34]/10"}`}>
-                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[#1A3C34]"}`}>
+              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFE5E5] border-[#FF6B6B]" : "bg-white border-[#333333]/10"}`}>
+                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[#333333]"}`}>
                   {String(timeLeft.days).padStart(2, '0')}
                 </div>
-                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[#1A3C34]/50"}`}>
+                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[#333333]/50"}`}>
                   DAY
                 </div>
               </div>
-              <div className="font-serif text-2xl text-[#1A3C34]/30">:</div>
-              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-[#1A3C34]/10"}`}>
-                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[#1A3C34]"}`}>
+              <div className="font-serif text-2xl text-[#333333]/30">:</div>
+              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFE5E5] border-[#FF6B6B]" : "bg-white border-[#333333]/10"}`}>
+                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[#333333]"}`}>
                   {String(timeLeft.hours).padStart(2, '0')}
                 </div>
-                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[#1A3C34]/50"}`}>
+                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[#333333]/50"}`}>
                   HOUR
                 </div>
               </div>
-              <div className="font-serif text-2xl text-[#1A3C34]/30">:</div>
-              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-[#1A3C34]/10"}`}>
-                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[#1A3C34]"}`}>
+              <div className="font-serif text-2xl text-[#333333]/30">:</div>
+              <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFE5E5] border-[#FF6B6B]" : "bg-white border-[#333333]/10"}`}>
+                <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-[#333333]"}`}>
                   {String(timeLeft.minutes).padStart(2, '0')}
                 </div>
-                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[#1A3C34]/50"}`}>
+                <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-[#333333]/50"}`}>
                   MIN
                 </div>
               </div>
@@ -208,7 +195,7 @@ export function HomeRecruitingView({
           </div>
 
           {/* Main Text */}
-          <h2 className="font-serif text-2xl text-[#1A3C34] mb-6 leading-relaxed">
+          <h2 className="font-serif text-2xl text-[#333333] mb-6 leading-relaxed">
             {isRegistered ? (
               <>
                 이번주 금요일에
@@ -227,8 +214,8 @@ export function HomeRecruitingView({
           {/* Primary CTA */}
           <button
             className={`w-full font-sans font-medium py-4 rounded-lg transition-all duration-300 text-base ${isRegistered
-              ? "bg-[#1A3C34] text-white hover:bg-[#1A3C34]/90"
-              : "bg-[#D4AF37] text-white hover:bg-[#D4AF37]/90 shadow-xl shadow-[#D4AF37]/30"
+              ? "bg-[#333333] text-white hover:bg-[#333333]/90"
+              : "bg-[#CC0000] text-white hover:bg-[#b30000] shadow-lg shadow-[#171717]/10"
               }`}
             onClick={isRegistered ? handleCancelClick : handleRegisterClick}
           >
@@ -236,7 +223,7 @@ export function HomeRecruitingView({
           </button>
 
           {/* Info Text */}
-          <p className="text-xs text-[#1A3C34]/40 font-sans mt-4 leading-relaxed">
+          <p className="text-xs text-[#333333]/40 font-sans mt-4 leading-relaxed">
             {isRegistered
               ? "신청을 취소하시려면 버튼을 다시 눌러주세요"
               : "매주 금요일 밤 8시, 새로운 인연이 시작됩니다"
@@ -245,12 +232,12 @@ export function HomeRecruitingView({
         </div >
 
         {/* Content Feed */}
-        < div className="px-6 py-6 bg-gradient-to-b from-[#FCFCFA] to-[#F5F5F0]" >
+        < div className="px-6 py-6 bg-gradient-to-b from-[#FAFAFA] to-[#F0F0F0]" >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-serif text-xl text-[#1A3C34]">
+            <h3 className="font-serif text-xl text-[#333333]">
               지난주 매칭 성공
             </h3>
-            <div className="h-px flex-1 ml-3 bg-[#D4AF37]/20" />
+            <div className="h-px flex-1 ml-3 bg-[#171717]/20" />
           </div>
 
           {/* Horizontal Scroll Cards */}
@@ -258,11 +245,11 @@ export function HomeRecruitingView({
             {successStories.map((story) => (
               <div
                 key={story.id}
-                className="flex-shrink-0 w-[280px] bg-white border border-[#1A3C34]/10 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow"
+                className="flex-shrink-0 w-[280px] bg-white border border-[#333333]/10 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow"
               >
                 {/* User Info */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full overflow-hidden border border-[#1A3C34]/10">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border border-[#333333]/10">
                     <ImageWithFallback
                       src={story.userImage}
                       alt="User"
@@ -270,24 +257,24 @@ export function HomeRecruitingView({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-serif text-[#1A3C34] text-sm truncate">
+                    <p className="font-serif text-[#333333] text-sm truncate">
                       {story.bookTitle}
                     </p>
-                    <p className="text-xs text-[#1A3C34]/50 font-sans">
+                    <p className="text-xs text-[#333333]/50 font-sans">
                       매칭 성공
                     </p>
                   </div>
                 </div>
 
                 {/* Matched Sentence */}
-                <div className="bg-[#FCFCFA] border border-[#D4AF37]/20 rounded-lg p-3 mb-3">
-                  <p className="font-serif text-sm text-[#1A3C34] italic leading-relaxed">
+                <div className="bg-[#FAFAFA] border border-[#171717]/20 rounded-lg p-3 mb-3">
+                  <p className="font-serif text-sm text-[#333333] italic leading-relaxed">
                     "{story.matchedSentence}"
                   </p>
                 </div>
 
                 {/* Testimonial */}
-                <p className="text-sm text-[#1A3C34]/70 font-sans leading-relaxed">
+                <p className="text-sm text-[#333333]/70 font-sans leading-relaxed">
                   {story.testimonial}
                 </p>
               </div>
@@ -297,26 +284,26 @@ export function HomeRecruitingView({
           {/* Stats Section */}
           <div className="mt-8 grid grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="font-serif text-2xl text-[#D4AF37] mb-1">
+              <div className="font-serif text-2xl text-[#171717] mb-1">
                 1,247
               </div>
-              <div className="text-xs text-[#1A3C34]/60 font-sans">
+              <div className="text-xs text-[#333333]/60 font-sans">
                 누적 매칭
               </div>
             </div>
             <div className="text-center">
-              <div className="font-serif text-2xl text-[#D4AF37] mb-1">
+              <div className="font-serif text-2xl text-[#171717] mb-1">
                 89%
               </div>
-              <div className="text-xs text-[#1A3C34]/60 font-sans">
+              <div className="text-xs text-[#333333]/60 font-sans">
                 만족도
               </div>
             </div>
             <div className="text-center">
-              <div className="font-serif text-2xl text-[#D4AF37] mb-1">
+              <div className="font-serif text-2xl text-[#171717] mb-1">
                 342
               </div>
-              <div className="text-xs text-[#1A3C34]/60 font-sans">
+              <div className="text-xs text-[#333333]/60 font-sans">
                 이번 주 신청
               </div>
             </div>
@@ -325,45 +312,45 @@ export function HomeRecruitingView({
 
         {/* How It Works Section */}
         < div className="px-6 py-8" >
-          <h3 className="font-serif text-xl text-[#1A3C34] mb-6 text-center">
+          <h3 className="font-serif text-xl text-[#333333] mb-6 text-center">
             어떻게 진행되나요?
           </h3>
           <div className="space-y-4">
             <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#D4AF37] text-white flex items-center justify-center font-sans text-sm">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#171717] text-white flex items-center justify-center font-sans text-sm">
                 1
               </div>
               <div>
-                <h4 className="font-sans font-medium text-[#1A3C34] mb-1">
+                <h4 className="font-sans font-medium text-[#333333] mb-1">
                   프로필 등록
                 </h4>
-                <p className="text-sm text-[#1A3C34]/60 font-sans leading-relaxed">
+                <p className="text-sm text-[#333333]/60 font-sans leading-relaxed">
                   인생책과 마음에 남은 문장을 공유하세요
                 </p>
               </div>
             </div>
             <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#D4AF37] text-white flex items-center justify-center font-sans text-sm">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#171717] text-white flex items-center justify-center font-sans text-sm">
                 2
               </div>
               <div>
-                <h4 className="font-sans font-medium text-[#1A3C34] mb-1">
+                <h4 className="font-sans font-medium text-[#333333] mb-1">
                   매칭 대기
                 </h4>
-                <p className="text-sm text-[#1A3C34]/60 font-sans leading-relaxed">
+                <p className="text-sm text-[#333333]/60 font-sans leading-relaxed">
                   AI가 책 취향과 가치관이 맞는 상대를 찾아드려요
                 </p>
               </div>
             </div>
             <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#D4AF37] text-white flex items-center justify-center font-sans text-sm">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#171717] text-white flex items-center justify-center font-sans text-sm">
                 3
               </div>
               <div>
-                <h4 className="font-sans font-medium text-[#1A3C34] mb-1">
+                <h4 className="font-sans font-medium text-[#333333] mb-1">
                   만남 시작
                 </h4>
-                <p className="text-sm text-[#1A3C34]/60 font-sans leading-relaxed">
+                <p className="text-sm text-[#333333]/60 font-sans leading-relaxed">
                   금요일 밤 8시, 우편함에서 새로운 인연을 확인하세요
                 </p>
               </div>
@@ -411,5 +398,21 @@ export function HomeRecruitingView({
         }}
       />
     </div >
+  );
+}
+
+// Reuse mailbox-like bell with badge for consistency
+function MailboxHeaderButton({ unreadCount, onShowNotifications }: { unreadCount: number; onShowNotifications?: () => void }) {
+  return (
+    <button
+      onClick={onShowNotifications}
+      className="p-2 hover:bg-[#171717]/6 rounded-full transition-colors relative"
+      aria-label="Notifications"
+    >
+      <Bell className="w-5 h-5 text-[#171717]" />
+      {unreadCount > 0 && (
+        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#CC0000] rounded-full border border-[#FAFAFA]" />
+      )}
+    </button>
   );
 }

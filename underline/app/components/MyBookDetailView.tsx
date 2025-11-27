@@ -60,18 +60,18 @@ export function MyBookDetailView({
   };
 
   return (
-    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FAFAFA] flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
+      <div className="sticky top-0 z-50 bg-[#FAFAFA] border-b border-[#171717]/10">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <button
-              className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors"
+              className="p-1 hover:bg-[#171717]/5 rounded-full transition-colors"
               onClick={onBack}
             >
-              <ArrowLeft className="w-5 h-5 text-[#1A3C34]" />
+              <ArrowLeft className="w-5 h-5 text-[#171717]" />
             </button>
-            <h1 className="font-serif text-2xl text-[#1A3C34]">Book Review</h1>
+            <h1 className="font-serif text-2xl text-[#171717]">Book Review</h1>
           </div>
 
           {/* Action Buttons */}
@@ -79,9 +79,9 @@ export function MyBookDetailView({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsEditing(true)}
-                className="p-2 hover:bg-[#D4AF37]/10 rounded-full transition-colors"
+                className="p-2 hover:bg-[#CC0000]/10 rounded-full transition-colors"
               >
-                <Edit2 className="w-4 h-4 text-[#D4AF37]" />
+                <Edit2 className="w-4 h-4 text-[#CC0000]" />
               </button>
               <button
                 onClick={handleDeleteClick}
@@ -98,7 +98,7 @@ export function MyBookDetailView({
       <div className="flex-1 overflow-y-auto pb-24">
         <div className="px-6 py-6 space-y-6">
           {/* Book Info Card */}
-          <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[#D4AF37]/20 rounded-xl p-6 shadow-sm">
+          <div className="bg-white border border-[#C2C2C2]/60 rounded-xl p-6 shadow-sm">
             <div className="flex gap-5 mb-5">
               <div className="flex-shrink-0">
                 <ImageWithFallback
@@ -108,15 +108,15 @@ export function MyBookDetailView({
                 />
               </div>
               <div className="flex-1 flex flex-col justify-center">
-                <h2 className="font-serif text-xl text-[#1A3C34] mb-3 leading-snug">
+                <h2 className="font-serif text-xl text-[#171717] mb-3 leading-snug">
                   {book.title}
                 </h2>
                 <div className="space-y-1">
-                  <p className="text-sm text-[#1A3C34]/70 font-sans">
+                  <p className="text-sm text-[#171717]/70 font-sans">
                     저자: {book.author}
                   </p>
                   {book.publisher && (
-                    <p className="text-sm text-[#1A3C34]/70 font-sans">
+                    <p className="text-sm text-[#171717]/70 font-sans">
                       출판사: {book.publisher}
                     </p>
                   )}
@@ -126,42 +126,42 @@ export function MyBookDetailView({
 
             {/* Aladin Attribution */}
             <div className="flex justify-end items-center gap-2 mb-4">
-              <span className="text-[10px] text-[#1A3C34]/40 font-sans">
+              <span className="text-[10px] text-[#171717]/40 font-sans">
                 도서 DB 제공 : 알라딘
               </span>
               <a
                 href={book.isbn13 ? `https://www.aladin.co.kr/shop/wproduct.aspx?ISBN=${book.isbn13}` : `https://www.aladin.co.kr/search/wsearchresult.aspx?SearchTarget=Book&SearchWord=${encodeURIComponent(book.title)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] text-[#1A3C34]/60 hover:text-[#D4AF37] font-sans flex items-center gap-0.5 transition-colors"
+                className="text-[10px] text-[#171717]/60 hover:text-[#CC0000] font-sans flex items-center gap-0.5 transition-colors"
               >
                 자세히 보기
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>
 
-            <div className="h-px bg-[#D4AF37]/30 mb-4" />
+            <div className="h-px bg-[#CC0000]/30 mb-4" />
 
             <div className="flex items-center gap-2 mb-3">
-              <BookOpen className="w-4 h-4 text-[#D4AF37]" />
-              <h3 className="font-serif text-base text-[#1A3C34]">나의 감상</h3>
+              <BookOpen className="w-4 h-4 text-[#CC0000]" />
+              <h3 className="font-serif text-base text-[#171717]">나의 감상</h3>
             </div>
           </div>
 
           {/* Review Content */}
           {isEditing ? (
             <>
-              <div className="bg-white border border-[#1A3C34]/10 rounded-xl p-6 shadow-sm">
+              <div className="bg-white border border-[#171717]/10 rounded-xl p-6 shadow-sm">
                 <textarea
                   value={editedReview}
                   onChange={(e) => setEditedReview(e.target.value)}
                   maxLength={10000}
                   rows={15}
-                  className="w-full px-4 py-3 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-serif text-sm focus:outline-none focus:border-[#D4AF37] transition-colors resize-none bg-white leading-relaxed"
+                  className="w-full px-4 py-3 border border-[#171717]/20 rounded-lg text-[#171717] font-serif text-sm focus:outline-none focus:border-[#CC0000] transition-colors resize-none bg-white leading-relaxed"
                   placeholder="감상문을 작성해주세요..."
                 />
                 <div className="flex justify-end mt-2">
-                  <p className="text-xs text-[#1A3C34]/60 font-sans">
+                  <p className="text-xs text-[#171717]/60 font-sans">
                     {editedReview.length} / 10,000
                   </p>
                 </div>
@@ -171,14 +171,14 @@ export function MyBookDetailView({
               <div className="flex gap-3">
                 <button
                   onClick={handleCancelEdit}
-                  className="flex-1 border-2 border-[#1A3C34]/20 text-[#1A3C34] hover:bg-[#1A3C34]/5 font-sans font-medium py-3.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                  className="flex-1 border-2 border-[#171717]/20 text-[#171717] hover:bg-[#171717]/5 font-sans font-medium py-3.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <X className="w-4 h-4" />
                   취소
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="flex-1 bg-[#D4AF37] text-white hover:bg-[#D4AF37]/90 font-sans font-medium py-3.5 rounded-lg transition-all duration-300 shadow-lg shadow-[#D4AF37]/20 flex items-center justify-center gap-2"
+                  className="flex-1 bg-[#CC0000] text-white hover:bg-[#CC0000]/90 font-sans font-medium py-3.5 rounded-lg transition-all duration-300 shadow-lg shadow-[#CC0000]/20 flex items-center justify-center gap-2"
                 >
                   <Save className="w-4 h-4" />
                   수정완료하기
@@ -186,9 +186,9 @@ export function MyBookDetailView({
               </div>
             </>
           ) : (
-            <div className="bg-white border border-[#1A3C34]/10 rounded-xl p-6 shadow-sm">
+            <div className="bg-white border border-[#171717]/10 rounded-xl p-6 shadow-sm">
               <div className="prose prose-sm max-w-none">
-                <p className="text-[#1A3C34] font-serif leading-loose whitespace-pre-wrap break-words">
+                <p className="text-[#171717] font-serif leading-loose whitespace-pre-wrap break-words">
                   {book.review}
                 </p>
               </div>
@@ -198,8 +198,8 @@ export function MyBookDetailView({
           {/* Decorative Quote */}
           {!isEditing && (
             <div className="text-center py-4">
-              <div className="inline-block px-6 py-3 bg-[#D4AF37]/5 rounded-full border border-[#D4AF37]/20">
-                <p className="text-xs text-[#D4AF37] font-serif italic">
+              <div className="inline-block px-6 py-3 bg-[#CC0000]/5 rounded-full border border-[#CC0000]/20">
+                <p className="text-xs text-[#CC0000] font-serif italic">
                   "책은 마음의 거울이다"
                 </p>
               </div>
@@ -211,18 +211,18 @@ export function MyBookDetailView({
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-6">
-          <div className="bg-[#FCFCFA] p-8 rounded-2xl shadow-2xl max-w-sm w-full border border-[#1A3C34]/10">
-            <h2 className="font-serif text-xl text-[#1A3C34] mb-3">
+          <div className="bg-[#FAFAFA] p-8 rounded-2xl shadow-2xl max-w-sm w-full border border-[#171717]/10">
+            <h2 className="font-serif text-xl text-[#171717] mb-3">
               책을 삭제하시겠습니까?
             </h2>
-            <p className="text-sm text-[#1A3C34]/70 font-sans mb-6 leading-relaxed">
+            <p className="text-sm text-[#171717]/70 font-sans mb-6 leading-relaxed">
               <span className="font-medium">{book.title}</span>과 작성하신 감상문이 영구적으로 삭제됩니다.<br />
               <span className="text-red-500">이 작업은 취소할 수 없습니다.</span>
             </p>
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="w-full py-3.5 bg-[#1A3C34] text-white font-sans rounded-lg hover:bg-[#1A3C34]/90 transition-all duration-300 shadow-sm"
+                className="w-full py-3.5 bg-[#171717] text-white font-sans rounded-lg hover:bg-[#171717]/90 transition-all duration-300 shadow-sm"
               >
                 취소
               </button>

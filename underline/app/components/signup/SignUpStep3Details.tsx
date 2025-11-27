@@ -50,7 +50,7 @@ export function SignUpStep3Details({
     };
 
     return (
-        <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+        <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 min-h-screen bg-[#FAFAFA] flex flex-col">
             <SignUpHeader
                 currentStep={3}
                 totalSteps={4}
@@ -63,13 +63,13 @@ export function SignUpStep3Details({
 
                     {/* Religion */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2">
                             종교
                         </label>
                         <select
                             value={religion}
                             onChange={(e) => setReligion(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors bg-white appearance-none"
+                            className="w-full px-4 py-2.5 border border-[#171717]/20 rounded-lg text-[#171717] font-sans text-sm focus:outline-none focus:border-[#CC0000] transition-colors bg-white appearance-none"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231A3C34' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
                                 backgroundRepeat: "no-repeat",
@@ -87,13 +87,13 @@ export function SignUpStep3Details({
 
                     {/* Smoking */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2">
                             흡연 여부
                         </label>
                         <select
                             value={smoking}
                             onChange={(e) => setSmoking(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors bg-white appearance-none"
+                            className="w-full px-4 py-2.5 border border-[#171717]/20 rounded-lg text-[#171717] font-sans text-sm focus:outline-none focus:border-[#CC0000] transition-colors bg-white appearance-none"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231A3C34' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
                                 backgroundRepeat: "no-repeat",
@@ -109,13 +109,13 @@ export function SignUpStep3Details({
 
                     {/* Drinking */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2">
                             음주 여부
                         </label>
                         <select
                             value={drinking}
                             onChange={(e) => setDrinking(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors bg-white appearance-none"
+                            className="w-full px-4 py-2.5 border border-[#171717]/20 rounded-lg text-[#171717] font-sans text-sm focus:outline-none focus:border-[#CC0000] transition-colors bg-white appearance-none"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231A3C34' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
                                 backgroundRepeat: "no-repeat",
@@ -132,14 +132,14 @@ export function SignUpStep3Details({
 
                     {/* Bio */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2">
                             자기소개
                         </label>
                         <textarea
                             value={bio}
                             onChange={(e) => setBio(e.target.value)}
                             rows={4}
-                            className="w-full px-4 py-3 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors resize-none bg-white leading-relaxed"
+                            className="w-full px-4 py-3 border border-[#171717]/20 rounded-lg text-[#171717] font-sans text-sm focus:outline-none focus:border-[#CC0000] transition-colors resize-none bg-white leading-relaxed"
                             placeholder="당신을 소개해주세요..."
                         />
                     </div>
@@ -148,10 +148,10 @@ export function SignUpStep3Details({
             </div>
 
             {/* Bottom Action */}
-            <div className="sticky bottom-0 z-50 bg-[#FCFCFA] border-t border-[#1A3C34]/10 px-6 py-4">
+            <div className="sticky bottom-0 z-50 bg-[#FAFAFA] border-t border-[#171717]/10 px-6 py-4">
                 <button
                     onClick={handleNext}
-                    className="w-full bg-[#D4AF37] text-white font-sans font-medium py-3.5 rounded-lg hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-lg shadow-[#D4AF37]/20"
+                    className="w-full bg-[#CC0000] text-white font-sans font-medium py-3.5 rounded-lg hover:bg-[#CC0000]/90 transition-all duration-300 shadow-lg shadow-[#CC0000]/20"
                 >
                     다음 단계
                 </button>

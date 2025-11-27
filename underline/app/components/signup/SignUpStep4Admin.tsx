@@ -176,7 +176,7 @@ export function SignUpStep4Admin({
     };
 
     return (
-        <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+        <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 min-h-screen bg-[#FAFAFA] flex flex-col">
             <SignUpHeader
                 currentStep={4}
                 totalSteps={4}
@@ -198,25 +198,25 @@ export function SignUpStep4Admin({
 
                     {/* KakaoTalk ID */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2 flex items-center gap-1.5">
-                            <Lock className="w-3.5 h-3.5 text-[#1A3C34]/40" />
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2 flex items-center gap-1.5">
+                            <Lock className="w-3.5 h-3.5 text-[#171717]/40" />
                             카카오톡 ID
                         </label>
                         <input
                             type="text"
                             value={kakaoId}
                             onChange={(e) => setKakaoId(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors"
+                            className="w-full px-4 py-2.5 border border-[#171717]/20 rounded-lg text-[#171717] font-sans text-sm focus:outline-none focus:border-[#CC0000] transition-colors"
                             placeholder="카카오톡 ID를 입력하세요"
                         />
-                        <p className="text-xs text-[#1A3C34]/40 mt-1.5 font-sans">
+                        <p className="text-xs text-[#171717]/40 mt-1.5 font-sans">
                             매칭에 성공한 상대방에게 공유될 연락처입니다
                         </p>
                     </div>
 
                     {/* Photo Upload */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2">
                             프로필 사진 (최소 1장)
                         </label>
                         <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -224,7 +224,7 @@ export function SignUpStep4Admin({
                                 <div key={photo.id} className="relative flex-shrink-0">
                                     {photo.url ? (
                                         <>
-                                            <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-[#1A3C34]/10">
+                                            <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-[#171717]/10">
                                                 <ImageWithFallback
                                                     src={photo.url}
                                                     alt={`Photo ${index + 1}`}
@@ -233,7 +233,7 @@ export function SignUpStep4Admin({
                                             </div>
                                             <button
                                                 onClick={() => handleRemovePhoto(photo.id)}
-                                                className="absolute top-1 right-1 w-6 h-6 bg-[#1A3C34] rounded-full flex items-center justify-center hover:bg-[#1A3C34]/80 transition-colors shadow-md z-10"
+                                                className="absolute top-1 right-1 w-6 h-6 bg-[#171717] rounded-full flex items-center justify-center hover:bg-[#171717]/80 transition-colors shadow-md z-10"
                                             >
                                                 <X className="w-3.5 h-3.5 text-white" />
                                             </button>
@@ -241,10 +241,10 @@ export function SignUpStep4Admin({
                                     ) : (
                                         <button
                                             onClick={() => handleAddPhoto(photo.id)}
-                                            className="w-20 h-20 border-2 border-dashed border-[#1A3C34]/20 rounded-lg flex flex-col items-center justify-center hover:border-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors"
+                                            className="w-20 h-20 border-2 border-dashed border-[#171717]/20 rounded-lg flex flex-col items-center justify-center hover:border-[#CC0000] hover:bg-[#CC0000]/5 transition-colors"
                                         >
-                                            <Plus className="w-5 h-5 text-[#1A3C34]/30" />
-                                            <span className="text-[10px] text-[#1A3C34]/40 font-sans mt-0.5">
+                                            <Plus className="w-5 h-5 text-[#171717]/30" />
+                                            <span className="text-[10px] text-[#171717]/40 font-sans mt-0.5">
                                                 {index + 1}
                                             </span>
                                         </button>
@@ -253,8 +253,8 @@ export function SignUpStep4Admin({
                             ))}
                         </div>
                         <div className="flex items-center gap-1.5 mt-2">
-                            <Shield className="w-3.5 h-3.5 text-[#D4AF37]" />
-                            <p className="text-xs text-[#1A3C34]/40 font-sans">
+                            <Shield className="w-3.5 h-3.5 text-[#CC0000]" />
+                            <p className="text-xs text-[#171717]/40 font-sans">
                                 AI 부적절한 사진 검사 활성화
                             </p>
                         </div>
@@ -264,10 +264,10 @@ export function SignUpStep4Admin({
             </div>
 
             {/* Bottom Action */}
-            <div className="sticky bottom-0 z-50 bg-[#FCFCFA] border-t border-[#1A3C34]/10 px-6 py-4">
+            <div className="sticky bottom-0 z-50 bg-[#FAFAFA] border-t border-[#171717]/10 px-6 py-4">
                 <button
                     onClick={handleComplete}
-                    className="w-full bg-[#D4AF37] text-white font-sans font-medium py-3.5 rounded-lg hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-lg shadow-[#D4AF37]/20 flex items-center justify-center gap-2"
+                    className="w-full bg-[#CC0000] text-white font-sans font-medium py-3.5 rounded-lg hover:bg-[#CC0000]/90 transition-all duration-300 shadow-lg shadow-[#CC0000]/20 flex items-center justify-center gap-2"
                 >
                     <Check className="w-5 h-5" />
                     가입 완료하기

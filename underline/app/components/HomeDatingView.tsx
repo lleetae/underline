@@ -197,24 +197,15 @@ id,
   };
 
   return (
-    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FAFAFA] flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
+      <div className="sticky top-0 z-20 bg-[#FAFAFA] border-b border-[#333333]/10">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="w-8" /> {/* Spacer for centering */}
-          <h1 className="font-serif text-2xl text-[#1A3C34] tracking-wide">
+          <h1 className="font-serif text-2xl text-[#333333] tracking-wide">
             Underline
           </h1>
-          <button
-            onClick={onShowNotifications}
-            className="p-2 hover:bg-[#1A3C34]/5 rounded-full transition-colors relative"
-          >
-            <Bell className="w-5 h-5 text-[#1A3C34]" />
-            {/* Notification badge */}
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#D4AF37] rounded-full border border-[#FCFCFA]"></span>
-            )}
-          </button>
+          <MailboxHeaderButton unreadCount={unreadCount} onShowNotifications={onShowNotifications} />
         </div>
 
         {/* Floating Badge - Dating Period Timer */}
@@ -223,7 +214,7 @@ id,
             px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500
             ${totalHours < 24
               ? "bg-gradient-to-r from-[#FF6B6B] to-[#FF8E53] shadow-[#FF6B6B]/30 animate-pulse"
-              : "bg-gradient-to-r from-[#D4AF37] to-[#C9A641] shadow-[#D4AF37]/30"
+              : "bg-gradient-to-r from-[#171717] to-[#333333] shadow-[#171717]/30"
             }
           `}>
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
@@ -239,8 +230,8 @@ id,
       <div className="flex-1 overflow-y-auto pb-24 px-6 py-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p className="text-sm text-[#1A3C34]/60 font-sans">프로필을 불러오는 중...</p>
+            <div className="w-8 h-8 border-2 border-[#171717] border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-sm text-[#333333]/60 font-sans">프로필을 불러오는 중...</p>
           </div>
         ) : profiles.length > 0 ? (
           <>
@@ -249,7 +240,7 @@ id,
                 <div
                   key={profile.id}
                   onClick={() => onProfileClick?.(profile.id.toString())}
-                  className="bg-white border border-[#1A3C34]/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                  className="bg-white border border-[#333333]/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group"
                 >
                   {/* Photo Section */}
                   <div className="relative aspect-[4/5] overflow-hidden">
@@ -282,11 +273,11 @@ id,
                   </div>
 
                   {/* Bio and Book Review Section */}
-                  <div className="p-5 bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] space-y-4">
+                  <div className="p-5 bg-white border border-[#C2C2C2]/60 space-y-4 rounded-xl shadow-sm">
                     {/* Bio */}
                     <div>
-                      <h4 className="text-xs text-[#1A3C34]/50 font-sans mb-2">자기소개</h4>
-                      <p className="font-sans text-[#1A3C34] leading-relaxed text-sm line-clamp-2">
+                      <h4 className="text-xs text-[#333333]/50 font-sans mb-2">자기소개</h4>
+                      <p className="font-sans text-[#333333] leading-relaxed text-sm line-clamp-2">
                         {profile.bio}
                       </p>
                     </div>
@@ -299,19 +290,34 @@ id,
 
             {/* Load More Hint */}
             <div className="text-center py-8">
-              <p className="text-sm text-[#1A3C34]/40 font-sans">
+              <p className="text-sm text-[#333333]/40 font-sans">
                 더 많은 프로필이 준비 중입니다
               </p>
             </div>
           </>
         ) : (
           <div className="text-center py-20">
-            <p className="text-sm text-[#1A3C34]/60 font-sans">
+            <p className="text-sm text-[#333333]/60 font-sans">
               아직 등록된 프로필이 없습니다.
             </p>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function MailboxHeaderButton({ unreadCount, onShowNotifications }: { unreadCount: number; onShowNotifications?: () => void }) {
+  return (
+    <button
+      onClick={onShowNotifications}
+      className="p-2 hover:bg-[#171717]/6 rounded-full transition-colors relative"
+      aria-label="Notifications"
+    >
+      <Bell className="w-5 h-5 text-[#171717]" />
+      {unreadCount > 0 && (
+        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#CC0000] rounded-full border border-[#FAFAFA]" />
+      )}
+    </button>
   );
 }

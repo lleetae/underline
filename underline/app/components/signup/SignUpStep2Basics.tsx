@@ -95,7 +95,7 @@ export function SignUpStep2Basics({
     };
 
     return (
-        <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+        <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 min-h-screen bg-[#FAFAFA] flex flex-col">
             <SignUpHeader
                 currentStep={2}
                 totalSteps={4}
@@ -108,7 +108,7 @@ export function SignUpStep2Basics({
 
                     {/* Nickname */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2">
                             닉네임
                         </label>
                         <div className="flex gap-2">
@@ -119,14 +119,14 @@ export function SignUpStep2Basics({
                                     setNickname(e.target.value);
                                     setIsNicknameChecked(false);
                                 }}
-                                className="flex-1 px-4 py-2.5 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors"
+                                className="flex-1 px-4 py-2.5 border border-[#171717]/20 rounded-lg text-[#171717] font-sans text-sm focus:outline-none focus:border-[#CC0000] transition-colors"
                                 placeholder="닉네임을 입력하세요"
                             />
                             <button
                                 type="button"
                                 onClick={handleCheckNickname}
                                 disabled={isCheckingNickname}
-                                className="px-4 py-2.5 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white rounded-lg transition-all duration-300 flex items-center gap-1.5 font-sans text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2.5 border border-[#CC0000] text-[#CC0000] hover:bg-[#CC0000] hover:text-white rounded-lg transition-all duration-300 flex items-center gap-1.5 font-sans text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isCheckingNickname ? (
                                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -137,7 +137,7 @@ export function SignUpStep2Basics({
                             </button>
                         </div>
                         {isNicknameChecked && (
-                            <p className="text-xs text-[#D4AF37] mt-1.5 font-sans">
+                            <p className="text-xs text-[#CC0000] mt-1.5 font-sans">
                                 ✓ 사용 가능
                             </p>
                         )}
@@ -145,15 +145,15 @@ export function SignUpStep2Basics({
 
                     {/* Gender */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2">
                             성별
                         </label>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setGender("male")}
                                 className={`flex-1 py-2.5 rounded-lg font-sans text-sm transition-all duration-300 ${gender === "male"
-                                    ? "bg-[#1A3C34] text-white"
-                                    : "border border-[#1A3C34]/20 text-[#1A3C34]/60 hover:border-[#1A3C34]/40"
+                                    ? "bg-[#171717] text-white"
+                                    : "border border-[#171717]/20 text-[#171717]/60 hover:border-[#171717]/40"
                                     }`}
                             >
                                 남성
@@ -161,14 +161,14 @@ export function SignUpStep2Basics({
                             <button
                                 onClick={() => setGender("female")}
                                 className={`flex-1 py-2.5 rounded-lg font-sans text-sm transition-all duration-300 ${gender === "female"
-                                    ? "bg-[#1A3C34] text-white"
-                                    : "border border-[#1A3C34]/20 text-[#1A3C34]/60 hover:border-[#1A3C34]/40"
+                                    ? "bg-[#171717] text-white"
+                                    : "border border-[#171717]/20 text-[#171717]/60 hover:border-[#171717]/40"
                                     }`}
                             >
                                 여성
                             </button>
                         </div>
-                        <p className="text-xs text-[#D4AF37] mt-1.5 font-sans flex items-center gap-1">
+                        <p className="text-xs text-[#CC0000] mt-1.5 font-sans flex items-center gap-1">
                             <Lock className="w-3 h-3" />
                             한번 설정하면 수정이 불가능합니다
                         </p>
@@ -176,7 +176,7 @@ export function SignUpStep2Basics({
 
                     {/* BirthDate */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2">
                             생년월일
                         </label>
                         <input
@@ -184,7 +184,7 @@ export function SignUpStep2Basics({
                             value={birthDate}
                             max="2006-12-31"
                             onChange={(e) => setBirthDate(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors bg-white"
+                            className="w-full px-4 py-2.5 border border-[#171717]/20 rounded-lg text-[#171717] font-sans text-sm focus:outline-none focus:border-[#CC0000] transition-colors bg-white"
                         />
                         <p className="text-sm text-red-500 mt-2 font-sans font-bold">
                             2006년 12월 31일 이전 출생자만 가입 가능합니다
@@ -193,13 +193,13 @@ export function SignUpStep2Basics({
 
                     {/* Location */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2">
                             지역
                         </label>
                         <select
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors bg-white appearance-none"
+                            className="w-full px-4 py-2.5 border border-[#171717]/20 rounded-lg text-[#171717] font-sans text-sm focus:outline-none focus:border-[#CC0000] transition-colors bg-white appearance-none"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231A3C34' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
                                 backgroundRepeat: "no-repeat",
@@ -219,7 +219,7 @@ export function SignUpStep2Basics({
 
                     {/* Height */}
                     <div>
-                        <label className="block text-sm text-[#1A3C34]/70 font-sans mb-2">
+                        <label className="block text-sm text-[#171717]/70 font-sans mb-2">
                             키
                         </label>
                         <input
@@ -231,7 +231,7 @@ export function SignUpStep2Basics({
                                 const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
                                 setHeight(value);
                             }}
-                            className="w-full px-4 py-2.5 border border-[#1A3C34]/20 rounded-lg text-[#1A3C34] font-sans text-sm focus:outline-none focus:border-[#D4AF37] transition-colors"
+                            className="w-full px-4 py-2.5 border border-[#171717]/20 rounded-lg text-[#171717] font-sans text-sm focus:outline-none focus:border-[#CC0000] transition-colors"
                             placeholder="키를 입력하세요 (cm)"
                             maxLength={3}
                         />
@@ -241,10 +241,10 @@ export function SignUpStep2Basics({
             </div>
 
             {/* Bottom Action */}
-            <div className="sticky bottom-0 z-50 bg-[#FCFCFA] border-t border-[#1A3C34]/10 px-6 py-4">
+            <div className="sticky bottom-0 z-50 bg-[#FAFAFA] border-t border-[#171717]/10 px-6 py-4">
                 <button
                     onClick={handleNext}
-                    className="w-full bg-[#D4AF37] text-white font-sans font-medium py-3.5 rounded-lg hover:bg-[#D4AF37]/90 transition-all duration-300 shadow-lg shadow-[#D4AF37]/20"
+                    className="w-full bg-[#CC0000] text-white font-sans font-medium py-3.5 rounded-lg hover:bg-[#CC0000]/90 transition-all duration-300 shadow-lg shadow-[#CC0000]/20"
                 >
                     다음 단계
                 </button>

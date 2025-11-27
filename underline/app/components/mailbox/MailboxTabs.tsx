@@ -14,7 +14,7 @@ export function MailboxTabs({ activeTab, onTabChange }: MailboxTabsProps) {
   ];
 
   return (
-    <div className="px-6 border-b border-[#1A3C34]/10">
+    <div className="px-6 border-b border-[#C2C2C2]/60">
       <div className="flex w-full">
         {tabs.map((tab) => (
           <button
@@ -23,13 +23,13 @@ export function MailboxTabs({ activeTab, onTabChange }: MailboxTabsProps) {
             className={cn(
               "flex-1 py-3 text-sm font-medium transition-all relative",
               activeTab === tab.id
-                ? "text-[#1A3C34]"
-                : "text-[#1A3C34]/40 hover:text-[#1A3C34]/60"
+                ? "text-[#171717]"
+                : "text-[#333333]/50 hover:text-[#171717]/80"
             )}
           >
             {tab.label}
             {activeTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1A3C34]" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#171717] rounded-full" />
             )}
           </button>
         ))}

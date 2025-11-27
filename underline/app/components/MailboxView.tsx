@@ -210,12 +210,12 @@ export function MailboxView({
   };
 
   return (
-    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+    <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FAFAFA] flex flex-col">
       <MailboxHeader onShowNotifications={onShowNotifications} unreadCount={unreadCount} />
       <MailboxTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
       <div
-        className="flex-1 bg-[#FCFCFA] pb-24 overflow-hidden"
+        className="flex-1 bg-[#FAFAFA] pb-24 overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -230,17 +230,17 @@ export function MailboxView({
                     {index > 0 && (
                       <div className="relative py-2">
                         <div className="absolute inset-0 flex items-center">
-                          <div className="w-full border-t border-[#1A3C34]/10"></div>
+                          <div className="w-full border-t border-[#C2C2C2]/60"></div>
                         </div>
                       </div>
                     )}
                     <div
                       onClick={() => onProfileClick?.(request.profileId, "mailbox")}
-                      className="bg-white border border-[#1A3C34]/10 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+                      className="bg-white border border-[#C2C2C2]/60 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
                     >
                       <div className="flex gap-3 mb-3">
                         <div
-                          className="w-14 h-14 rounded-full overflow-hidden border border-[#1A3C34]/10 flex-shrink-0"
+                          className="w-14 h-14 rounded-full overflow-hidden border border-[#C2C2C2]/60 flex-shrink-0"
                         >
                           <img
                             src={request.photo}
@@ -250,24 +250,24 @@ export function MailboxView({
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2 mb-1">
-                            <h3 className="font-sans font-medium text-[#1A3C34]">
+                            <h3 className="font-sans font-medium text-[#171717]">
                               {request.nickname}
                             </h3>
-                            <span className="text-sm text-[#1A3C34]/60 font-sans">
+                            <span className="text-sm text-[#333333]/70 font-sans">
                               만 {request.age}세
                             </span>
                           </div>
-                          <p className="text-xs text-[#1A3C34]/50 font-sans">
+                          <p className="text-xs text-[#333333]/60 font-sans">
                             {getLocationText(request.location)}
                           </p>
                         </div>
                       </div>
-                      <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border border-[#D4AF37]/20 rounded-lg p-3">
-                        <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap line-clamp-3">
+                      <div className="bg-white border border-[#C2C2C2]/50 rounded-lg p-3">
+                        <p className="font-serif text-sm text-[#171717] leading-relaxed whitespace-pre-wrap line-clamp-3">
                           {request.letter}
                         </p>
                       </div>
-                      <p className="text-xs text-[#1A3C34]/40 font-sans mt-2">
+                      <p className="text-xs text-[#333333]/55 font-sans mt-2">
                         {new Date(request.timestamp).toLocaleString('ko-KR', {
                           month: 'long',
                           day: 'numeric',
@@ -282,7 +282,7 @@ export function MailboxView({
                           e.stopPropagation();
                           onAcceptMatch?.(request.id);
                         }}
-                        className="flex-1 py-2.5 bg-[#1A3C34] text-[#FCFCFA] rounded-lg hover:bg-[#1A3C34]/90 transition-colors font-sans text-sm"
+                        className="flex-1 py-2.5 bg-[#171717] text-[#FAFAFA] rounded-lg hover:bg-[#171717]/85 transition-colors font-sans text-sm shadow-sm shadow-black/10"
                       >
                         수락
                       </button>
@@ -291,7 +291,7 @@ export function MailboxView({
                           e.stopPropagation();
                           handleRejectClick(request);
                         }}
-                        className="flex-1 py-2.5 bg-white border border-[#1A3C34]/20 text-[#1A3C34] rounded-lg hover:bg-[#FCFCFA] transition-colors font-sans text-sm"
+                        className="flex-1 py-2.5 bg-white border border-[#C2C2C2]/80 text-[#171717] rounded-lg hover:bg-[#EAEAEA] transition-colors font-sans text-sm"
                       >
                         거절
                       </button>
@@ -300,7 +300,7 @@ export function MailboxView({
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-[#1A3C34]/40 text-sm font-sans">
+              <div className="flex flex-col items-center justify-center h-64 text-[#333333]/50 text-sm font-sans">
                 <p>아직 받은 매칭 신청이 없습니다.</p>
               </div>
             )}
@@ -315,11 +315,11 @@ export function MailboxView({
                   <div
                     key={`${request.profileId}-${index}`}
                     onClick={() => onProfileClick?.(request.profileId, "mailbox")}
-                    className="bg-white border border-[#1A3C34]/10 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+                    className="bg-white border border-[#C2C2C2]/60 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
                   >
                     <div className="flex gap-3 mb-3">
                       <div
-                        className="w-14 h-14 rounded-full overflow-hidden border border-[#1A3C34]/10 flex-shrink-0"
+                        className="w-14 h-14 rounded-full overflow-hidden border border-[#C2C2C2]/60 flex-shrink-0"
                       >
                         <img
                           src={request.photo}
@@ -329,29 +329,29 @@ export function MailboxView({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 mb-1">
-                          <h3 className="font-sans font-medium text-[#1A3C34]">
+                          <h3 className="font-sans font-medium text-[#171717]">
                             {request.nickname}
                           </h3>
-                          <span className="text-sm text-[#1A3C34]/60 font-sans">
+                          <span className="text-sm text-[#333333]/70 font-sans">
                             만 {request.age}세
                           </span>
                         </div>
-                        <p className="text-xs text-[#1A3C34]/50 font-sans">
+                        <p className="text-xs text-[#333333]/60 font-sans">
                           {getLocationText(request.location)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs text-[#D4AF37] font-sans">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#EAEAEA] text-[11px] text-[#171717] font-sans font-medium">
                           수락 대기중
                         </span>
                       </div>
                     </div>
-                    <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border border-[#D4AF37]/20 rounded-lg p-3">
-                      <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap line-clamp-3">
+                    <div className="bg-white border border-[#C2C2C2]/50 rounded-lg p-3">
+                      <p className="font-serif text-sm text-[#171717] leading-relaxed whitespace-pre-wrap line-clamp-3">
                         {request.letter}
                       </p>
                     </div>
-                    <p className="text-xs text-[#1A3C34]/40 font-sans mt-2">
+                    <p className="text-xs text-[#333333]/55 font-sans mt-2">
                       {new Date(request.timestamp).toLocaleString('ko-KR', {
                         month: 'long',
                         day: 'numeric',
@@ -363,13 +363,13 @@ export function MailboxView({
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-[#1A3C34]/40 text-sm font-sans">
+              <div className="flex flex-col items-center justify-center h-64 text-[#333333]/50 text-sm font-sans">
                 <p>아직 보낸 매칭 신청이 없습니다.</p>
               </div>
             )}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-64 text-[#1A3C34]/40 text-sm font-sans">
+          <div className="flex flex-col items-center justify-center h-64 text-[#333333]/50 text-sm font-sans">
             <p>아직 메시지가 없습니다.</p>
           </div>
         )}

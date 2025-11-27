@@ -21,7 +21,7 @@ export function DatingCancelModal({ isOpen, onClose, onConfirm }: DatingCancelMo
             {/* Modal Content */}
             <div className="relative w-full max-w-sm bg-white rounded-2xl overflow-hidden shadow-2xl transform transition-all scale-100">
                 {/* Header */}
-                <div className="bg-[#1A3C34] px-6 py-8 flex flex-col items-center justify-center relative">
+                <div className="bg-[#171717] px-6 py-8 flex flex-col items-center justify-center relative">
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
@@ -30,7 +30,7 @@ export function DatingCancelModal({ isOpen, onClose, onConfirm }: DatingCancelMo
                     </button>
 
                     <div className="flex flex-col items-center gap-3">
-                        <AlertTriangle className="w-8 h-8 text-[#D4AF37]" />
+                        <AlertTriangle className="w-8 h-8 text-[#CC0000]" />
                         <h2 className="font-serif text-2xl text-white tracking-wide">
                             소개팅 신청 취소
                         </h2>
@@ -43,12 +43,12 @@ export function DatingCancelModal({ isOpen, onClose, onConfirm }: DatingCancelMo
                 {/* Body */}
                 <div className="p-6 space-y-6">
                     {/* Message Box */}
-                    <div className="bg-[#FCFCFA] border border-[#D4AF37]/30 rounded-xl p-5 text-center space-y-3">
-                        <Heart className="w-5 h-5 text-[#D4AF37] mx-auto fill-current" />
-                        <p className="text-[#1A3C34] font-sans text-sm leading-relaxed">
+                    <div className="bg-[#FAFAFA] border border-[#CC0000]/30 rounded-xl p-5 text-center space-y-3">
+                        <Heart className="w-5 h-5 text-[#CC0000] mx-auto fill-current" />
+                        <p className="text-[#171717] font-sans text-sm leading-relaxed">
                             이번 주 금요일, 당신과 같은 책을 좋아하는 사람과의 특별한 만남이 기다리고 있어요.
                         </p>
-                        <p className="text-[#1A3C34]/60 font-sans text-xs">
+                        <p className="text-[#171717]/60 font-sans text-xs">
                             정말 포기하시겠습니까?
                         </p>
                     </div>
@@ -57,7 +57,7 @@ export function DatingCancelModal({ isOpen, onClose, onConfirm }: DatingCancelMo
                     <div className="space-y-3">
                         <button
                             onClick={onClose}
-                            className="w-full bg-[#D4AF37] text-white font-sans font-medium py-3.5 rounded-xl hover:bg-[#D4AF37]/90 transition-colors shadow-lg shadow-[#D4AF37]/20"
+                            className="w-full bg-[#CC0000] text-white font-sans font-medium py-3.5 rounded-xl hover:bg-[#CC0000]/90 transition-colors shadow-lg shadow-[#CC0000]/20"
                         >
                             계속 참여하기
                         </button>
@@ -66,7 +66,7 @@ export function DatingCancelModal({ isOpen, onClose, onConfirm }: DatingCancelMo
                                 console.log("Modal cancel button clicked, calling onConfirm");
                                 onConfirm();
                             }}
-                            className="w-full bg-white border border-[#1A3C34]/10 text-[#1A3C34]/40 font-sans font-medium py-3.5 rounded-xl hover:bg-[#1A3C34]/5 hover:text-[#1A3C34]/60 transition-colors"
+                            className="w-full bg-white border border-[#171717]/10 text-[#171717]/40 font-sans font-medium py-3.5 rounded-xl hover:bg-[#171717]/5 hover:text-[#171717]/60 transition-colors"
                         >
                             취소하기
                         </button>
