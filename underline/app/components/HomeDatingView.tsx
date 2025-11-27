@@ -303,21 +303,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
                       </p>
                     </div>
 
-                    {/* Divider */}
-                    <div className="h-px bg-[#1A3C34]/10" />
 
-                    {/* Book Review */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <BookOpen className="w-4 h-4 text-[#D4AF37]" />
-                        <h4 className="font-serif text-sm text-[#1A3C34]/80 truncate">
-                          {profile.bookTitle}
-                        </h4>
-                      </div>
-                      <p className="font-serif text-[#1A3C34] leading-relaxed text-sm italic line-clamp-3">
-                        "{profile.reviewExcerpt}"
-                      </p>
-                    </div>
                   </div>
                 </div>
               ))}
