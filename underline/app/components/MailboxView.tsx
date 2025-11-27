@@ -48,6 +48,12 @@ export function MailboxView({
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<ReceivedMatchRequest | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchDeltaX, setTouchDeltaX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [animateDirection, setAnimateDirection] = useState<"left" | "right" | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const tabOrder: Array<"sent" | "received" | "matched"> = ["sent", "received", "matched"];
 
   // Fetch unread notification count
   useEffect(() => {
@@ -111,12 +117,97 @@ export function MailboxView({
     return locationMap[location] || location;
   };
 
+  const handleTabChange = (tab: string) => {
+    const currentIndex = tabOrder.indexOf(activeTab as "sent" | "received" | "matched");
+    const nextIndex = tabOrder.indexOf(tab as "sent" | "received" | "matched");
+
+    if (nextIndex > currentIndex) setAnimateDirection("left");
+    if (nextIndex < currentIndex) setAnimateDirection("right");
+
+    onTabChange(tab);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
+    setTouchDeltaX(0);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = touch.clientY - touchStart.y;
+
+    // Ignore vertical scroll gestures
+    if (Math.abs(deltaY) > Math.abs(deltaX) + 20) return;
+
+    setTouchDeltaX(deltaX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart) {
+      setIsDragging(false);
+      return;
+    }
+
+    const threshold = 40;
+    if (touchDeltaX < -threshold) {
+      // Swipe left -> next tab
+      const currentIndex = tabOrder.indexOf(activeTab as "sent" | "received" | "matched");
+      if (currentIndex < tabOrder.length - 1) {
+        handleTabChange(tabOrder[currentIndex + 1]);
+      }
+    } else if (touchDeltaX > threshold) {
+      // Swipe right -> prev tab
+      const currentIndex = tabOrder.indexOf(activeTab as "sent" | "received" | "matched");
+      if (currentIndex > 0) {
+        handleTabChange(tabOrder[currentIndex - 1]);
+      }
+    }
+
+    setTouchStart(null);
+    setTouchDeltaX(0);
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    // Trigger a small transition on tab change for smoothness
+    setIsAnimating(true);
+    const timer = setTimeout(() => setIsAnimating(false), 260);
+    return () => clearTimeout(timer);
+  }, [activeTab]);
+
+  const dragOffset = Math.max(-60, Math.min(60, touchDeltaX));
+  const slideOffset =
+    !isDragging && isAnimating && animateDirection
+      ? animateDirection === "left"
+        ? -10
+        : 10
+      : 0;
+  const translateX = isDragging ? dragOffset : slideOffset;
+  const contentStyle: React.CSSProperties = {
+    transform: `translateX(${translateX}px)`,
+    transition: isDragging
+      ? "none"
+      : "transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 240ms ease",
+    opacity: isDragging ? 0.98 : isAnimating ? 0.95 : 1,
+    willChange: "transform, opacity",
+  };
+
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
       <MailboxHeader onShowNotifications={onShowNotifications} unreadCount={unreadCount} />
-      <MailboxTabs activeTab={activeTab} onTabChange={onTabChange} />
+      <MailboxTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
-      <div className="flex-1 bg-[#FCFCFA] pb-24">
+      <div
+        className="flex-1 bg-[#FCFCFA] pb-24 overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div style={contentStyle}>
         {activeTab === "received" ? (
           <div className="px-6 py-4">
             {receivedMatchRequests && receivedMatchRequests.length > 0 ? (
@@ -269,6 +360,7 @@ export function MailboxView({
             <p>아직 메시지가 없습니다.</p>
           </div>
         )}
+        </div>
       </div>
       <RejectConfirmModal
         isOpen={rejectModalOpen}

@@ -8,8 +8,8 @@ interface MailboxTabsProps {
 
 export function MailboxTabs({ activeTab, onTabChange }: MailboxTabsProps) {
   const tabs = [
-    { id: "received", label: "받음" },
     { id: "sent", label: "보냄" },
+    { id: "received", label: "받음" },
     { id: "matched", label: "매칭됨" },
   ];
 
