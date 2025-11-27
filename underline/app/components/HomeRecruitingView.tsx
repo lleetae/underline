@@ -96,12 +96,44 @@ export function HomeRecruitingView({
     }
   };
 
-  const handleRegisterClick = () => {
+  const handleRegisterClick = async () => {
     if (!isSignedUp) {
       onShowLoginModal();
       return;
     }
-    onRegister();
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get member_id
+      const { data: memberData } = await supabase
+        .from('member')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single();
+
+      if (!memberData) return;
+
+      // Insert or update dating_applications with status='active'
+      const { error } = await supabase
+        .from('dating_applications')
+        .upsert(
+          { member_id: memberData.id, status: 'active' },
+          { onConflict: 'member_id' }
+        );
+
+      if (error) {
+        console.error("Error applying:", error);
+        return;
+      }
+
+      // Call the prop callback
+      onRegister();
+    } catch (error) {
+      console.error("Registration failed:", error);
+    }
   };
 
   const handleCancelClick = () => {
@@ -366,9 +398,38 @@ export function HomeRecruitingView({
       <CancelRecruitmentModal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}
-        onConfirm={() => {
-          onCancelRegister();
-          setShowCancelModal(false);
+        onConfirm={async () => {
+          try {
+            // Get current user
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Get member_id
+            const { data: memberData } = await supabase
+              .from('member')
+              .select('id')
+              .eq('auth_id', user.id)
+              .single();
+
+            if (!memberData) return;
+
+            // Update status to 'cancelled'
+            const { error } = await supabase
+              .from('dating_applications')
+              .update({ status: 'cancelled' })
+              .eq('member_id', memberData.id);
+
+            if (error) {
+              console.error("Error cancelling:", error);
+              return;
+            }
+
+            // Call the prop callback
+            onCancelRegister();
+            setShowCancelModal(false);
+          } catch (error) {
+            console.error("Cancel failed:", error);
+          }
         }}
       />
     </div>
