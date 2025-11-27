@@ -3,6 +3,7 @@ import { Bell } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { CancelRecruitmentModal } from "./CancelRecruitmentModal";
 import { supabase } from "../lib/supabase";
+import { useCountdown } from "../hooks/useCountdown";
 
 interface SuccessStory {
   id: string;
@@ -30,43 +31,8 @@ export function HomeRecruitingView({
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Countdown timer state (example: 2 days, 14 hours, 23 minutes remaining)
-  // Calculate time left until next Friday 00:00:00
-  const calculateTimeLeft = () => {
-    const now = new Date();
-    const target = new Date(now);
-
-    // Calculate days until next Friday (5)
-    const currentDay = now.getDay(); // 0: Sun, 1: Mon, ... 6: Sat
-    let daysUntilFriday = (5 - currentDay + 7) % 7;
-    if (daysUntilFriday === 0) daysUntilFriday = 7;
-
-    target.setDate(now.getDate() + daysUntilFriday);
-    target.setHours(0, 0, 0, 0);
-
-    const difference = target.getTime() - now.getTime();
-
-    if (difference > 0) {
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((difference / 1000 / 60) % 60);
-      const seconds = Math.floor((difference / 1000) % 60);
-
-      return { days, hours, minutes, seconds };
-    }
-
-    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  };
-
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+  // Countdown timer for next Friday 00:00:00
+  const timeLeft = useCountdown(5, 0);
 
   // Fetch unread notification count with short polling (5 seconds)
   useEffect(() => {

@@ -11,7 +11,7 @@ interface Photo {
   file?: File;
 }
 
-interface ProfileData {
+export interface ProfileData {
   nickname: string;
   gender: string;
   birthDate: string;

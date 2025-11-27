@@ -379,7 +379,6 @@ export default function App() {
           {isDatingPhase ? (
             <HomeDatingView
               isSignedUp={isSignedUp}
-              onShowLoginModal={handleShowLoginModal}
               onProfileClick={handleProfileClick}
               onShowNotifications={handleShowNotifications}
             />
