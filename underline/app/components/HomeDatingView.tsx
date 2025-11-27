@@ -27,27 +27,43 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
   // const supabase = createClient(); // Removed local client creation
 
   // Countdown timer for dating period end
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 12,
-    minutes: 0,
-    seconds: 0,
-  });
+  // Calculate time left until next Monday 00:00:00 (End of Sunday)
+  const calculateTimeLeft = () => {
+    const now = new Date();
+    const target = new Date(now);
+
+    // Calculate days until next Monday
+    const currentDay = now.getDay(); // 0: Sun, 1: Mon, ... 6: Sat
+    const daysUntilMonday = (8 - currentDay) % 7;
+    const daysToAdd = daysUntilMonday === 0 ? 7 : daysUntilMonday;
+
+    target.setDate(now.getDate() + daysToAdd);
+    target.setHours(0, 0, 0, 0);
+
+    const difference = target.getTime() - now.getTime();
+
+    if (difference > 0) {
+      const totalHours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      return {
+        hours: totalHours,
+        minutes: minutes,
+        seconds: seconds
+      };
+    }
+
+    return { hours: 0, minutes: 0, seconds: 0 };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
 
-    return () => clearInterval(timer);
     return () => clearInterval(timer);
   }, []);
 
