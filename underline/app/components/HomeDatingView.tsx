@@ -126,6 +126,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
         const myGender = currentUserData?.gender;
         const myMemberId = currentUserData?.id;
 
+
         // Fetch candidates (excluding myself) and filter by dating_applications existence
         let query = supabase
           .from('member')
@@ -143,7 +144,8 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
               created_at
             ),
             dating_applications!inner(*)
-          `);
+          `)
+          .eq('dating_applications.status', 'active'); // Only show active applications
 
         if (myMemberId) {
           query = query.neq('id', myMemberId);

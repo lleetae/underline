@@ -253,7 +253,7 @@ export default function App() {
     setCurrentView("notifications");
   };
 
-  const handleNotificationNavigateToMatch = (matchId: string, notificationType: 'match_request' | 'match_accepted' | 'contact_revealed') => {
+  const handleNotificationNavigateToMatch = (_matchId: string, notificationType: 'match_request' | 'match_accepted' | 'contact_revealed') => {
     // Navigate to mailbox with appropriate tab
     setCurrentView("mailbox");
 
