@@ -24,8 +24,8 @@ const config: Config = {
                 background: "hsl(var(--background))",
                 foreground: "hsl(var(--foreground))",
                 primary: {
-                    DEFAULT: "hsl(var(--primary))",
-                    foreground: "hsl(var(--primary-foreground))",
+                    DEFAULT: "#A31D1D", // Deep Red
+                    foreground: "#FFFFFF",
                 },
                 secondary: {
                     DEFAULT: "hsl(var(--secondary))",
@@ -51,6 +51,13 @@ const config: Config = {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
+                "underline-red": "#CC0000",
+                "underline-cream": "#FDFBF7",
+                "underline-text": "#2D2D2D",
+            },
+            fontFamily: {
+                serif: ["var(--font-serif)", "serif"],
+                sans: ["var(--font-sans)", "sans-serif"],
             },
             borderRadius: {
                 lg: "var(--radius)",

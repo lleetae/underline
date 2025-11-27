@@ -33,7 +33,7 @@ export function LoginModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative bg-gradient-to-br from-[var(--foreground)] to-[#2A4C44] px-6 py-8 text-white">
+        <div className="relative bg-[var(--foreground)] px-6 py-8 text-white">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition-colors"

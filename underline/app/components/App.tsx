@@ -13,6 +13,7 @@ import { LoginModal } from "./LoginModal";
 import { Toaster, toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { Session } from "@supabase/supabase-js";
+import { CancelRecruitmentModal } from "./CancelRecruitmentModal";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -21,6 +22,7 @@ export default function App() {
   const [isSignedUp, setIsSignedUp] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false); // Added for HomeRecruitingView compatibility
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
@@ -50,6 +52,7 @@ export default function App() {
 
   const [matches, setMatches] = useState<Array<{
     id: string;
+    profileId: string;
     userImage: string;
     nickname: string;
     age: number;
@@ -498,8 +501,70 @@ export default function App() {
 
   // Placeholder functions for HomeRecruitingView compatibility
   const handleShowLoginModal = () => setShowLoginModal(true);
-  const handleRegister = () => setIsRegistered(true);
-  const handleCancelRegister = () => setIsRegistered(false);
+  const handleRegister = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get member id
+      const { data: member } = await supabase
+        .from('member')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single();
+
+      if (!member) return;
+
+      const { error } = await supabase
+        .from('dating_applications')
+        .upsert({
+          member_id: member.id,
+          status: 'active',
+          created_at: new Date().toISOString()
+        }, { onConflict: 'member_id' });
+
+      if (error) throw error;
+
+      setIsRegistered(true);
+      toast.success("신청이 완료되었습니다");
+    } catch (error) {
+      console.error("Error registering:", error);
+      toast.error("신청에 실패했습니다");
+    }
+  };
+
+  const handleCancelRegister = () => {
+    setShowCancelModal(true);
+  };
+
+  const confirmCancelRegister = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: member } = await supabase
+        .from('member')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single();
+
+      if (!member) return;
+
+      const { error } = await supabase
+        .from('dating_applications')
+        .update({ status: 'cancelled' })
+        .eq('member_id', member.id);
+
+      if (error) throw error;
+
+      setIsRegistered(false);
+      setShowCancelModal(false);
+      toast.success("신청이 취소되었습니다");
+    } catch (error) {
+      console.error("Error cancelling:", error);
+      toast.error("취소에 실패했습니다");
+    }
+  };
 
 
   if (isLoading) {
@@ -604,6 +669,8 @@ export default function App() {
         )}
       </div>
 
+
+
       {currentView === "home" && (
         <>
           {isDatingPhase ? (
@@ -623,6 +690,18 @@ export default function App() {
             />
           )}
           <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
+
+          <CancelRecruitmentModal
+            isOpen={showCancelModal}
+            onClose={() => setShowCancelModal(false)}
+            onConfirm={confirmCancelRegister}
+          />
+
+          <CancelRecruitmentModal
+            isOpen={showCancelModal}
+            onClose={() => setShowCancelModal(false)}
+            onConfirm={confirmCancelRegister}
+          />
         </>
       )}
 
