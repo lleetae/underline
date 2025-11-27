@@ -55,8 +55,8 @@ export default function App() {
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
     },
     {
-      profileId: "profile3",
-      nickname: "커피애호가",
+      profileId: "37",
+      nickname: "소설가지망생",
       age: 27,
       location: "서울 마포구",
       photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
@@ -77,8 +77,8 @@ export default function App() {
   }>>([
     {
       id: "received1",
-      profileId: "profile4",
-      nickname: "북카페순례자",
+      profileId: "38",
+      nickname: "철학하는여자",
       age: 29,
       location: "서울 용산구",
       photo: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
@@ -87,8 +87,8 @@ export default function App() {
     },
     {
       id: "received2",
-      profileId: "profile5",
-      nickname: "밤하늘독서",
+      profileId: "39",
+      nickname: "문학소녀",
       age: 26,
       location: "서울 종로구",
       photo: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df",
@@ -97,8 +97,8 @@ export default function App() {
     },
     {
       id: "received3",
-      profileId: "profile6",
-      nickname: "조용한오후",
+      profileId: "36",
+      nickname: "심리학도",
       age: 31,
       location: "서울 서초구",
       photo: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e",
