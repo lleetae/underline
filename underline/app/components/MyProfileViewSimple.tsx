@@ -150,7 +150,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
           ));
           setSelectedBook({ ...selectedBook, review: updatedReview });
         }}
-        onDelete={() => {
+        onDelete={async () => {
           setBooks(books.filter(b => b.id !== selectedBook.id));
           setSelectedBook(null);
         }}
@@ -187,7 +187,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       <ProfileEditView
         profileData={profileData}
         onBack={() => setShowProfileEditView(false)}
-        onSave={(updatedData) => {
+        onSave={async (updatedData, _deletedPhotos) => {
           setProfileData({
             ...updatedData,
             profilePhoto: updatedData.profilePhotos?.[0]?.url

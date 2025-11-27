@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from "react";
-import { MapPin, BookOpen, Bell } from "lucide-react";
+import { MapPin, Bell } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { supabase } from "../lib/supabase";
+import { useCountdown } from "../hooks/useCountdown";
 
 interface UserProfile {
   id: number; // Changed from string to number
@@ -15,10 +17,9 @@ interface UserProfile {
   reviewExcerpt: string;
 }
 
-export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, onShowNotifications }: {
-  onProfileClick?: (profileId: string, source?: "home" | "mailbox") => void; // Keep as string for routing compatibility, will convert
+export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications }: {
+  onProfileClick?: (profileId: string, source?: "home" | "mailbox") => void;
   isSignedUp?: boolean;
-  onShowLoginModal?: () => void;
   onShowNotifications?: () => void;
 }) {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
@@ -26,46 +27,15 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
   const [unreadCount, setUnreadCount] = useState(0);
   // const supabase = createClient(); // Removed local client creation
 
-  // Countdown timer for dating period end
-  // Calculate time left until next Monday 00:00:00 (End of Sunday)
-  const calculateTimeLeft = () => {
-    const now = new Date();
-    const target = new Date(now);
+  // Countdown timer for dating period end (Next Monday 00:00)
+  // The useCountdown hook takes (targetDayOfWeek: number, targetHour: number)
+  // 1 for Monday, 0 for Sunday. So 1, 0 means Monday 00:00.
+  const timeLeft = useCountdown(1, 0);
 
-    // Calculate days until next Monday
-    const currentDay = now.getDay(); // 0: Sun, 1: Mon, ... 6: Sat
-    const daysUntilMonday = (8 - currentDay) % 7;
-    const daysToAdd = daysUntilMonday === 0 ? 7 : daysUntilMonday;
+  // Calculate total hours for display (e.g. 36:00:00)
+  const totalHours = timeLeft.days * 24 + timeLeft.hours;
 
-    target.setDate(now.getDate() + daysToAdd);
-    target.setHours(0, 0, 0, 0);
-
-    const difference = target.getTime() - now.getTime();
-
-    if (difference > 0) {
-      const totalHours = Math.floor(difference / (1000 * 60 * 60));
-      const minutes = Math.floor((difference / 1000 / 60) % 60);
-      const seconds = Math.floor((difference / 1000) % 60);
-
-      return {
-        hours: totalHours,
-        minutes: minutes,
-        seconds: seconds
-      };
-    }
-
-    return { hours: 0, minutes: 0, seconds: 0 };
-  };
-
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+  // Removed manual calculateTimeLeft and its useEffect
 
   // Fetch unread notification count with short polling (5 seconds)
   useEffect(() => {
@@ -93,7 +63,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
       const token = session.access_token;
       const response = await fetch('/api/notifications?unread_only=true', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token} `
         }
       });
 
@@ -131,20 +101,20 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
         let query = supabase
           .from('member')
           .select(`
-            id,
-            nickname,
-            age,
-            location,
-            photo_url,
-            bio,
-            gender,
-            member_books(
-              book_title,
-              book_review,
-              created_at
-            ),
-            dating_applications!inner(*)
-          `)
+id,
+  nickname,
+  age,
+  location,
+  photo_url,
+  bio,
+  gender,
+  member_books(
+    book_title,
+    book_review,
+    created_at
+  ),
+  dating_applications!inner(*)
+    `)
           .eq('dating_applications.status', 'active'); // Only show active applications
 
         if (myMemberId) {
@@ -235,15 +205,15 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal, o
         <div className="px-6 pb-3">
           <div className={`
             px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500
-            ${timeLeft.hours < 24
+            ${totalHours < 24
               ? "bg-gradient-to-r from-[#FF6B6B] to-[#FF8E53] shadow-[#FF6B6B]/30 animate-pulse"
               : "bg-gradient-to-r from-[#D4AF37] to-[#C9A641] shadow-[#D4AF37]/30"
             }
           `}>
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
             <span className="text-xs font-sans font-medium tracking-wide text-white">
-              {timeLeft.hours < 24 ? "마감 임박! " : ""}
-              소개팅 기간 종료까지 {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+              {totalHours < 24 ? "마감 임박! " : ""}
+              소개팅 기간 종료까지 {String(totalHours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
             </span>
           </div>
         </div>
