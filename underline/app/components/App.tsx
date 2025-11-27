@@ -33,7 +33,7 @@ export default function App() {
     age: number;
     location: string;
     photo: string;
-    sentence: string;
+    letter: string;
     timestamp: Date;
   }>>([
     {
@@ -42,7 +42,7 @@ export default function App() {
       age: 28,
       location: "서울 성동구",
       photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-      sentence: "가벼움과 무거움 사이에서 우리는 무엇을 선택해야 할까.",
+      letter: "안녕하세요. 프로필을 보다가 '참을 수 없는 존재의 가벼움'을 좋아하신다는 점이 인상 깊어서 매칭 신청을 보냅니다. 저도 그 책을 읽고 많은 생각을 했거든요. 특히 '가벼움과 무거움'에 대한 주제로 이야기를 나눠보고 싶습니다.",
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
     },
     {
@@ -51,7 +51,7 @@ export default function App() {
       age: 30,
       location: "서울 강남구",
       photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
-      sentence: "새는 알에서 나오려고 투쟁한다. 알은 세계다.",
+      letter: "데미안을 읽으셨군요! 저에게도 인생 책 중 하나입니다. '새는 알에서 나오려고 투쟁한다'는 구절을 가장 좋아해요. 혹시 어떤 구절을 가장 좋아하시나요? 책 취향이 비슷해 보여서 꼭 한번 대화 나눠보고 싶습니다.",
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
     },
     {
@@ -60,7 +60,7 @@ export default function App() {
       age: 27,
       location: "서울 마포구",
       photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
-      sentence: "사랑이란 타인을 통해 자기 자신을 발견하는 과정이다.",
+      letter: "안녕하세요! 에리히 프롬의 '사랑의 기술'을 읽으신 걸 보고 반가워서 연락드립니다. 사랑에 대한 깊이 있는 고찰을 좋아하시는 것 같아요. 저도 최근에 다시 읽고 있는데, 함께 독서 모임이나 이야기를 나누면 좋을 것 같아 신청합니다.",
       timestamp: new Date(Date.now() - 1000 * 60 * 30),
     },
   ]);
@@ -72,7 +72,7 @@ export default function App() {
     age: number;
     location: string;
     photo: string;
-    sentence: string;
+    letter: string;
     timestamp: Date;
   }>>([
     {
@@ -82,7 +82,7 @@ export default function App() {
       age: 29,
       location: "서울 용산구",
       photo: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
-      sentence: "인생은 B와 D 사이의 C다. 탄생(Birth)과 죽음(Death) 사이의 선택(Choice).",
+      letter: "안녕하세요~ 프로필에 적힌 책 취향이 저랑 너무 비슷해서 놀랐어요! 저도 주말마다 북카페 찾아다니는 걸 좋아하는데, 혹시 추천해주실 만한 곳이 있나요? 같이 책 이야기 나누고 싶어요.",
       timestamp: new Date(Date.now() - 1000 * 60 * 45),
     },
     {
@@ -92,7 +92,7 @@ export default function App() {
       age: 26,
       location: "서울 종로구",
       photo: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df",
-      sentence: "우리는 모두 별이 되기 위해 어둠 속을 헤매고 있다.",
+      letter: "반갑습니다. '코스모스'를 인생 책으로 꼽으셨더라고요. 저도 우주와 과학에 관심이 많습니다. '우리는 모두 별의 먼지'라는 말을 참 좋아하는데, 이런 주제로 깊은 대화를 나눠보고 싶어서 신청합니다.",
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
     },
     {
@@ -102,7 +102,7 @@ export default function App() {
       age: 31,
       location: "서울 서초구",
       photo: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e",
-      sentence: "진정한 여행은 새로운 풍경을 보는 것이 아니라 새로운 눈을 갖는 것이다.",
+      letter: "여행 에세이를 좋아하시는군요! '진정한 여행은 새로운 눈을 갖는 것'이라는 말에 깊이 공감합니다. 저도 여행 다니며 글 쓰는 걸 좋아해요. 서로의 여행 경험과 책 이야기를 공유하면 즐거울 것 같습니다.",
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
     },
   ]);
@@ -189,7 +189,7 @@ export default function App() {
     age: number;
     location: string;
     photo: string;
-    sentence: string;
+    letter: string;
   }) => {
     const alreadySent = sentMatchRequests.find(req => req.profileId === profileData.profileId);
 
@@ -202,10 +202,6 @@ export default function App() {
       { ...profileData, timestamp: new Date() },
       ...prev
     ]);
-  };
-
-  const handleCancelMatchRequest = (profileId: string) => {
-    setSentMatchRequests(prev => prev.filter(req => req.profileId !== profileId));
   };
 
   const handleTabChange = (tab: "signup" | "home" | "mailbox" | "profile" | "profileDetail") => {
@@ -385,6 +381,7 @@ export default function App() {
               isSignedUp={isSignedUp}
               onShowLoginModal={handleShowLoginModal}
               onProfileClick={handleProfileClick}
+              onShowNotifications={handleShowNotifications}
             />
           ) : (
             <HomeRecruitingView
@@ -419,6 +416,7 @@ export default function App() {
                 onTabChange={(tab) => setMailboxActiveTab(tab as "matched" | "sent" | "messages")}
                 onAcceptMatch={handleAcceptMatch}
                 onRejectMatch={handleRejectMatch}
+                onShowNotifications={handleShowNotifications}
               />
               <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
             </>
@@ -435,6 +433,7 @@ export default function App() {
                 onTabChange={(tab) => setMailboxActiveTab(tab as "matched" | "sent" | "messages")}
                 onAcceptMatch={handleAcceptMatch}
                 onRejectMatch={handleRejectMatch}
+                onShowNotifications={handleShowNotifications}
               />
               <BottomNav activeTab="mailbox" onTabChange={handleTabChange} />
             </>
@@ -453,7 +452,6 @@ export default function App() {
                 profileId={selectedProfileId}
                 onBack={handleBackFromProfileDetail}
                 onMatchRequest={handleMatchRequest}
-                onCancelMatchRequest={handleCancelMatchRequest}
                 sentMatchRequests={sentMatchRequests}
                 disableMatching={profileSource === "mailbox"}
               />

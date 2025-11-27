@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
 import { MailboxHeader } from "./mailbox/MailboxHeader";
 import { MatchList } from "./mailbox/MatchList";
 import { MailboxTabs } from "./mailbox/MailboxTabs";
@@ -10,7 +11,7 @@ interface SentMatchRequest {
   age: number;
   location: string;
   photo: string;
-  sentence: string;
+  letter: string;
   timestamp: Date;
 }
 
@@ -21,7 +22,7 @@ interface ReceivedMatchRequest {
   age: number;
   location: string;
   photo: string;
-  sentence: string;
+  letter: string;
   timestamp: Date;
 }
 
@@ -32,7 +33,8 @@ export function MailboxView({
   activeTab,
   onTabChange,
   onAcceptMatch,
-  onRejectMatch
+  onRejectMatch,
+  onShowNotifications
 }: {
   sentMatchRequests?: SentMatchRequest[];
   receivedMatchRequests?: ReceivedMatchRequest[];
@@ -41,9 +43,38 @@ export function MailboxView({
   onTabChange: (tab: string) => void;
   onAcceptMatch?: (requestId: string) => void;
   onRejectMatch?: (requestId: string) => void;
+  onShowNotifications?: () => void;
 }) {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<ReceivedMatchRequest | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const response = await fetch('/api/notifications?unread_only=true', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching unread count:", error);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleRejectClick = (request: ReceivedMatchRequest) => {
     setSelectedRequest(request);
@@ -68,7 +99,7 @@ export function MailboxView({
 
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
-      <MailboxHeader />
+      <MailboxHeader onShowNotifications={onShowNotifications} unreadCount={unreadCount} />
       <MailboxTabs activeTab={activeTab} onTabChange={onTabChange} />
 
       <div className="flex-1 bg-[#FCFCFA] pb-24">
@@ -114,8 +145,8 @@ export function MailboxView({
                         </div>
                       </div>
                       <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border border-[#D4AF37]/20 rounded-lg p-3">
-                        <p className="font-serif text-sm text-[#1A3C34] italic leading-relaxed">
-                          "{request.sentence}"
+                        <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap line-clamp-3">
+                          {request.letter}
                         </p>
                       </div>
                       <p className="text-xs text-[#1A3C34]/40 font-sans mt-2">
@@ -198,8 +229,8 @@ export function MailboxView({
                       </div>
                     </div>
                     <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border border-[#D4AF37]/20 rounded-lg p-3">
-                      <p className="font-serif text-sm text-[#1A3C34] italic leading-relaxed">
-                        "{request.sentence}"
+                      <p className="font-serif text-sm text-[#1A3C34] leading-relaxed whitespace-pre-wrap line-clamp-3">
+                        {request.letter}
                       </p>
                     </div>
                     <p className="text-xs text-[#1A3C34]/40 font-sans mt-2">
