@@ -12,16 +12,18 @@ interface Book {
   review: string;
 }
 
-export function MyBookDetailView({ 
-  book, 
+export function MyBookDetailView({
+  book,
   onBack,
   onUpdate,
-  onDelete
-}: { 
-  book: Book; 
+  onDelete,
+  isLastBook = false
+}: {
+  book: Book;
   onBack: () => void;
   onUpdate?: (updatedReview: string) => void;
-  onDelete?: () => void;
+  onDelete?: () => Promise<void>;
+  isLastBook?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedReview, setEditedReview] = useState(book.review);
@@ -42,10 +44,18 @@ export function MyBookDetailView({
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
-    onDelete?.();
+  const handleDelete = async () => {
+    await onDelete?.();
     setShowDeleteModal(false);
     toast.success("책이 삭제되었습니다");
+  };
+
+  const handleDeleteClick = () => {
+    if (isLastBook) {
+      toast.error("최소 1권의 책은 남겨두어야 합니다");
+      return;
+    }
+    setShowDeleteModal(true);
   };
 
   return (
@@ -54,15 +64,15 @@ export function MyBookDetailView({
       <div className="sticky top-0 z-50 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <button 
-              className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors" 
+            <button
+              className="p-1 hover:bg-[#1A3C34]/5 rounded-full transition-colors"
               onClick={onBack}
             >
               <ArrowLeft className="w-5 h-5 text-[#1A3C34]" />
             </button>
             <h1 className="font-serif text-2xl text-[#1A3C34]">Book Review</h1>
           </div>
-          
+
           {/* Action Buttons */}
           {!isEditing && (
             <div className="flex items-center gap-2">
@@ -73,7 +83,7 @@ export function MyBookDetailView({
                 <Edit2 className="w-4 h-4 text-[#D4AF37]" />
               </button>
               <button
-                onClick={() => setShowDeleteModal(true)}
+                onClick={handleDeleteClick}
                 className="p-2 hover:bg-red-50 rounded-full transition-colors"
               >
                 <Trash2 className="w-4 h-4 text-red-500" />
@@ -112,9 +122,9 @@ export function MyBookDetailView({
                 </div>
               </div>
             </div>
-            
+
             <div className="h-px bg-[#D4AF37]/30 mb-4" />
-            
+
             <div className="flex items-center gap-2 mb-3">
               <BookOpen className="w-4 h-4 text-[#D4AF37]" />
               <h3 className="font-serif text-base text-[#1A3C34]">나의 감상</h3>
@@ -133,7 +143,7 @@ export function MyBookDetailView({
                   placeholder="감상문을 작성해주세요..."
                 />
               </div>
-              
+
               {/* Edit Action Buttons - Below Textarea */}
               <div className="flex gap-3">
                 <button
