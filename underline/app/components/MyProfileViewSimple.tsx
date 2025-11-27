@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Edit3, User, LogOut, MapPin, Book as BookIcon } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { MyBookDetailView } from "./MyBookDetailView";
 import { AddBookView } from "./AddBookView";
 import { ProfileEditView, ProfileData } from "./ProfileEditView";
 import { toast } from "sonner";
+import { supabase } from "../lib/supabase";
 
 interface Book {
   id: string;
@@ -108,19 +109,45 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
 
   // Profile Data State
   const [profileData, setProfileData] = useState<ProfileData & { profilePhoto?: string }>({
-    nickname: "책읽는사람",
-    gender: "여성",
-    birthDate: "1995.03.15",
+    nickname: "",
+    gender: "",
+    birthDate: "",
     location: "seoul",
     religion: "none",
-    height: "165",
+    height: "",
     smoking: "non-smoker",
     drinking: "social",
-    bio: "책과 커피, 그리고 조용한 오후를 사랑합니다. 깊이 있는 대화를 나눌 수 있는 사람을 찾고 있어요.",
-    kakaoId: "example_kakao",
+    bio: "",
+    kakaoId: "",
     profilePhoto: undefined,
     profilePhotos: [],
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: member } = await supabase.from('member').select('*').eq('auth_id', user.id).single();
+      if (member) {
+        setProfileData({
+          nickname: member.nickname || "",
+          gender: member.gender || "",
+          birthDate: member.birth_date || "",
+          location: member.location || "seoul",
+          religion: member.religion || "none",
+          height: member.height?.toString() || "",
+          smoking: member.smoking || "non-smoker",
+          drinking: member.drinking || "non-drinker",
+          bio: member.bio || "",
+          kakaoId: member.kakao_id || "",
+          profilePhoto: member.photo_url,
+          profilePhotos: member.photos ? member.photos.map((url: string, idx: number) => ({ id: idx.toString(), url })) : []
+        });
+      }
+    };
+    fetchProfile();
+  }, []);
 
   // Location mapping
   const locationMap: { [key: string]: string } = {
@@ -188,11 +215,43 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
         profileData={profileData}
         onBack={() => setShowProfileEditView(false)}
         onSave={async (updatedData, _deletedPhotos) => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          // Calculate age
+          let age = 0;
+          if (updatedData.birthDate) {
+            const birthYear = parseInt(updatedData.birthDate.substring(0, 4));
+            const currentYear = new Date().getFullYear();
+            age = currentYear - birthYear;
+          }
+
+          const { error } = await supabase.from('member').update({
+            nickname: updatedData.nickname,
+            location: updatedData.location,
+            religion: updatedData.religion,
+            height: parseInt(updatedData.height),
+            smoking: updatedData.smoking,
+            drinking: updatedData.drinking,
+            bio: updatedData.bio,
+            kakao_id: updatedData.kakaoId,
+            age: age,
+            photo_url: updatedData.profilePhotos?.[0]?.url,
+            photos: updatedData.profilePhotos?.map(p => p.url)
+          }).eq('auth_id', user.id);
+
+          if (error) {
+            console.error("Error saving profile:", error);
+            toast.error("저장 실패");
+            return;
+          }
+
           setProfileData({
             ...updatedData,
             profilePhoto: updatedData.profilePhotos?.[0]?.url
           });
           setShowProfileEditView(false);
+          toast.success("프로필이 저장되었습니다");
         }}
       />
     );

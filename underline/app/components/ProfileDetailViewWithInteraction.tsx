@@ -107,14 +107,14 @@ export function ProfileDetailViewWithInteraction({
           setProfile({
             id: memberData.id,
             nickname: memberData.nickname || "익명",
-            age: memberData.age || 0,
+            age: memberData.age || (memberData.birth_date ? new Date().getFullYear() - parseInt(memberData.birth_date.substring(0, 4)) : 0),
             location: memberData.location || "알 수 없음",
             religion: memberData.religion || "none",
             height: memberData.height || "",
             smoking: memberData.smoking || "non-smoker",
             drinking: memberData.drinking || "non-drinker",
             bio: memberData.bio || "",
-            photos: memberData.photo_url ? [memberData.photo_url] : [],
+            photos: memberData.photos && memberData.photos.length > 0 ? memberData.photos : (memberData.photo_url ? [memberData.photo_url] : []),
             books: books
           });
         }
@@ -164,6 +164,23 @@ export function ProfileDetailViewWithInteraction({
       "more-than-5": "월 5회이상"
     };
     return drinkingMap[drinking] || drinking;
+  };
+
+  // Helper function to display location text
+  const getLocationText = (location: string) => {
+    const locationMap: { [key: string]: string } = {
+      seoul: "서울",
+      busan: "부산",
+      incheon: "인천",
+      daegu: "대구",
+      daejeon: "대전",
+      gwangju: "광주",
+      ulsan: "울산",
+      sejong: "세종",
+      gyeonggi: "경기",
+      other: "기타"
+    };
+    return locationMap[location] || location;
   };
 
   const handleBookClick = (book: Book) => {
@@ -365,7 +382,7 @@ export function ProfileDetailViewWithInteraction({
               <span className="text-sm font-sans">만 {profile.age}세</span>
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
-                <span className="text-sm font-sans">{profile.location}</span>
+                <span className="text-sm font-sans">{getLocationText(profile.location)}</span>
               </div>
             </div>
           </div>
