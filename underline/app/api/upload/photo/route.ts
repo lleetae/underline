@@ -69,12 +69,22 @@ export async function POST(request: NextRequest) {
         const extension = file.name.split('.').pop();
         const filename = `${userId}_${timestamp}.${extension}`;
 
-        // 1. Upload original to PRIVATE bucket
+        // 1. Optimize original image (Resize & Compress)
+        const optimizedBuffer = await sharp(buffer)
+            .rotate() // Auto-rotate based on EXIF
+            .resize(1920, 1920, {
+                fit: 'inside', // Maintain aspect ratio, max dimensions
+                withoutEnlargement: true // Don't upscale smaller images
+            })
+            .jpeg({ quality: 80, mozjpeg: true }) // Compress to JPEG
+            .toBuffer();
+
+        // 1. Upload optimized original to PRIVATE bucket
         const { data: originalUpload, error: originalError } = await supabaseAdmin
             .storage
             .from('profile-photos-original')
-            .upload(filename, buffer, {
-                contentType: file.type,
+            .upload(filename, optimizedBuffer, {
+                contentType: 'image/jpeg', // Always JPEG after conversion
                 upsert: false
             });
 
@@ -86,8 +96,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. Generate blurred thumbnail
-        const blurredBuffer = await sharp(buffer)
+        // 2. Generate blurred thumbnail from optimized buffer
+        const blurredBuffer = await sharp(optimizedBuffer)
             .resize(800, 800, {
                 fit: 'cover',
                 position: 'center'
