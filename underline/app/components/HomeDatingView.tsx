@@ -104,8 +104,10 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
 id,
   nickname,
   age,
+  birth_date,
   location,
   photo_url,
+  photos,
   bio,
   gender,
   member_books(
@@ -144,9 +146,9 @@ id,
 
               // Handle potential missing fields
               const nickname = member.nickname || "익명";
-              const age = member.age || 0;
+              const age = member.age || (member.birth_date ? new Date().getFullYear() - parseInt(member.birth_date.substring(0, 4)) : 0);
               const location = member.location || "알 수 없음";
-              const photoUrl = member.photo_url;
+              const photos = member.photos && member.photos.length > 0 ? member.photos : (member.photo_url ? [member.photo_url] : []);
               const bio = member.bio || "";
 
               // If latestBook is missing (should be filtered out, but for safety)
@@ -157,7 +159,7 @@ id,
                 nickname,
                 age,
                 location,
-                photos: photoUrl ? [photoUrl] : [],
+                photos,
                 bio,
                 bookTitle: latestBook.book_title,
                 bookReview: latestBook.book_review,
