@@ -163,9 +163,7 @@ export default function App() {
   };
 
   const handleBackToHome = () => {
-    // If user cancels sign up, maybe logout?
-    // For now, just go back to home (logged out state effectively if no profile)
-    setCurrentView("home");
+    handleLogout();
   };
 
   const handleProfileClick = (profileId: string, source: "home" | "mailbox" = "home") => {

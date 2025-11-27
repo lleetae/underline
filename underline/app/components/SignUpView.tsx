@@ -6,7 +6,7 @@ import { SignUpStep2Basics, Step2Data } from "./signup/SignUpStep2Basics";
 import { SignUpStep3Details, Step3Data } from "./signup/SignUpStep3Details";
 import { SignUpStep4Admin, Step4Data } from "./signup/SignUpStep4Admin";
 
-export function SignUpView({ onComplete }: { onComplete?: () => void; onBack?: () => void }) {
+export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; onBack?: () => void }) {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
 
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
@@ -122,6 +122,8 @@ export function SignUpView({ onComplete }: { onComplete?: () => void; onBack?: (
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => (prev - 1) as 1 | 2 | 3 | 4);
+    } else {
+      onBack?.();
     }
   };
 
