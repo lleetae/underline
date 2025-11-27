@@ -5,8 +5,6 @@ export function CancelMatchModal({
   isOpen,
   onClose,
   onConfirm,
-  nickname,
-  sentence,
 }: {
   isOpen: boolean;
   onClose: () => void;

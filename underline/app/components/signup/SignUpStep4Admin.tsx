@@ -7,6 +7,8 @@ import { SignUpHeader } from "./SignUpHeader";
 interface PhotoSlot {
     id: string;
     url: string | null;
+    originalPath?: string | null;
+    blurredUrl?: string | null;
 }
 
 export interface Step4Data {
@@ -48,7 +50,7 @@ export function SignUpStep4Admin({
     const checkNudity = async (file: File): Promise<boolean> => {
         try {
             const nsfwjs = await import('nsfwjs');
-            const tf = await import('@tensorflow/tfjs');
+
 
             // Create an image element to load the file
             const img = document.createElement('img');
@@ -101,39 +103,41 @@ export function SignUpStep4Admin({
             }
 
             toast.dismiss(loadingToast);
-            const uploadToast = toast.loading("사진을 업로드하고 있습니다...");
+            const uploadToast = toast.loading("사진을 업로드하고 블러 처리중입니다...");
 
-            // 2. Upload to Supabase
+            // 2. Upload via API (Server-side processing)
             const { supabase } = await import('../../lib/supabase');
-
             const { data: { session } } = await supabase.auth.getSession();
+
             if (!session) {
-                toast.dismiss(loadingToast);
+                toast.dismiss(uploadToast);
                 toast.error("로그인이 필요합니다. 다시 로그인해주세요.");
                 return;
             }
 
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-            const filePath = `${session.user.id}/${fileName}`; // Organize by user ID
+            const formData = new FormData();
+            formData.append('photo', file);
+            formData.append('userId', session.user.id);
 
-            const { error: uploadError } = await supabase.storage
-                .from('profile-photos')
-                .upload(filePath, file);
+            const response = await fetch('/api/upload/photo', {
+                method: 'POST',
+                body: formData
+            });
 
-            if (uploadError) {
-                console.error("Supabase Upload Error:", uploadError);
-                throw uploadError;
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Upload failed');
             }
 
-            // 3. Get Public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('profile-photos')
-                .getPublicUrl(filePath);
-
-            // 4. Update State
+            // 3. Update State
             setPhotos(photos.map(photo =>
-                photo.id === activeSlotId ? { ...photo, url: publicUrl } : photo
+                photo.id === activeSlotId ? {
+                    ...photo,
+                    url: result.blurredUrl, // Display blurred image
+                    originalPath: result.originalPath,
+                    blurredUrl: result.blurredUrl
+                } : photo
             ));
 
             toast.dismiss(uploadToast);

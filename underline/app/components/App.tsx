@@ -315,7 +315,7 @@ export default function App() {
                 receivedMatchRequests={receivedMatchRequests}
                 onProfileClick={handleProfileClick}
                 activeTab={mailboxActiveTab}
-                onTabChange={setMailboxActiveTab}
+                onTabChange={(tab) => setMailboxActiveTab(tab as "matched" | "sent" | "messages")}
                 onAcceptMatch={handleAcceptMatch}
                 onRejectMatch={handleRejectMatch}
               />
@@ -331,7 +331,7 @@ export default function App() {
                 receivedMatchRequests={receivedMatchRequests}
                 onProfileClick={handleProfileClick}
                 activeTab={mailboxActiveTab}
-                onTabChange={setMailboxActiveTab}
+                onTabChange={(tab) => setMailboxActiveTab(tab as "matched" | "sent" | "messages")}
                 onAcceptMatch={handleAcceptMatch}
                 onRejectMatch={handleRejectMatch}
               />

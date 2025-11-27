@@ -14,7 +14,7 @@ export function SignUpHeader({
     onBack,
     title = "회원가입"
 }: SignUpHeaderProps) {
-    const progressPercentage = (currentStep / totalSteps) * 100;
+
 
     return (
         <div className="sticky top-0 z-50 bg-[#FCFCFA] border-b border-[#1A3C34]/10">

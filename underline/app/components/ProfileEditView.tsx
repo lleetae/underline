@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import { ArrowLeft, Save, Camera, User, X, Plus } from "lucide-react";
+import { ArrowLeft, Save, X, Plus } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 
-interface Photo {
+export interface Photo {
   id: string;
   url: string;
 }
 
-interface ProfileData {
+export interface ProfileData {
   nickname: string;
   gender: string;
   birthDate: string;
@@ -108,7 +108,7 @@ export function ProfileEditView({
                 {formData.profilePhotos.length} / 5
               </span>
             </div>
-            
+
             <div className="grid grid-cols-3 gap-3">
               {/* Existing Photos */}
               {formData.profilePhotos.map((photo, index) => (
@@ -133,7 +133,7 @@ export function ProfileEditView({
                   </button>
                 </div>
               ))}
-              
+
               {/* Add Photo Button */}
               {formData.profilePhotos.length < 5 && (
                 <button
@@ -145,7 +145,7 @@ export function ProfileEditView({
                 </button>
               )}
             </div>
-            
+
             <p className="text-xs text-[#1A3C34]/60 font-sans mt-3 leading-relaxed">
               <span className="text-[#D4AF37]">최소 1장</span> 이상, <span className="text-[#D4AF37]">최대 5장</span>까지 등록 가능합니다
             </p>

@@ -6,7 +6,7 @@ import { SignUpStep2Basics, Step2Data } from "./signup/SignUpStep2Basics";
 import { SignUpStep3Details, Step3Data } from "./signup/SignUpStep3Details";
 import { SignUpStep4Admin, Step4Data } from "./signup/SignUpStep4Admin";
 
-export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; onBack?: () => void }) {
+export function SignUpView({ onComplete }: { onComplete?: () => void; onBack?: () => void }) {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
 
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
@@ -87,8 +87,10 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
           drinking: fullUserData.drinking,
           bio: fullUserData.bio,
           kakao_id: encryptedKakaoId, // ✅ Now encrypted
-          // Photos (Filter out nulls and map to URLs)
-          photos: fullUserData.photos.filter(p => p.url).map(p => p.url)
+          // Photos
+          photos: fullUserData.photos.filter(p => p.blurredUrl).map(p => p.blurredUrl), // Default to blurred for public
+          photo_urls_original: fullUserData.photos.filter(p => p.originalPath).map(p => p.originalPath),
+          photo_urls_blurred: fullUserData.photos.filter(p => p.blurredUrl).map(p => p.blurredUrl)
         });
 
       if (error) throw error;

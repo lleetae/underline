@@ -3,7 +3,7 @@ import { Plus, Edit3, User, LogOut, MapPin, Book as BookIcon } from "lucide-reac
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { MyBookDetailView } from "./MyBookDetailView";
 import { AddBookView } from "./AddBookView";
-import { ProfileEditView } from "./ProfileEditView";
+import { ProfileEditView, ProfileData } from "./ProfileEditView";
 import { toast } from "sonner";
 
 interface Book {
@@ -107,7 +107,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Profile Data State
-  const [profileData, setProfileData] = useState({
+  const [profileData, setProfileData] = useState<ProfileData & { profilePhoto?: string }>({
     nickname: "책읽는사람",
     gender: "여성",
     birthDate: "1995.03.15",
@@ -119,6 +119,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
     bio: "책과 커피, 그리고 조용한 오후를 사랑합니다. 깊이 있는 대화를 나눌 수 있는 사람을 찾고 있어요.",
     kakaoId: "example_kakao",
     profilePhoto: undefined,
+    profilePhotos: [],
   });
 
   // Location mapping
@@ -142,8 +143,8 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
         book={selectedBook}
         onBack={() => setSelectedBook(null)}
         onUpdate={(updatedReview) => {
-          setBooks(books.map(b => 
-            b.id === selectedBook.id 
+          setBooks(books.map(b =>
+            b.id === selectedBook.id
               ? { ...b, review: updatedReview, reviewPreview: updatedReview.split('\n')[0].slice(0, 80) + "..." }
               : b
           ));
@@ -187,7 +188,10 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
         profileData={profileData}
         onBack={() => setShowProfileEditView(false)}
         onSave={(updatedData) => {
-          setProfileData(updatedData);
+          setProfileData({
+            ...updatedData,
+            profilePhoto: updatedData.profilePhotos?.[0]?.url
+          });
           setShowProfileEditView(false);
         }}
       />
@@ -207,7 +211,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       <div className="sticky top-0 z-10 bg-[#FCFCFA] border-b border-[#1A3C34]/10">
         <div className="flex items-center justify-between px-6 py-4">
           <h1 className="font-serif text-2xl text-[#1A3C34]">My Profile</h1>
-          <button 
+          <button
             onClick={() => setShowLogoutModal(true)}
             className="p-2 hover:bg-[#1A3C34]/5 rounded-full transition-colors"
           >
@@ -236,7 +240,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
                   <User className="w-10 h-10 text-[#D4AF37]/40" />
                 </div>
               )}
-              
+
               {/* Profile Info */}
               <div className="flex-1 min-w-0">
                 <h2 className="font-serif text-xl text-[#1A3C34] mb-1">
@@ -283,7 +287,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
               <span>{books.length}권</span>
             </div>
           </div>
-          
+
           {/* 3x3 Grid Layout */}
           <div className="grid grid-cols-3 gap-3">
             {/* Add New Book Button - First Position */}

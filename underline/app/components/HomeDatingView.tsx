@@ -14,7 +14,7 @@ interface UserProfile {
   reviewExcerpt: string;
 }
 
-export function HomeDatingView({ onProfileClick, isSignedUp, onShowLoginModal }: {
+export function HomeDatingView({ onProfileClick }: {
   onProfileClick?: (profileId: string, source?: "home" | "mailbox") => void;
   isSignedUp?: boolean;
   onShowLoginModal?: () => void;
