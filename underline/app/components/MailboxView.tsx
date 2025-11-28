@@ -28,6 +28,7 @@ interface ReceivedMatchRequest {
 
 interface Match {
   id: string;
+  profileId: string;
   userImage: string;
   nickname: string;
   age: number;
@@ -35,6 +36,7 @@ interface Match {
   bookTitle: string;
   isUnlocked: boolean;
   contactId?: string;
+  isBlurred?: boolean;
 }
 
 export function MailboxView({
@@ -221,20 +223,99 @@ export function MailboxView({
         onTouchEnd={handleTouchEnd}
       >
         <div style={contentStyle}>
-        {activeTab === "received" ? (
-          <div className="px-6 py-4">
-            {receivedMatchRequests && receivedMatchRequests.length > 0 ? (
-              <div className="space-y-3">
-                {receivedMatchRequests.map((request, index) => (
-                  <React.Fragment key={request.id}>
-                    {index > 0 && (
-                      <div className="relative py-2">
-                        <div className="absolute inset-0 flex items-center">
-                          <div className="w-full border-t border-[var(--foreground)]/10"></div>
+          {activeTab === "received" ? (
+            <div className="px-6 py-4">
+              {receivedMatchRequests && receivedMatchRequests.length > 0 ? (
+                <div className="space-y-3">
+                  {receivedMatchRequests.map((request, index) => (
+                    <React.Fragment key={request.id}>
+                      {index > 0 && (
+                        <div className="relative py-2">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-[var(--foreground)]/10"></div>
+                          </div>
                         </div>
+                      )}
+                      <div
+                        onClick={() => onProfileClick?.(request.profileId, "mailbox")}
+                        className="bg-white border border-[var(--foreground)]/10 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+                      >
+                        <div className="flex gap-3 mb-3">
+                          <div
+                            className="w-14 h-14 rounded-full overflow-hidden border border-[var(--foreground)]/10 flex-shrink-0"
+                          >
+                            <img
+                              src={request.photo}
+                              alt={request.nickname}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-2 mb-1">
+                              <h3 className="font-sans font-medium text-[var(--foreground)]">
+                                {request.nickname}
+                              </h3>
+                              <span className="text-sm text-[var(--foreground)]/60 font-sans">
+                                만 {request.age}세
+                              </span>
+                            </div>
+                            <p className="text-xs text-[var(--foreground)]/50 font-sans">
+                              {getLocationText(request.location)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border border-[var(--primary)]/20 rounded-lg p-3">
+                          <p className="font-serif text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap line-clamp-3">
+                            {request.letter}
+                          </p>
+                        </div>
+                        <p className="text-xs text-[var(--foreground)]/40 font-sans mt-2">
+                          {new Date(request.timestamp).toLocaleString('ko-KR', {
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
                       </div>
-                    )}
+                      <div className="flex gap-2 mt-2 px-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAcceptMatch?.(request.id);
+                          }}
+                          className="flex-1 py-2.5 bg-[var(--foreground)] text-[#FCFCFA] rounded-lg hover:bg-[var(--foreground)]/90 transition-colors font-sans text-sm"
+                        >
+                          수락
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRejectClick(request);
+                          }}
+                          className="flex-1 py-2.5 bg-white border border-[var(--foreground)]/20 text-[var(--foreground)] rounded-lg hover:bg-[#FCFCFA] transition-colors font-sans text-sm"
+                        >
+                          거절
+                        </button>
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-[var(--foreground)]/40 text-sm font-sans">
+                  <p>아직 받은 매칭 신청이 없습니다.</p>
+                </div>
+              )}
+            </div>
+          ) : activeTab === "matched" ? (
+            <MatchList matches={matches} onProfileClick={onProfileClick} />
+          ) : activeTab === "sent" ? (
+            <div className="px-6 py-4">
+              {sentMatchRequests && sentMatchRequests.length > 0 ? (
+                <div className="space-y-3">
+                  {sentMatchRequests.map((request, index) => (
                     <div
+                      key={`${request.profileId}-${index}`}
                       onClick={() => onProfileClick?.(request.profileId, "mailbox")}
                       className="bg-white border border-[var(--foreground)]/10 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
                     >
@@ -261,6 +342,11 @@ export function MailboxView({
                             {getLocationText(request.location)}
                           </p>
                         </div>
+                        <div className="text-right">
+                          <span className="text-xs text-[var(--primary)] font-sans">
+                            수락 대기중
+                          </span>
+                        </div>
                       </div>
                       <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border border-[var(--primary)]/20 rounded-lg p-3">
                         <p className="font-serif text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap line-clamp-3">
@@ -276,103 +362,19 @@ export function MailboxView({
                         })}
                       </p>
                     </div>
-                    <div className="flex gap-2 mt-2 px-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAcceptMatch?.(request.id);
-                        }}
-                        className="flex-1 py-2.5 bg-[var(--foreground)] text-[#FCFCFA] rounded-lg hover:bg-[var(--foreground)]/90 transition-colors font-sans text-sm"
-                      >
-                        수락
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRejectClick(request);
-                        }}
-                        className="flex-1 py-2.5 bg-white border border-[var(--foreground)]/20 text-[var(--foreground)] rounded-lg hover:bg-[#FCFCFA] transition-colors font-sans text-sm"
-                      >
-                        거절
-                      </button>
-                    </div>
-                  </React.Fragment>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-[var(--foreground)]/40 text-sm font-sans">
-                <p>아직 받은 매칭 신청이 없습니다.</p>
-              </div>
-            )}
-          </div>
-        ) : activeTab === "matched" ? (
-          <MatchList matches={matches} onProfileClick={onProfileClick} />
-        ) : activeTab === "sent" ? (
-          <div className="px-6 py-4">
-            {sentMatchRequests && sentMatchRequests.length > 0 ? (
-              <div className="space-y-3">
-                {sentMatchRequests.map((request, index) => (
-                  <div
-                    key={`${request.profileId}-${index}`}
-                    onClick={() => onProfileClick?.(request.profileId, "mailbox")}
-                    className="bg-white border border-[var(--foreground)]/10 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
-                  >
-                    <div className="flex gap-3 mb-3">
-                      <div
-                        className="w-14 h-14 rounded-full overflow-hidden border border-[var(--foreground)]/10 flex-shrink-0"
-                      >
-                        <img
-                          src={request.photo}
-                          alt={request.nickname}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2 mb-1">
-                          <h3 className="font-sans font-medium text-[var(--foreground)]">
-                            {request.nickname}
-                          </h3>
-                          <span className="text-sm text-[var(--foreground)]/60 font-sans">
-                            만 {request.age}세
-                          </span>
-                        </div>
-                        <p className="text-xs text-[var(--foreground)]/50 font-sans">
-                          {getLocationText(request.location)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs text-[var(--primary)] font-sans">
-                          수락 대기중
-                        </span>
-                      </div>
-                    </div>
-                    <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border border-[var(--primary)]/20 rounded-lg p-3">
-                      <p className="font-serif text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap line-clamp-3">
-                        {request.letter}
-                      </p>
-                    </div>
-                    <p className="text-xs text-[var(--foreground)]/40 font-sans mt-2">
-                      {new Date(request.timestamp).toLocaleString('ko-KR', {
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-[var(--foreground)]/40 text-sm font-sans">
-                <p>아직 보낸 매칭 신청이 없습니다.</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-64 text-[var(--foreground)]/40 text-sm font-sans">
-            <p>아직 메시지가 없습니다.</p>
-          </div>
-        )}
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-[var(--foreground)]/40 text-sm font-sans">
+                  <p>아직 보낸 매칭 신청이 없습니다.</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-64 text-[var(--foreground)]/40 text-sm font-sans">
+              <p>아직 메시지가 없습니다.</p>
+            </div>
+          )}
         </div>
       </div>
       <RejectConfirmModal
