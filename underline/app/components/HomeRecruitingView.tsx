@@ -370,7 +370,7 @@ export function HomeRecruitingView({
           </div>
 
           <div className="pt-2 text-white/30">
-            Copyright © 2025 언니의인맥 All rights reserved.
+            Copyright © 2025 Bookbla Inc. All rights reserved.
           </div>
         </div>
       </footer>
