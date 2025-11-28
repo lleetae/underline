@@ -106,6 +106,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
   const [showAddBookView, setShowAddBookView] = useState(false);
   const [showProfileEditView, setShowProfileEditView] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
   useEffect(() => {
     fetchProfileData();
@@ -449,6 +450,40 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
     }
   };
 
+  const handleWithdraw = async () => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        toast.error("로그인 정보가 없습니다.");
+        return;
+      }
+
+      const response = await fetch('/api/auth/withdraw', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        toast.success("회원 탈퇴가 완료되었습니다.");
+        setShowWithdrawModal(false);
+        if (onLogout) onLogout(); // Trigger logout cleanup
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || "Withdrawal failed");
+      }
+    } catch (error) {
+      console.error("Withdrawal error:", error);
+      toast.error("회원 탈퇴 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="w-full max-w-md mx-auto min-h-screen bg-[#FCFCFA] flex items-center justify-center">
@@ -473,7 +508,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div className="flex-1 overflow-y-auto pb-40">
         {/* Profile Summary Card */}
         <div className="px-6 pt-6 pb-4">
           <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-5 shadow-sm">
@@ -580,6 +615,16 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
             </p>
           </div>
         </div>
+
+        {/* Footer Links */}
+        <div className="px-6 py-8 text-center">
+          <button
+            onClick={() => setShowWithdrawModal(true)}
+            className="text-xs text-[var(--foreground)] opacity-10 hover:opacity-30 underline transition-opacity font-sans"
+          >
+            회원 탈퇴
+          </button>
+        </div>
       </div>
 
       {/* Logout Modal */}
@@ -611,6 +656,38 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
           </div>
         </div>
       )}
+
+      {/* Withdraw Modal */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+          <div className="bg-[#FCFCFA] p-8 rounded-2xl shadow-2xl max-w-sm w-full border border-[var(--foreground)]/10">
+            <h2 className="font-serif text-xl text-[var(--foreground)] mb-3 text-red-600">
+              정말 탈퇴하시겠습니까?
+            </h2>
+            <p className="text-sm text-[var(--foreground)]/70 font-sans mb-6 leading-relaxed">
+              탈퇴 시 프로필, 매칭 내역, 대화 내용 등<br />
+              <span className="font-bold text-red-500">모든 데이터가 영구적으로 삭제</span>되며<br />
+              복구할 수 없습니다.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setShowWithdrawModal(false)}
+                className="w-full py-3.5 bg-[var(--foreground)] text-white font-sans rounded-lg hover:bg-[var(--foreground)]/90 transition-all duration-300 shadow-sm"
+              >
+                취소하기
+              </button>
+              <button
+                onClick={handleWithdraw}
+                className="w-full py-3 border border-red-200 text-red-500 font-sans rounded-lg hover:bg-red-50 transition-colors text-sm"
+              >
+                회원 탈퇴
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }

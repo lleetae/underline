@@ -29,7 +29,9 @@ export default function App() {
   const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
-  const [selectedProfilePenalized, setSelectedProfilePenalized] = useState(false); // New state for penalty
+  const [selectedProfilePenalized, setSelectedProfilePenalized] = useState(false);
+  const [selectedProfileWithdrawn, setSelectedProfileWithdrawn] = useState(false);
+  const [selectedProfileKakaoId, setSelectedProfileKakaoId] = useState<string | null>(null); // New state // New state for penalty
   const [profileSource, setProfileSource] = useState<"home" | "mailbox">("home");
   const [mailboxActiveTab, setMailboxActiveTab] = useState<"matched" | "sent" | "received" | "messages">("matched");
   const [sentMatchRequests, setSentMatchRequests] = useState<Array<{
@@ -205,7 +207,8 @@ export default function App() {
               birth_date,
               location,
               photo_url,
-              photos
+              photos,
+              auth_id
             )
           `)
           .eq('receiver_id', data.id)
@@ -214,29 +217,31 @@ export default function App() {
           .order('created_at', { ascending: false });
 
         if (!requestsError && receivedRequests) {
-          const formattedRequests = receivedRequests.map((req: any) => {
-            // Handle photos: check photos array first, then photo_url
-            const photos = req.sender.photos && req.sender.photos.length > 0
-              ? req.sender.photos
-              : (req.sender.photo_url ? [req.sender.photo_url] : []);
+          const formattedRequests = receivedRequests
+            .filter((req: any) => req.sender.auth_id !== null) // Filter out withdrawn users
+            .map((req: any) => {
+              // Handle photos: check photos array first, then photo_url
+              const photos = req.sender.photos && req.sender.photos.length > 0
+                ? req.sender.photos
+                : (req.sender.photo_url ? [req.sender.photo_url] : []);
 
-            // Handle age: use age if available, otherwise calculate from birth_date
-            const age = req.sender.age || (req.sender.birth_date
-              ? new Date().getFullYear() - parseInt(req.sender.birth_date.substring(0, 4))
-              : 0);
+              // Handle age: use age if available, otherwise calculate from birth_date
+              const age = req.sender.age || (req.sender.birth_date
+                ? new Date().getFullYear() - parseInt(req.sender.birth_date.substring(0, 4))
+                : 0);
 
-            return {
-              id: req.id,
-              profileId: req.sender.id.toString(),
-              nickname: req.sender.nickname,
-              age: age,
-              location: req.sender.location,
-              photo: photos[0] || "",
-              letter: req.letter,
-              timestamp: new Date(req.created_at),
-              isBlurred: true // Received requests are blurred
-            };
-          });
+              return {
+                id: req.id,
+                profileId: req.sender.id.toString(),
+                nickname: req.sender.nickname,
+                age: age,
+                location: req.sender.location,
+                photo: photos[0] || "",
+                letter: req.letter,
+                timestamp: new Date(req.created_at),
+                isBlurred: true // Received requests are blurred
+              };
+            });
           setReceivedMatchRequests(formattedRequests);
         }
 
@@ -255,7 +260,8 @@ export default function App() {
               birth_date,
               location,
               photo_url,
-              photos
+              photos,
+              auth_id
             )
           `)
           .eq('sender_id', data.id)
@@ -264,26 +270,28 @@ export default function App() {
           .order('created_at', { ascending: false });
 
         if (!sentRequestsError && sentRequests) {
-          const formattedSentRequests = sentRequests.map((req: any) => {
-            const photos = req.receiver.photos && req.receiver.photos.length > 0
-              ? req.receiver.photos
-              : (req.receiver.photo_url ? [req.receiver.photo_url] : []);
+          const formattedSentRequests = sentRequests
+            .filter((req: any) => req.receiver.auth_id !== null) // Filter out withdrawn users
+            .map((req: any) => {
+              const photos = req.receiver.photos && req.receiver.photos.length > 0
+                ? req.receiver.photos
+                : (req.receiver.photo_url ? [req.receiver.photo_url] : []);
 
-            const age = req.receiver.age || (req.receiver.birth_date
-              ? new Date().getFullYear() - parseInt(req.receiver.birth_date.substring(0, 4))
-              : 0);
+              const age = req.receiver.age || (req.receiver.birth_date
+                ? new Date().getFullYear() - parseInt(req.receiver.birth_date.substring(0, 4))
+                : 0);
 
-            return {
-              profileId: req.receiver.id.toString(),
-              nickname: req.receiver.nickname,
-              age: age,
-              location: req.receiver.location,
-              photo: photos[0] || "",
-              letter: req.letter,
-              timestamp: new Date(req.created_at),
-              isBlurred: true // Sent requests are blurred
-            };
-          });
+              return {
+                profileId: req.receiver.id.toString(),
+                nickname: req.receiver.nickname,
+                age: age,
+                location: req.receiver.location,
+                photo: photos[0] || "",
+                letter: req.letter,
+                timestamp: new Date(req.created_at),
+                isBlurred: true // Sent requests are blurred
+              };
+            });
           setSentMatchRequests(formattedSentRequests);
         }
 
@@ -298,8 +306,10 @@ export default function App() {
             status,
             letter,
             created_at,
-            sender:member!sender_id (id, nickname, age, birth_date, location, photo_url, photos),
-            receiver:member!receiver_id (id, nickname, age, birth_date, location, photo_url, photos)
+            sender_kakao_id,
+            receiver_kakao_id,
+            sender:member!sender_id (id, nickname, age, birth_date, location, photo_url, photos, auth_id),
+            receiver:member!receiver_id (id, nickname, age, birth_date, location, photo_url, photos, auth_id)
           `)
           .or(`sender_id.eq.${data.id},receiver_id.eq.${data.id}`)
           .eq('status', 'accepted')
@@ -312,6 +322,8 @@ export default function App() {
           const formattedMatches = matchesData.map((match: any) => {
             const isSender = match.sender_id === data.id;
             const partner = isSender ? match.receiver : match.sender;
+            const isWithdrawn = partner.auth_id === null;
+            const partnerKakaoId = isSender ? match.receiver_kakao_id : match.sender_kakao_id;
 
             // Helper to get original photo URL
             const getOriginalPhotoUrl = (url: string) => {
@@ -348,13 +360,15 @@ export default function App() {
               id: match.id,
               profileId: partner.id.toString(),
               userImage: photos[0] || "",
-              nickname: partner.nickname,
+              nickname: isWithdrawn ? "알수없음 (탈퇴)" : partner.nickname,
               age: age,
               location: getLocationText(partner.location),
               bookTitle: match.letter ? (match.letter.length > 20 ? match.letter.substring(0, 20) + "..." : match.letter) : "매칭된 책", // Use letter as fallback
               isUnlocked: false, // Default to locked for now
               contactId: "kakao_id_placeholder", // Placeholder
-              isBlurred: false // Matched profiles are NOT blurred
+              isBlurred: false, // Matched profiles are NOT blurred
+              isWithdrawn: isWithdrawn, // Add withdrawn flag
+              partnerKakaoId: partnerKakaoId // Add snapshot ID
             };
           });
           setMatches(formattedMatches);
@@ -385,14 +399,18 @@ export default function App() {
     handleLogout();
   };
 
-  const handleProfileClick = (profileId: string, source: "home" | "mailbox" = "home", metadata?: { isPenalized?: boolean }) => {
+
+
+  const handleProfileClick = (profileId: string, source: "home" | "mailbox" = "home", metadata?: { isPenalized?: boolean; isWithdrawn?: boolean; partnerKakaoId?: string }) => {
     if (!isSignedUp) {
       setShowLoginModal(true);
       return;
     }
     setSelectedProfileId(profileId);
     setProfileSource(source);
-    setSelectedProfilePenalized(metadata?.isPenalized || false); // Set penalty status
+    setSelectedProfilePenalized(metadata?.isPenalized || false);
+    setSelectedProfileWithdrawn(metadata?.isWithdrawn || false);
+    setSelectedProfileKakaoId(metadata?.partnerKakaoId || null); // Set Kakao ID
     setCurrentView("profileDetail");
   };
 
@@ -400,6 +418,8 @@ export default function App() {
     const previousView = selectedProfileId ? profileSource : "home";
     setCurrentView(previousView);
     setSelectedProfileId(null);
+    setSelectedProfileWithdrawn(false);
+    setSelectedProfileKakaoId(null); // Reset
   };
 
   const handleMatchRequest = (profileData: {
@@ -443,14 +463,23 @@ export default function App() {
 
   const handleAcceptMatch = async (requestId: string) => {
     try {
-      const { data: updatedMatch, error } = await supabase
-        .from('match_requests')
-        .update({ status: 'accepted' })
-        .eq('id', requestId)
-        .select()
-        .single();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-      if (error) throw error;
+      const response = await fetch('/api/match/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ requestId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to accept match');
+      }
+
+      const { match: updatedMatch } = await response.json();
 
       // Send Notification to the sender
       try {
@@ -472,16 +501,16 @@ export default function App() {
         console.error("Error sending notification:", e);
       }
 
-      toast.success("매칭이 수락되었습니다!");
+      // Update local state
+      setReceivedMatchRequests(prev => prev.filter(req => req.id !== requestId));
 
-      // Refresh data
-      if (session?.user.id) {
-        checkProfile(session.user.id);
-      }
-      setMailboxActiveTab("matched");
+      // Refresh matches
+      checkProfile(session.user.id);
+
+      toast.success("매칭이 성사되었습니다!");
     } catch (error) {
       console.error("Error accepting match:", error);
-      toast.error("매칭 수락에 실패했습니다");
+      toast.error("매칭 수락 중 오류가 발생했습니다.");
     }
   };
 
@@ -854,7 +883,9 @@ export default function App() {
                 onMatchRequest={handleMatchRequest}
                 sentMatchRequests={sentMatchRequests}
                 isMatched={matches.some(m => m.profileId === selectedProfileId)} // Check if matched
-                disableMatching={profileSource === "mailbox" || selectedProfilePenalized} // Disable if penalized
+                disableMatching={profileSource === "mailbox" || selectedProfilePenalized || selectedProfileWithdrawn}
+                isWithdrawn={selectedProfileWithdrawn}
+                partnerKakaoId={selectedProfileKakaoId} // Pass Kakao ID
               />
             </div>
           )}

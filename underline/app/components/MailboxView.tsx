@@ -37,6 +37,7 @@ interface Match {
   isUnlocked: boolean;
   contactId?: string;
   isBlurred?: boolean;
+  partnerKakaoId?: string; // Added
 }
 
 export function MailboxView({
@@ -53,7 +54,7 @@ export function MailboxView({
   sentMatchRequests?: SentMatchRequest[];
   receivedMatchRequests?: ReceivedMatchRequest[];
   matches?: Match[];
-  onProfileClick?: (profileId: string, source: "home" | "mailbox") => void;
+  onProfileClick?: (profileId: string, source: "home" | "mailbox", metadata?: { isPenalized?: boolean; isWithdrawn?: boolean; partnerKakaoId?: string }) => void;
   activeTab: string;
   onTabChange: (tab: string) => void;
   onAcceptMatch?: (requestId: string) => void;

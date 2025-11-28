@@ -128,7 +128,8 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
           `)
           .gte('dating_applications.created_at', start.toISOString())
           .lte('dating_applications.created_at', end.toISOString())
-          .eq('dating_applications.status', 'active'); // Only show active applications
+          .eq('dating_applications.status', 'active') // Only show active applications
+          .not('auth_id', 'is', null); // Exclude withdrawn members
 
         if (myMemberId) {
           query = query.neq('id', myMemberId);

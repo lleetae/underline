@@ -13,6 +13,7 @@ interface Match {
   bookTitle: string;
   isUnlocked: boolean;
   isBlurred?: boolean;
+  partnerKakaoId?: string; // Added
 }
 
 export function MatchList({
@@ -20,7 +21,7 @@ export function MatchList({
   onProfileClick
 }: {
   matches?: Match[];
-  onProfileClick?: (profileId: string, source: "home" | "mailbox") => void;
+  onProfileClick?: (profileId: string, source: "home" | "mailbox", metadata?: { isPenalized?: boolean; isWithdrawn?: boolean; partnerKakaoId?: string }) => void;
 }) {
   if (!matches || matches.length === 0) {
     return (
@@ -64,7 +65,7 @@ export function MatchList({
         >
           {/* Match Profile Info */}
           <div
-            onClick={() => onProfileClick?.(match.profileId, "mailbox")}
+            onClick={() => onProfileClick?.(match.profileId, "mailbox", { partnerKakaoId: match.partnerKakaoId })}
             className="flex items-center gap-3 cursor-pointer hover:bg-[var(--foreground)]/5 p-2 rounded-lg transition-colors -mx-2"
           >
             <div className="w-12 h-12 rounded-full overflow-hidden border border-[var(--foreground)]/10 flex-shrink-0">
