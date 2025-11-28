@@ -1,4 +1,4 @@
-const Filter = require('bad-words');
+import { Filter } from 'bad-words';
 
 const koreanBadWords = [
     "시발", "씨발", "병신", "개새끼", "좆", "창녀", "지랄", "염병", "쓰레기", "미친",
