@@ -184,7 +184,7 @@ export function HomeRecruitingView({
           <p className="text-[11px] text-underline-text/40 mt-3">
             {isRegistered
               ? "신청이 접수되었습니다. 다음 주 금요일을 기대해주세요!"
-              : "매주 금요일 밤 8시, 새로운 인연이 시작됩니다"
+              : "매주 금요일, 새로운 인연이 시작됩니다"
             }
           </p>
         </div>
@@ -338,7 +338,7 @@ export function HomeRecruitingView({
               <Mail className="w-5 h-5 text-underline-red" />
             </div>
             <div className="flex-1 pt-1">
-              <h4 className="font-bold text-underline-text mb-1">금요일 밤 8시, 인연의 편지 열기</h4>
+              <h4 className="font-bold text-underline-text mb-1">매주 금요일, 인연의 편지 열기</h4>
               <p className="text-sm text-underline-text/60 leading-relaxed">
                 한 주 동안 기다린 인연이 우편함에 도착합니다. 알림이 울리면 설레는 마음으로 확인해 보세요.
               </p>
