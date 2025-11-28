@@ -316,7 +316,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
               pageCount: newBookData.pageCount || 0,
               isbn13: newBookData.isbn13
             };
-            setBooks([...books, newBook]);
+            setBooks([newBook, ...books]);
             setShowAddBookView(false);
             toast.success("책이 추가되었습니다");
           } catch (error) {
