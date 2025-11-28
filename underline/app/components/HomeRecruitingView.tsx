@@ -148,7 +148,7 @@ export function HomeRecruitingView({
           </div>
         </div>
         {/* Main Copy */}
-        <h2 className="font-serif text-[28px] leading-snug font-bold mb-4 text-underline-text break-keep">
+        <h2 className="font-serif text-[26px] leading-snug font-semibold mb-4 text-underline-text break-keep">
           당신의 내면을 읽어줄 사람,<br />
           이번 주 금요일에 만나보세요.
         </h2>
