@@ -155,8 +155,7 @@ export function HomeRecruitingView({
 
         {/* Sub Copy */}
         <p className="text-underline-text/60 text-sm mb-8 leading-relaxed break-keep">
-          겉모습 뒤에 숨겨진 '진짜 나'를 알아보는 대화.<br />
-          언더라인에서 이번 주 소개팅을 예약하세요.
+          겉모습 뒤에 숨겨진 '진짜 나'를 알아보는 대화.
         </p>
 
         {/* Main CTA */}
