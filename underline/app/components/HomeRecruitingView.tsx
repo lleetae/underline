@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
+<<<<<<< HEAD
 import { TermsContent, PrivacyContent } from "../utils/PolicyComponents";
 import { Bell, BookOpen, User, Mail } from "lucide-react";
+=======
+import { Bell, BookOpen, User, Mail, Edit } from "lucide-react";
+import { useRouter } from "next/navigation";
+>>>>>>> feature/dynamic-reviews
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCountdown } from "../hooks/useCountdown";
 import useEmblaCarousel from "embla-carousel-react";
@@ -40,6 +45,23 @@ export function HomeRecruitingView({
   const [unreadCount, setUnreadCount] = useState(0);
   const [reviews, setReviews] = useState<SuccessStory[]>([]);
   const [selectedReview, setSelectedReview] = useState<SuccessStory | null>(null); // For Modal
+  const [isAdmin, setIsAdmin] = useState(false);
+  const router = useRouter();
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id === '79a3d062-ea87-4363-92da-016c9b7489da') {
+          setIsAdmin(true);
+        }
+      } catch (error) {
+        console.error('Error checking admin:', error);
+      }
+    };
+    checkAdmin();
+  }, []);
 
   // Fetch unread notification count
   useEffect(() => {
@@ -74,7 +96,7 @@ export function HomeRecruitingView({
         const { data, error } = await supabase
           .from('reviews')
           .select('*')
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: false });
 
         if (error) throw error;
 
@@ -196,10 +218,19 @@ export function HomeRecruitingView({
 
       {/* 3. Social Proof (Horizontal Scroll) */}
       <section className="py-10 bg-white border-y border-black/5">
-        <div className="px-6 mb-6">
+        <div className="px-6 mb-6 flex items-center justify-between">
           <h3 className="font-serif text-xl font-bold text-underline-text">
             실제 유저 후기
           </h3>
+          {isAdmin && (
+            <button
+              onClick={() => router.push('/admin/reviews')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-underline-red text-white text-sm rounded-lg hover:bg-underline-red/90 transition-colors"
+            >
+              <Edit className="w-4 h-4" />
+              후기 작성
+            </button>
+          )}
         </div>
 
         <div className="overflow-hidden" ref={emblaRef}>
@@ -221,8 +252,7 @@ export function HomeRecruitingView({
                 {/* Content Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
                   <div className="pr-2">
-                    <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/10 text-[10px] font-medium mb-3">
-                      <span>📖</span>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-underline-red text-white text-xs font-medium mb-3 shadow-lg">
                       <span>{story.bookInfo}</span>
                     </div>
                     <p className="text-lg font-bold leading-snug opacity-100 break-keep drop-shadow-md">
@@ -238,36 +268,39 @@ export function HomeRecruitingView({
 
       {/* Review Detail Modal */}
       {selectedReview && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="relative h-48">
-              <ImageWithFallback
-                src={selectedReview.imageUrl}
-                alt="Review"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <button
-                onClick={() => setSelectedReview(null)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors"
-              >
-                ✕
-              </button>
-              <div className="absolute bottom-4 left-4 right-4 text-white">
-                <div className="inline-block px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-[10px] font-medium mb-2 border border-white/10">
-                  📖 {selectedReview.bookInfo}
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setSelectedReview(null)}
+        >
+          <div
+            className="relative w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-white rounded-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="p-1.5">
+                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl">
+                  <ImageWithFallback
+                    src={selectedReview.imageUrl}
+                    alt="Review"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <h3 className="font-serif text-xl font-bold leading-tight">
+              </div>
+              <div className="px-6 py-3 bg-white">
+                <div className="inline-block px-3 py-1.5 rounded-md bg-underline-red text-white text-xs font-medium mb-3 shadow-lg">
+                  {selectedReview.bookInfo}
+                </div>
+                <h3 className="font-serif text-xl font-bold leading-tight text-[var(--foreground)]">
                   {selectedReview.title}
                 </h3>
               </div>
-            </div>
-            <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
-              <div>
-                <p className="text-xs font-bold text-[var(--primary)] mb-2">Q. {selectedReview.detailQuestion}</p>
-                <p className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">
-                  {selectedReview.detailAnswer}
-                </p>
+              <div className="px-6 pb-6 pt-2 bg-white">
+                <div>
+                  <p className="text-xs font-bold text-[var(--primary)] mb-2">Q. {selectedReview.detailQuestion}</p>
+                  <p className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">
+                    {selectedReview.detailAnswer}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

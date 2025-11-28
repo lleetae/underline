@@ -86,7 +86,7 @@ export function SignUpStep1Book({
 
         try {
             // 로컬 백엔드 API 호출
-            const response = await fetch(`http://localhost:3000/api/books/search?query=${encodeURIComponent(searchQuery)}`);
+            const response = await fetch(`/api/books/search?query=${encodeURIComponent(searchQuery)}`);
             const data = await response.json();
 
             if (data.item && data.item.length > 0) {
@@ -122,7 +122,7 @@ export function SignUpStep1Book({
     const handleBookClick = async (book: AladinBook) => {
         try {
             // 로컬 백엔드 API 호출
-            const response = await fetch(`http://localhost:3000/api/books/detail/${book.isbn13}`);
+            const response = await fetch(`/api/books/detail/${book.isbn13}`);
             const data = await response.json();
 
             if (data.item && data.item.length > 0) {
