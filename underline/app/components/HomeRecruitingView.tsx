@@ -17,11 +17,11 @@ interface HomeRecruitingViewProps {
 
 interface SuccessStory {
   id: string;
-  userImage: string;
-  bookTitle: string;
-  testimonial: string;
-  matchedSentence: string;
-  type: "start" | "life"; // Case A or Case B
+  imageUrl: string;
+  title: string;
+  bookInfo: string;
+  detailQuestion: string;
+  detailAnswer: string;
 }
 
 export function HomeRecruitingView({
@@ -36,6 +36,8 @@ export function HomeRecruitingView({
   const timeLeft = useCountdown(5, 0);
   const [emblaRef] = useEmblaCarousel({ align: "start", dragFree: true });
   const [unreadCount, setUnreadCount] = useState(0);
+  const [reviews, setReviews] = useState<SuccessStory[]>([]);
+  const [selectedReview, setSelectedReview] = useState<SuccessStory | null>(null); // For Modal
 
   // Fetch unread notification count
   useEffect(() => {
@@ -64,32 +66,34 @@ export function HomeRecruitingView({
     return () => clearInterval(interval);
   }, [isSignedUp]);
 
-  const successStories: SuccessStory[] = [
-    {
-      id: "1",
-      userImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-      bookTitle: "참을 수 없는 존재의 가벼움",
-      testimonial: "프로필에 적힌 '가벼움과 무거움 사이'라는 서평을 보고 신청했어요.",
-      matchedSentence: "가벼움과 무거움 사이",
-      type: "start",
-    },
-    {
-      id: "2",
-      userImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
-      bookTitle: "데미안",
-      testimonial: "새는 알에서 나오려고 투쟁한다... 그 문장에 이끌렸습니다.",
-      matchedSentence: "새는 알에서 나오려고 투쟁한다",
-      type: "life",
-    },
-    {
-      id: "3",
-      userImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-      bookTitle: "1984",
-      testimonial: "같은 책을 인생 책으로 꼽은 사람을 만나 반가웠어요.",
-      matchedSentence: "자유는 노예 상태이다",
-      type: "life",
-    },
-  ];
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        if (data) {
+          const mappedReviews: SuccessStory[] = data.map((item: any) => ({
+            id: item.id,
+            imageUrl: item.image_url,
+            title: item.title,
+            bookInfo: item.book_info,
+            detailQuestion: item.detail_question,
+            detailAnswer: item.detail_answer
+          }));
+          setReviews(mappedReviews);
+        }
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+    };
+
+    fetchReviews();
+  }, []);
 
   return (
     <div className="min-h-screen bg-underline-cream text-underline-text font-sans pb-20 max-w-md mx-auto shadow-2xl shadow-black/5 relative">
@@ -194,14 +198,15 @@ export function HomeRecruitingView({
 
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex px-6 gap-4">
-            {successStories.map((story) => (
+            {reviews.map((story) => (
               <div
                 key={story.id}
-                className="flex-[0_0_70%] min-w-0 relative rounded-2xl overflow-hidden aspect-[3/4] shadow-md group"
+                onClick={() => setSelectedReview(story)}
+                className="flex-[0_0_70%] min-w-0 relative rounded-2xl overflow-hidden aspect-[3/4] shadow-md group cursor-pointer"
               >
                 {/* Background Image */}
                 <ImageWithFallback
-                  src={story.userImage}
+                  src={story.imageUrl}
                   alt="User"
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
@@ -212,17 +217,10 @@ export function HomeRecruitingView({
                   <div className="pr-2">
                     <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/10 text-[10px] font-medium mb-3">
                       <span>📖</span>
-                      <span>{story.type === "start" ? "대화의 시작" : "인생 책"}</span>
-                      <span className="opacity-50">|</span>
-                      <span>{story.bookTitle}</span>
+                      <span>{story.bookInfo}</span>
                     </div>
                     <p className="text-lg font-bold leading-snug opacity-100 break-keep drop-shadow-md">
-                      "{story.testimonial.split(story.matchedSentence).map((part, i, arr) => (
-                        <React.Fragment key={i}>
-                          {part}
-                          {i < arr.length - 1 && <span className="text-underline-cream">{story.matchedSentence}</span>}
-                        </React.Fragment>
-                      ))}"
+                      {story.title}
                     </p>
                   </div>
                 </div>
@@ -231,6 +229,44 @@ export function HomeRecruitingView({
           </div>
         </div>
       </section>
+
+      {/* Review Detail Modal */}
+      {selectedReview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="relative h-48">
+              <ImageWithFallback
+                src={selectedReview.imageUrl}
+                alt="Review"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <button
+                onClick={() => setSelectedReview(null)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-colors"
+              >
+                ✕
+              </button>
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <div className="inline-block px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-[10px] font-medium mb-2 border border-white/10">
+                  📖 {selectedReview.bookInfo}
+                </div>
+                <h3 className="font-serif text-xl font-bold leading-tight">
+                  {selectedReview.title}
+                </h3>
+              </div>
+            </div>
+            <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+              <div>
+                <p className="text-xs font-bold text-[var(--primary)] mb-2">Q. {selectedReview.detailQuestion}</p>
+                <p className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">
+                  {selectedReview.detailAnswer}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 4. Live Stats */}
       <section className="px-6 py-12">
