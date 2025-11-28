@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
-<<<<<<< HEAD
 import { TermsContent, PrivacyContent } from "../utils/PolicyComponents";
-import { Bell, BookOpen, User, Mail } from "lucide-react";
-=======
 import { Bell, BookOpen, User, Mail, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
->>>>>>> feature/dynamic-reviews
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCountdown } from "../hooks/useCountdown";
 import useEmblaCarousel from "embla-carousel-react";
