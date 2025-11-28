@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Plus, X, Shield, Save } from "lucide-react";
+import { ArrowLeft, Plus, X, Shield, Save, Check } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 
@@ -36,6 +36,8 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
   const [deletedPhotos, setDeletedPhotos] = useState<Photo[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [isNicknameChecked, setIsNicknameChecked] = useState(true);
+  const [isCheckingNickname, setIsCheckingNickname] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch signed URLs for original photos on mount
@@ -153,6 +155,33 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
     checkDirty();
   }, [formData, deletedPhotos, profileData]);
 
+  const handleCheckNickname = async () => {
+    if (!formData.nickname.trim()) {
+      toast.error("닉네임을 입력해주세요");
+      return;
+    }
+
+    setIsCheckingNickname(true);
+    try {
+      const response = await fetch(`/api/check-nickname?nickname=${encodeURIComponent(formData.nickname)}`);
+      const data = await response.json();
+
+      if (response.ok && data.available) {
+        setIsNicknameChecked(true);
+        toast.success(data.message);
+      } else {
+        setIsNicknameChecked(false);
+        toast.error(data.message || "이미 사용 중인 닉네임입니다");
+      }
+    } catch (error) {
+      console.error("Nickname check failed:", error);
+      toast.error("중복 확인 중 오류가 발생했습니다");
+      setIsNicknameChecked(false);
+    } finally {
+      setIsCheckingNickname(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!isDirty) return; // Prevent saving if no changes
 
@@ -162,6 +191,10 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
     }
     if (!formData.nickname.trim()) {
       toast.error("닉네임을 입력해주세요");
+      return;
+    }
+    if (!isNicknameChecked) {
+      toast.error("닉네임 중복 확인을 해주세요");
       return;
     }
     if (!formData.height || parseInt(formData.height) < 100 || parseInt(formData.height) > 250) {
@@ -448,14 +481,42 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
                 <label className="block text-xs text-[var(--foreground)]/70 font-sans mb-2">
                   닉네임 *
                 </label>
-                <input
-                  type="text"
-                  value={formData.nickname}
-                  onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors"
-                  placeholder="닉네임을 입력하세요"
-                  maxLength={20}
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.nickname}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      setFormData({ ...formData, nickname: newValue });
+                      if (newValue === profileData.nickname) {
+                        setIsNicknameChecked(true);
+                      } else {
+                        setIsNicknameChecked(false);
+                      }
+                    }}
+                    className="flex-1 px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors"
+                    placeholder="닉네임을 입력하세요"
+                    maxLength={20}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCheckNickname}
+                    disabled={isCheckingNickname || formData.nickname === profileData.nickname}
+                    className="px-4 py-2.5 border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white rounded-lg transition-all duration-300 flex items-center gap-1.5 font-sans text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCheckingNickname ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4" />
+                    )}
+                    확인
+                  </button>
+                </div>
+                {isNicknameChecked && formData.nickname !== profileData.nickname && (
+                  <p className="text-xs text-[var(--primary)] mt-1.5 font-sans">
+                    ✓ 사용 가능
+                  </p>
+                )}
               </div>
 
               {/* Gender - Read Only */}
