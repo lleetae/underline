@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { TermsContent, PrivacyContent } from "../utils/PolicyComponents";
 import { Bell, BookOpen, User, Mail } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCountdown } from "../hooks/useCountdown";
@@ -35,6 +36,7 @@ export function HomeRecruitingView({
   // Countdown timer for next Friday 00:00:00 (Thursday 23:59 deadline)
   const timeLeft = useCountdown(5, 0);
   const [emblaRef] = useEmblaCarousel({ align: "start", dragFree: true });
+  const [activePolicyModal, setActivePolicyModal] = useState<'terms' | 'privacy' | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [reviews, setReviews] = useState<SuccessStory[]>([]);
   const [selectedReview, setSelectedReview] = useState<SuccessStory | null>(null); // For Modal
@@ -344,6 +346,58 @@ export function HomeRecruitingView({
           </div>
         </div>
       </section>
+
+      {/* 6. Corporate Footer */}
+      <footer className="bg-[#333333] px-6 py-10 text-white/60 text-[10px] leading-relaxed font-sans">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-1">
+            <p>고객센터 : unicorn6402@bookbla.com</p>
+            <p>기업제휴 문의 : unicorn6402@bookbla.com</p>
+          </div>
+
+          <div className="w-full h-[1px] bg-white/10 my-4" />
+
+          <div className="space-y-1">
+            <p>경기도 성남시 성남대로 1342 AI공학관 617호</p>
+            <p>사업자 등록번호 206-88-02996</p>
+            <p>주식회사 북블라 대표이사 고도현</p>
+            <p>대표번호 070-8065-7296</p>
+          </div>
+
+          <div className="flex gap-4 pt-2 text-white/50 text-[10px]">
+            <button onClick={() => setActivePolicyModal('terms')} className="hover:text-white transition-colors">이용약관</button>
+            <button onClick={() => setActivePolicyModal('privacy')} className="hover:text-white transition-colors">개인정보처리방침</button>
+          </div>
+
+          <div className="pt-2 text-white/30">
+            Copyright © 2025 언니의인맥 All rights reserved.
+          </div>
+        </div>
+      </footer>
+
+      {/* Policy Modal */}
+      {activePolicyModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-bold text-lg">
+                {activePolicyModal === 'terms' ? '서비스 이용약관' : '개인정보 처리방침'}
+              </h3>
+              <button
+                onClick={() => setActivePolicyModal(null)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="text-sm text-gray-700 leading-relaxed">
+                {activePolicyModal === 'terms' ? <TermsContent /> : <PrivacyContent />}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
