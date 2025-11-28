@@ -167,10 +167,19 @@ export function HomeRecruitingView({
               : "bg-underline-red text-white shadow-underline-red/30 hover:shadow-underline-red/40"
               }`}
           >
-            {isRegistered ? "신청 완료" : "이번 주 소개팅 무료 신청하기"}
+            {isRegistered
+              ? "소개팅 대기중"
+              : (timeLeft.days === 0 && timeLeft.hours < 24 // If it's Friday/Saturday (Matching Period)
+                ? "다음 주 소개팅 미리 신청하기"
+                : "이번 주 소개팅 무료 신청하기"
+              )
+            }
           </button>
           <p className="text-[11px] text-underline-text/40 mt-3">
-            매주 금요일 밤 8시, 새로운 인연이 시작됩니다
+            {isRegistered
+              ? "신청이 접수되었습니다. 다음 주 금요일을 기대해주세요!"
+              : "매주 금요일 밤 8시, 새로운 인연이 시작됩니다"
+            }
           </p>
         </div>
       </section>
