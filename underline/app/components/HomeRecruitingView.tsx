@@ -103,7 +103,11 @@ export function HomeRecruitingView({
       <header className="sticky top-0 z-50 bg-underline-cream/90 backdrop-blur-sm h-[60px] flex items-center justify-between px-5 border-b border-black/5">
         <div className="w-6" /> {/* Spacer */}
         <h1 className="font-serif text-2xl font-bold tracking-tight text-underline-text">
-          Underline
+          Under
+          <span className="relative inline-block">
+            line
+            <span className="absolute bottom-0 left-0 w-full h-[4px] bg-underline-red rounded-full"></span>
+          </span>
         </h1>
         <button
           onClick={onShowNotifications}
