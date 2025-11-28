@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { checkProfanity } from '../../lib/profanity';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -9,6 +10,13 @@ export async function GET(request: Request) {
         return NextResponse.json(
             { available: false, message: '닉네임을 입력해주세요.' },
             { status: 400 }
+        );
+    }
+
+    if (checkProfanity(nickname)) {
+        return NextResponse.json(
+            { available: false, message: '닉네임에 비속어는 사용할 수 없어요.' },
+            { status: 200 }
         );
     }
 

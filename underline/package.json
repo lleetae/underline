@@ -31,6 +31,7 @@
             "@radix-ui/react-tooltip": "^1.1.8",
             "@supabase/supabase-js": "^2.84.0",
             "@tensorflow/tfjs": "^4.22.0",
+            "bad-words": "^4.0.0",
             "class-variance-authority": "^0.7.1",
             "clsx": "*",
             "cmdk": "^1.1.1",
