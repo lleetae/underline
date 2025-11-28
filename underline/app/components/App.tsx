@@ -14,6 +14,7 @@ import { Toaster, toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { Session } from "@supabase/supabase-js";
 import { CancelRecruitmentModal } from "./CancelRecruitmentModal";
+import { BatchUtils } from "../utils/BatchUtils";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -21,12 +22,14 @@ export default function App() {
   const [hasProfile, setHasProfile] = useState(false);
   const [isSignedUp, setIsSignedUp] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [isRegistered, setIsRegistered] = useState(false); // Added for HomeRecruitingView compatibility
+  const [isParticipant, setIsParticipant] = useState(false); // User is active in the CURRENT batch (for Dating View)
+  const [isApplied, setIsApplied] = useState(false); // User has applied for the TARGET batch (for Button Status)
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+  const [selectedProfilePenalized, setSelectedProfilePenalized] = useState(false); // New state for penalty
   const [profileSource, setProfileSource] = useState<"home" | "mailbox">("home");
   const [mailboxActiveTab, setMailboxActiveTab] = useState<"matched" | "sent" | "received" | "messages">("matched");
   const [sentMatchRequests, setSentMatchRequests] = useState<Array<{
@@ -83,7 +86,8 @@ export default function App() {
       } else {
         setHasProfile(false);
         setIsSignedUp(false);
-        setIsRegistered(false);
+        setIsParticipant(false);
+        setIsApplied(false);
         setIsLoading(false);
       }
     });
@@ -142,19 +146,49 @@ export default function App() {
 
         // Check application status
         console.log("Checking application status...");
-        const { data: applicationData, error: appError } = await supabase
+
+        // 1. Check if user is a PARTICIPANT in the CURRENT batch (for Dating View access)
+        const currentBatchDate = BatchUtils.getCurrentBatchStartDate();
+        const { start: currentStart, end: currentEnd } = BatchUtils.getBatchApplicationRange(currentBatchDate);
+
+        const { data: participantData } = await supabase
           .from('dating_applications')
           .select('status')
           .eq('member_id', data.id)
-          .single();
+          .gte('created_at', currentStart.toISOString())
+          .lte('created_at', currentEnd.toISOString())
+          .eq('status', 'active')
+          .maybeSingle();
 
-        console.log("Application status result:", applicationData, appError);
-
-        if (applicationData && applicationData.status === 'active') {
-          setIsRegistered(true);
+        if (participantData) {
+          setIsParticipant(true);
         } else {
-          setIsRegistered(false);
+          setIsParticipant(false);
         }
+
+        // 2. Check if user has APPLIED for the TARGET batch (for Button Status in Recruiting View)
+        const targetBatchDate = BatchUtils.getTargetBatchStartDate();
+        // If target is same as current (Sun-Thu), we check the same range.
+        // If target is next week (Fri-Sat), we need the range for NEXT batch.
+        const { start: targetStart, end: targetEnd } = BatchUtils.getBatchApplicationRange(targetBatchDate);
+
+        const { data: applicationData } = await supabase
+          .from('dating_applications')
+          .select('status')
+          .eq('member_id', data.id)
+          .gte('created_at', targetStart.toISOString())
+          .lte('created_at', targetEnd.toISOString())
+          .neq('status', 'cancelled') // Check for any non-cancelled status
+          .maybeSingle();
+
+        if (applicationData) {
+          setIsApplied(true);
+        } else {
+          setIsApplied(false);
+        }
+
+        // 3. Get Current Interaction Cycle Start Date (for Mailbox Filtering)
+        const cycleStartDate = BatchUtils.getCurrentInteractionCycleStart();
 
         // Fetch received match requests
         const { data: receivedRequests, error: requestsError } = await supabase
@@ -176,6 +210,7 @@ export default function App() {
           `)
           .eq('receiver_id', data.id)
           .eq('status', 'pending')
+          .gte('created_at', cycleStartDate.toISOString()) // Filter by cycle
           .order('created_at', { ascending: false });
 
         if (!requestsError && receivedRequests) {
@@ -225,6 +260,7 @@ export default function App() {
           `)
           .eq('sender_id', data.id)
           .eq('status', 'pending')
+          .gte('created_at', cycleStartDate.toISOString()) // Filter by cycle
           .order('created_at', { ascending: false });
 
         if (!sentRequestsError && sentRequests) {
@@ -267,6 +303,7 @@ export default function App() {
           `)
           .or(`sender_id.eq.${data.id},receiver_id.eq.${data.id}`)
           .eq('status', 'accepted')
+          .gte('created_at', cycleStartDate.toISOString()) // Filter by cycle
           .order('created_at', { ascending: false });
 
         console.log("Matches fetch result:", matchesData, matchesError);
@@ -327,7 +364,8 @@ export default function App() {
         console.log("No profile found");
         setHasProfile(false);
         setIsSignedUp(false);
-        setIsRegistered(false);
+        setIsParticipant(false);
+        setIsApplied(false);
       }
     } catch (error) {
       console.error("Error checking profile:", error);
@@ -347,13 +385,14 @@ export default function App() {
     handleLogout();
   };
 
-  const handleProfileClick = (profileId: string, source: "home" | "mailbox" = "home") => {
+  const handleProfileClick = (profileId: string, source: "home" | "mailbox" = "home", metadata?: { isPenalized?: boolean }) => {
     if (!isSignedUp) {
       setShowLoginModal(true);
       return;
     }
     setSelectedProfileId(profileId);
     setProfileSource(source);
+    setSelectedProfilePenalized(metadata?.isPenalized || false); // Set penalty status
     setCurrentView("profileDetail");
   };
 
@@ -397,7 +436,8 @@ export default function App() {
     setSession(null);
     setHasProfile(false);
     setIsSignedUp(false);
-    setIsRegistered(false);
+    setIsParticipant(false);
+    setIsApplied(false);
     setCurrentView("home");
   };
 
@@ -515,18 +555,57 @@ export default function App() {
 
       if (!member) return;
 
+      // Check which batch we are applying for
+      const targetBatchDate = BatchUtils.getTargetBatchStartDate();
+      const isNextWeek = targetBatchDate > BatchUtils.getCurrentBatchStartDate();
+
       const { error } = await supabase
         .from('dating_applications')
         .upsert({
           member_id: member.id,
           status: 'active',
-          created_at: new Date().toISOString()
-        }, { onConflict: 'member_id' });
+          created_at: new Date().toISOString() // This timestamp places it in the correct batch range
+        }, { onConflict: 'member_id' }); // Note: onConflict might need adjustment if we want multiple rows per user. 
+      // BUT, since we use created_at to filter, and upsert updates the existing row...
+      // Wait, if we upsert on member_id, we overwrite the previous application.
+      // This effectively "moves" the application to the new batch if we just update created_at.
+      // If we want to keep history, we should NOT use member_id as unique constraint for the table, 
+      // OR we need to accept that we only keep the LATEST application.
+      // Given the requirement "Reset: Sunday (initialize data)", keeping history might be good but 
+      // if the table has a unique constraint on member_id, we can't insert a new row.
+      // Let's assume for now we just update the timestamp, which effectively "renews" the application for the new batch.
+      // If the user applies again, the created_at updates, moving them to the new batch window.
 
       if (error) throw error;
 
-      setIsRegistered(true);
-      toast.success("신청이 완료되었습니다");
+      setIsApplied(true);
+
+      // If we are in REGISTRATION phase, applying now also makes us a participant for the current (upcoming) batch immediately?
+      // Actually, if it's Sun-Thu (Registration), the "Current Batch" IS the one we are applying for.
+      // So we should also set isParticipant to true so they can see the "Application Completed" state 
+      // OR if the design is to show Recruiting View until Friday, then isParticipant should remain false?
+      // Wait, if I apply on Monday, I am "Registered" for the batch starting THIS Sunday.
+      // But the "Dating View" only activates on Friday.
+      // So isParticipant should track if I have a valid application for the ACTIVE matching batch.
+      // Since matching is only active Fri-Sat, isParticipant will only be relevant then.
+
+      // However, for the UI logic:
+      // BatchUtils.getCurrentSystemState() === 'MATCHING' && isParticipant
+
+      // If I apply on Monday (Registration Phase), SystemState is REGISTRATION.
+      // So even if isParticipant is true, I won't see Dating View.
+      // So it's safe to set isParticipant = true if we are applying for the current batch.
+
+      if (!isNextWeek) {
+        setIsParticipant(true);
+      }
+
+      if (isNextWeek) {
+        toast.success("다음 주 소개팅 신청이 완료되었습니다!");
+      } else {
+        toast.success("이번 주 소개팅 신청이 완료되었습니다!");
+      }
+
     } catch (error) {
       console.error("Error registering:", error);
       toast.error("신청에 실패했습니다");
@@ -557,7 +636,10 @@ export default function App() {
 
       if (error) throw error;
 
-      setIsRegistered(false);
+      setIsApplied(false);
+      if (!BatchUtils.getCurrentSystemState().includes('MATCHING')) {
+        setIsParticipant(false);
+      }
       setShowCancelModal(false);
       toast.success("신청이 취소되었습니다");
     } catch (error) {
@@ -673,7 +755,15 @@ export default function App() {
 
       {currentView === "home" && (
         <>
-          {isDatingPhase ? (
+          {/* 
+            Logic Update:
+            1. If System is in MATCHING phase (Fri-Sat):
+               - If User is Registered for CURRENT batch -> Show Dating View
+               - Else -> Show Recruiting View (for NEXT batch)
+            2. If System is in REGISTRATION phase (Sun-Thu):
+               - Show Recruiting View (for CURRENT batch)
+          */}
+          {BatchUtils.getCurrentSystemState() === 'MATCHING' && isParticipant ? (
             <HomeDatingView
               isSignedUp={isSignedUp}
               onProfileClick={handleProfileClick}
@@ -683,7 +773,7 @@ export default function App() {
             <HomeRecruitingView
               isSignedUp={isSignedUp}
               onShowLoginModal={handleShowLoginModal}
-              isRegistered={isRegistered}
+              isRegistered={isApplied} // Pass isApplied to control the button state
               onRegister={handleRegister}
               onCancelRegister={handleCancelRegister}
               onShowNotifications={handleShowNotifications}
@@ -764,7 +854,7 @@ export default function App() {
                 onMatchRequest={handleMatchRequest}
                 sentMatchRequests={sentMatchRequests}
                 isMatched={matches.some(m => m.profileId === selectedProfileId)} // Check if matched
-                disableMatching={profileSource === "mailbox"}
+                disableMatching={profileSource === "mailbox" || selectedProfilePenalized} // Disable if penalized
               />
             </div>
           )}

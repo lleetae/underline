@@ -4,6 +4,8 @@ import { MapPin, Bell } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { supabase } from "../lib/supabase";
 import { useCountdown } from "../hooks/useCountdown";
+import { BatchUtils } from "../utils/BatchUtils";
+import { subDays } from "date-fns";
 
 interface UserProfile {
   id: number; // Changed from string to number
@@ -15,10 +17,11 @@ interface UserProfile {
   bookTitle: string;
   bookReview: string;
   reviewExcerpt: string;
+  isPenalized?: boolean;
 }
 
 export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications }: {
-  onProfileClick?: (profileId: string, source?: "home" | "mailbox") => void;
+  onProfileClick?: (profileId: string, source?: "home" | "mailbox", metadata?: { isPenalized?: boolean }) => void;
   isSignedUp?: boolean;
   onShowNotifications?: () => void;
 }) {
@@ -96,27 +99,35 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
         const myGender = currentUserData?.gender;
         const myMemberId = currentUserData?.id;
 
+        // 1. Determine Current Batch Range
+        // We only want candidates who applied for THIS batch.
+        const currentBatchDate = BatchUtils.getCurrentBatchStartDate();
+        const { start, end } = BatchUtils.getBatchApplicationRange(currentBatchDate);
 
-        // Fetch candidates (excluding myself) and filter by dating_applications existence
+        // 2. Fetch candidates (excluding myself) and filter by dating_applications existence in range
         let query = supabase
           .from('member')
           .select(`
-id,
-  nickname,
-  age,
-  birth_date,
-  location,
-  photo_url,
-  photos,
-  bio,
-  gender,
-  member_books(
-    book_title,
-    book_review,
-    created_at
-  ),
-  dating_applications!inner(*)
-    `)
+            id,
+            nickname,
+            age,
+            birth_date,
+            location,
+            photo_url,
+            photos,
+            bio,
+            gender,
+            member_books(
+              book_title,
+              book_review,
+              created_at
+            ),
+            dating_applications!inner(
+              created_at
+            )
+          `)
+          .gte('dating_applications.created_at', start.toISOString())
+          .lte('dating_applications.created_at', end.toISOString())
           .eq('dating_applications.status', 'active'); // Only show active applications
 
         if (myMemberId) {
@@ -128,16 +139,39 @@ id,
           query = query.neq('gender', myGender);
         }
 
-        const { data, error } = await query.limit(20);
+        const { data, error } = await query.limit(50); // Fetch more to handle sorting
 
         if (error) throw error;
 
         if (data) {
+          // 3. Penalty Logic: Check for previous matches
+          // Fetch matches for the PREVIOUS batch to penalize users who were matched last week.
+          // Previous Batch: Current Batch - 7 days
+          // We check 'match_requests' where status is 'accepted' and created_at is in previous batch range?
+          // Actually, match requests are created during the Matching Period (Fri-Sat).
+          // So we should check match_requests created between Previous Friday and Previous Sunday?
+          // Or just check if they had ANY accepted match in the last 7 days.
+          // Let's check for accepted matches in the last 7 days.
+          const oneWeekAgo = subDays(new Date(), 7);
+
+          const { data: recentMatches } = await supabase
+            .from('match_requests')
+            .select('sender_id, receiver_id')
+            .eq('status', 'accepted')
+            .gte('created_at', oneWeekAgo.toISOString());
+
+          const matchedUserIds = new Set<number>();
+          if (recentMatches) {
+            recentMatches.forEach(m => {
+              matchedUserIds.add(m.sender_id);
+              matchedUserIds.add(m.receiver_id);
+            });
+          }
+
           const formattedProfiles: UserProfile[] = data
             .filter(member => member.member_books && member.member_books.length > 0) // Only show members with books
             .map(member => {
               // Sort books by created_at desc to get the latest one
-              // member_books is an array, we need to cast it or handle it safely
               const books = Array.isArray(member.member_books) ? member.member_books : [member.member_books];
               const sortedBooks = [...books].sort((a: any, b: any) =>
                 new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -151,7 +185,6 @@ id,
               const photos = member.photos && member.photos.length > 0 ? member.photos : (member.photo_url ? [member.photo_url] : []);
               const bio = member.bio || "";
 
-              // If latestBook is missing (should be filtered out, but for safety)
               if (!latestBook) return null;
 
               return {
@@ -165,10 +198,18 @@ id,
                 bookReview: latestBook.book_review,
                 reviewExcerpt: latestBook.book_review.length > 50
                   ? latestBook.book_review.substring(0, 50) + "..."
-                  : latestBook.book_review
+                  : latestBook.book_review,
+                isPenalized: matchedUserIds.has(member.id) // Add flag for sorting
               };
             })
-            .filter((p): p is UserProfile => p !== null); // Filter out nulls
+            .filter((p): p is UserProfile => p !== null)
+            // Sort: Non-penalized first, then Penalized. Within groups, random or by ID.
+            // Let's just put penalized at the bottom.
+            .sort((a, b) => {
+              // We filtered out nulls, so a and b are UserProfile
+              if (a.isPenalized === b.isPenalized) return 0;
+              return a.isPenalized ? 1 : -1;
+            });
 
           setProfiles(formattedProfiles);
         }
@@ -241,7 +282,7 @@ id,
               {profiles.map((profile) => (
                 <div
                   key={profile.id}
-                  onClick={() => onProfileClick?.(profile.id.toString())}
+                  onClick={() => onProfileClick?.(profile.id.toString(), "home", { isPenalized: profile.isPenalized })}
                   className="bg-white border border-[var(--foreground)]/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group"
                 >
                   {/* Photo Section */}
