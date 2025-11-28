@@ -14,7 +14,7 @@ interface Book {
 }
 
 interface ProfileDetailData {
-  id: number; // Changed to number
+  id: number;
   nickname: string;
   age: number;
   location: string;
@@ -25,6 +25,7 @@ interface ProfileDetailData {
   bio: string;
   photos: string[];
   books: Book[];
+  kakaoId?: string; // Added field
 }
 
 export function ProfileDetailViewWithInteraction({
@@ -33,7 +34,9 @@ export function ProfileDetailViewWithInteraction({
   onMatchRequest,
   sentMatchRequests = [],
   disableMatching = false,
-  isMatched = false // New prop
+  isMatched = false,
+  isWithdrawn = false,
+  partnerKakaoId // New prop
 }: {
   profileId: string;
   onBack: () => void;
@@ -56,6 +59,8 @@ export function ProfileDetailViewWithInteraction({
   }>;
   disableMatching?: boolean;
   isMatched?: boolean;
+  isWithdrawn?: boolean;
+  partnerKakaoId?: string | null; // New prop type
 }) {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showLetterModal, setShowLetterModal] = useState(false);
@@ -65,7 +70,6 @@ export function ProfileDetailViewWithInteraction({
   const [profile, setProfile] = useState<ProfileDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  // const supabase = createClient(); // Removed local client creation
 
   // Reset scroll position when profileId changes
   useEffect(() => {
@@ -84,7 +88,7 @@ export function ProfileDetailViewWithInteraction({
         const { data: memberData, error: memberError } = await supabase
           .from('member')
           .select('*')
-          .eq('id', parseInt(profileId)) // Convert string prop to integer
+          .eq('id', parseInt(profileId))
           .single();
 
         if (memberError) throw memberError;
@@ -93,7 +97,7 @@ export function ProfileDetailViewWithInteraction({
         const { data: booksData, error: booksError } = await supabase
           .from('member_books')
           .select('*')
-          .eq('member_id', parseInt(profileId)) // Convert string prop to integer
+          .eq('member_id', parseInt(profileId))
           .order('created_at', { ascending: false });
 
         if (booksError) throw booksError;
@@ -119,6 +123,40 @@ export function ProfileDetailViewWithInteraction({
             });
           }
 
+          // Handle empty photos (e.g. withdrawn user)
+          if (photos.length === 0) {
+            photos = ["https://via.placeholder.com/400x500?text=No+Photo"];
+          }
+
+          // Decrypt Kakao ID
+          let decryptedKakaoId = "";
+          const encryptedId = partnerKakaoId || memberData.kakao_id; // Prefer snapshot
+
+          if (isMatched && encryptedId) {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              const token = session?.access_token;
+
+              if (token) {
+                const response = await fetch('/api/decrypt/kakao', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify({ encryptedId })
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  decryptedKakaoId = data.decryptedId;
+                }
+              }
+            } catch (e) {
+              console.error("Error decrypting Kakao ID:", e);
+            }
+          }
+
           setProfile({
             id: memberData.id,
             nickname: memberData.nickname || "익명",
@@ -130,7 +168,8 @@ export function ProfileDetailViewWithInteraction({
             drinking: memberData.drinking || "non-drinker",
             bio: memberData.bio || "",
             photos: photos,
-            books: books
+            books: books,
+            kakaoId: decryptedKakaoId // Set decrypted ID
           });
         }
       } catch (error) {
@@ -142,7 +181,7 @@ export function ProfileDetailViewWithInteraction({
     };
 
     fetchProfileDetail();
-  }, [profileId]);
+  }, [profileId, isMatched, partnerKakaoId]);
 
   // Check if already sent request to this profile
   const existingRequest = sentMatchRequests.find(req => req.profileId === profileId);
@@ -426,6 +465,14 @@ export function ProfileDetailViewWithInteraction({
           </button>
           <h1 className="font-sans text-base text-[var(--foreground)]">상대프로필</h1>
         </div>
+        {/* Withdrawn Banner */}
+        {isWithdrawn && (
+          <div className="bg-gray-100 px-6 py-2 border-b border-gray-200">
+            <p className="text-xs text-gray-500 font-sans text-center">
+              탈퇴한 회원입니다.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Scrollable Content */}
@@ -493,6 +540,33 @@ export function ProfileDetailViewWithInteraction({
             </div>
           </div>
         </div>
+
+        {/* Kakao ID Section */}
+        {profile.kakaoId && (
+          <div className="px-6 py-4 bg-[var(--primary)]/5 border-b border-[var(--foreground)]/10">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse" />
+              <p className="text-xs text-[var(--primary)] font-sans font-bold">매칭된 연락처</p>
+            </div>
+            <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-[var(--foreground)]/10 shadow-sm">
+              <div>
+                <p className="text-xs text-[var(--foreground)]/50 font-sans mb-0.5">카카오톡 ID</p>
+                <p className="text-lg text-[var(--foreground)] font-sans font-medium select-all">
+                  {profile.kakaoId}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(profile.kakaoId || "");
+                  toast.success("카카오톡 ID가 복사되었습니다");
+                }}
+                className="text-xs bg-[var(--foreground)]/5 hover:bg-[var(--foreground)]/10 text-[var(--foreground)] px-3 py-1.5 rounded-md transition-colors font-sans"
+              >
+                복사
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Additional Info Grid */}
         <div className="px-6 py-4 border-b border-[var(--foreground)]/10">
