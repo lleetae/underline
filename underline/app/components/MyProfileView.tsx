@@ -58,7 +58,7 @@ function TotalPagesStats({ books }: { books: Book[] }) {
         </span>
       </div>
 
-      <div className="relative h-4 bg-[var(--foreground)]/5 rounded-full overflow-hidden">
+      <div className="relative h-2 bg-[var(--foreground)]/5 rounded-full overflow-hidden">
         <div
           className="absolute top-0 left-0 h-full bg-[var(--primary)] transition-all duration-1000 ease-out rounded-full"
           style={{ width: `${percentage}%` }}
