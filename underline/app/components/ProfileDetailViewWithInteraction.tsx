@@ -483,7 +483,7 @@ export function ProfileDetailViewWithInteraction({
             <ImageWithFallback
               src={profile.photos[currentPhotoIndex]}
               alt={profile.nickname}
-              className={`w-full h-full object-cover ${!isMatched && !disableMatching ? 'blur-md' : ''}`}
+              className={`w-full h-full object-cover ${!isMatched ? 'blur-md' : ''}`}
             />
 
             {/* Photo Navigation Overlay */}
