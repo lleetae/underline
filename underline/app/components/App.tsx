@@ -140,6 +140,19 @@ export default function App() {
     setCurrentView(tab);
   };
 
+  // Safety Timeout for Loading State
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Loading timed out, forcing render.");
+        setIsLoading(false);
+        toast.error("데이터 로딩이 지연되어 강제로 화면을 표시합니다.");
+      }
+    }, 5000); // 5 seconds timeout
+
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setCurrentView("home");
