@@ -13,18 +13,57 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
   const [step2Data, setStep2Data] = useState<Step2Data | null>(null);
   const [step3Data, setStep3Data] = useState<Step3Data | null>(null);
 
+  const STORAGE_KEY = 'signup_progress';
+
+  // Load progress on mount
+  React.useEffect(() => {
+    const savedProgress = localStorage.getItem(STORAGE_KEY);
+    if (savedProgress) {
+      try {
+        const parsed = JSON.parse(savedProgress);
+        if (parsed.step1Data) setStep1Data(parsed.step1Data);
+        if (parsed.step2Data) setStep2Data(parsed.step2Data);
+        if (parsed.step3Data) setStep3Data(parsed.step3Data);
+
+        // Determine step to restore
+        if (parsed.step3Data) setCurrentStep(4);
+        else if (parsed.step2Data) setCurrentStep(3);
+        else if (parsed.step1Data) setCurrentStep(2);
+      } catch (e) {
+        console.error("Failed to parse saved progress", e);
+      }
+    }
+  }, []);
+
+  const saveProgress = (data: any) => {
+    const currentProgress = localStorage.getItem(STORAGE_KEY);
+    let parsed = {};
+    if (currentProgress) {
+      try {
+        parsed = JSON.parse(currentProgress);
+      } catch (e) {
+        // ignore
+      }
+    }
+    const newProgress = { ...parsed, ...data };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newProgress));
+  };
+
   const handleStep1Complete = (data: Step1Data) => {
     setStep1Data(data);
+    saveProgress({ step1Data: data });
     setCurrentStep(2);
   };
 
   const handleStep2Complete = (data: Step2Data) => {
     setStep2Data(data);
+    saveProgress({ step2Data: data });
     setCurrentStep(3);
   };
 
   const handleStep3Complete = (data: Step3Data) => {
     setStep3Data(data);
+    saveProgress({ step3Data: data });
     setCurrentStep(4);
   };
 
@@ -116,6 +155,8 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
 
       if (bookError) throw bookError;
 
+      // Clear progress on success
+      localStorage.removeItem(STORAGE_KEY);
       toast.success("회원가입이 완료되었습니다!");
       onComplete?.();
     } catch (error) {
