@@ -395,7 +395,7 @@ export function ProfileDetailViewWithInteraction({
         </div>
 
         {/* Book Detail Content */}
-        <div className="flex-1 overflow-y-auto pb-32 [scrollbar-gutter:stable]">
+        <div className="flex-1 overflow-y-auto pb-32" style={{ scrollbarGutter: 'stable' }}>
           <div className="px-6 py-8 space-y-6">
             {/* Book Header */}
             <div className="flex gap-4 items-start">
@@ -437,7 +437,7 @@ export function ProfileDetailViewWithInteraction({
                 }}
               />
 
-              <div className="relative z-10 font-serif text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words flex-1 overflow-y-auto pr-2 [scrollbar-gutter:stable]">
+              <div className="relative z-10 font-serif text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words flex-1 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
                 {selectedBook.review}
               </div>
             </div>
