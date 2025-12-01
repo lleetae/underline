@@ -233,6 +233,7 @@ export default function App() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       const response = await fetch('/api/matches/list', {
+        cache: 'no-store',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -555,11 +556,11 @@ export default function App() {
       // Update local state
       setReceivedMatchRequests(prev => prev.filter(req => req.id !== requestId));
 
-      // Refresh matches directly
-      await fetchMatches();
-
-      // Switch to matched tab
-      setMailboxActiveTab("matched");
+      // Wait a bit for DB propagation then refresh
+      setTimeout(async () => {
+        await fetchMatches();
+        setMailboxActiveTab("matched");
+      }, 500);
 
       toast.success("매칭이 성사되었습니다!");
     } catch (error) {
