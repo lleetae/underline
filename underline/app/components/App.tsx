@@ -89,16 +89,22 @@ export default function App() {
 
             if (error) {
               toast.error("세션 복구 실패: " + error.message);
+              setIsLoading(false);
             } else if (data.session) {
               setSession(data.session);
               checkProfile(data.session.user.id);
               // Clear hash to prevent loop or clutter
               window.history.replaceState(null, '', window.location.pathname);
               return; // Session established, skip standard getSession
+            } else {
+              setIsLoading(false);
             }
+          } else {
+            setIsLoading(false);
           }
         } catch (e) {
           console.error("Error parsing hash:", e);
+          setIsLoading(false);
         }
       }
     };
