@@ -87,14 +87,13 @@ export async function GET(request: NextRequest) {
         }
 
         // Fetch matches where current user is sender OR receiver
+        // NOTE: We are avoiding JOINs here because they were causing issues even when data existed.
         const { data: matchesData, error: matchesError } = await supabaseAdmin
             .from('match_requests')
             .select(`
-        id, sender_id, receiver_id, status, letter, created_at,
-        sender_kakao_id, receiver_kakao_id, is_unlocked,
-        sender:member!sender_id (id, nickname, age, birth_date, location, photo_url, photos, auth_id),
-        receiver:member!receiver_id (id, nickname, age, birth_date, location, photo_url, photos, auth_id)
-      `)
+                id, sender_id, receiver_id, status, letter, created_at,
+                sender_kakao_id, receiver_kakao_id, is_unlocked
+            `)
             .or(`sender_id.eq.${memberId},receiver_id.eq.${memberId}`)
             .eq('status', 'accepted')
             .order('created_at', { ascending: false });
@@ -105,10 +104,24 @@ export async function GET(request: NextRequest) {
         }
 
         console.log("Raw matches found (accepted):", matchesData?.length);
-        // 4. Format Data
-        const formattedMatches = matchesData.map((match: any) => {
+
+        // 4. Format Data with Manual Member Fetching
+        const formattedMatches = await Promise.all(matchesData.map(async (match: any) => {
             const isSender = match.sender_id === memberId;
-            const partner = isSender ? match.receiver : match.sender;
+            const partnerId = isSender ? match.receiver_id : match.sender_id;
+
+            // Fetch partner data manually
+            const { data: partner, error: partnerError } = await supabaseAdmin
+                .from('member')
+                .select('id, nickname, age, birth_date, location, photo_url, photos, auth_id')
+                .eq('id', partnerId)
+                .single();
+
+            if (partnerError || !partner) {
+                console.error(`Failed to fetch partner ${partnerId} for match ${match.id}`);
+                return null; // Skip this match if partner not found
+            }
+
             const isWithdrawn = partner.auth_id === null;
             const partnerKakaoId = isSender ? match.receiver_kakao_id : match.sender_kakao_id;
 
@@ -157,9 +170,12 @@ export async function GET(request: NextRequest) {
                 isWithdrawn: isWithdrawn,
                 partnerKakaoId: partnerKakaoId
             };
-        });
+        }));
 
-        return NextResponse.json({ matches: formattedMatches });
+        // Filter out nulls (failed fetches)
+        const validMatches = formattedMatches.filter(m => m !== null);
+
+        return NextResponse.json({ matches: validMatches });
 
     } catch (error) {
         console.error('Matches API error:', error);
