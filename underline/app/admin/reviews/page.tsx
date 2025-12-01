@@ -72,7 +72,7 @@ export default function AdminReviewsPage() {
             // 1. Upload Image
             const fileExt = selectedImage.name.split('.').pop();
             const fileName = `${Date.now()}.${fileExt}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('reviews')
                 .upload(fileName, selectedImage);
 

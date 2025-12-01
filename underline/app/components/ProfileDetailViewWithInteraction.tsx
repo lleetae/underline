@@ -4,6 +4,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 import { MatchRequestLetterModal } from "./MatchRequestLetterModal";
 import { supabase } from "../lib/supabase";
+import { DecryptedKakaoId } from "./DecryptedKakaoId";
 
 interface Book {
   id: string;
@@ -36,7 +37,9 @@ export function ProfileDetailViewWithInteraction({
   disableMatching = false,
   isMatched = false,
   isWithdrawn = false,
-  partnerKakaoId // New prop
+  partnerKakaoId, // New prop
+  isUnlocked, // New prop
+  matchId // New prop
 }: {
   profileId: string;
   onBack: () => void;
@@ -60,7 +63,9 @@ export function ProfileDetailViewWithInteraction({
   disableMatching?: boolean;
   isMatched?: boolean;
   isWithdrawn?: boolean;
-  partnerKakaoId?: string | null; // New prop type
+  partnerKakaoId?: string | null;
+  isUnlocked?: boolean; // New prop
+  matchId?: string | null; // New prop
 }) {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showLetterModal, setShowLetterModal] = useState(false);
@@ -128,34 +133,8 @@ export function ProfileDetailViewWithInteraction({
             photos = ["https://via.placeholder.com/400x500?text=No+Photo"];
           }
 
-          // Decrypt Kakao ID
-          let decryptedKakaoId = "";
-          const encryptedId = partnerKakaoId || memberData.kakao_id; // Prefer snapshot
-
-          if (isMatched && encryptedId) {
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              const token = session?.access_token;
-
-              if (token) {
-                const response = await fetch('/api/decrypt/kakao', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify({ encryptedId })
-                });
-
-                if (response.ok) {
-                  const data = await response.json();
-                  decryptedKakaoId = data.decryptedId;
-                }
-              }
-            } catch (e) {
-              console.error("Error decrypting Kakao ID:", e);
-            }
-          }
+          // Use encrypted ID directly
+          const kakaoId = partnerKakaoId || memberData.kakao_id;
 
           setProfile({
             id: memberData.id,
@@ -169,7 +148,7 @@ export function ProfileDetailViewWithInteraction({
             bio: memberData.bio || "",
             photos: photos,
             books: books,
-            kakaoId: decryptedKakaoId // Set decrypted ID
+            kakaoId: kakaoId // Set encrypted ID
           });
         }
       } catch (error) {
@@ -321,6 +300,39 @@ export function ProfileDetailViewWithInteraction({
     } finally {
       setIsSendingRequest(false);
     }
+  };
+
+  const handlePayment = () => {
+    console.log("handlePayment called");
+    if (!profile) {
+      console.log("Profile is missing");
+      return;
+    }
+
+    // @ts-ignore
+    console.log("window.AUTHNICE type:", typeof window.AUTHNICE);
+    // @ts-ignore
+    if (typeof window.AUTHNICE === 'undefined') {
+      console.error("AUTHNICE is undefined");
+      toast.error("결제 시스템을 불러오지 못했습니다. 새로고침 해주세요.");
+      return;
+    }
+
+    console.log("Calling requestPay with matchId:", matchId || profileId);
+
+    // @ts-ignore
+    window.AUTHNICE.requestPay({
+      clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID || 'S2_ff3bfd3d0db14308b7375e9f74f8b695',
+      method: 'card',
+      orderId: matchId || profileId, // Use matchId if available
+      amount: 9900,
+      goodsName: '연락처 잠금해제',
+      returnUrl: `${window.location.origin}/api/payments/approve`,
+      fnError: function (result: any) {
+        console.error("NicePayments error:", result);
+        toast.error('결제 중 오류가 발생했습니다: ' + result.errorMsg);
+      }
+    });
   };
 
 
@@ -542,29 +554,73 @@ export function ProfileDetailViewWithInteraction({
         </div>
 
         {/* Kakao ID Section */}
-        {profile.kakaoId && (
+        {isMatched && (
           <div className="px-6 py-4 bg-[var(--primary)]/5 border-b border-[var(--foreground)]/10">
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse" />
               <p className="text-xs text-[var(--primary)] font-sans font-bold">매칭된 연락처</p>
             </div>
-            <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-[var(--foreground)]/10 shadow-sm">
-              <div>
-                <p className="text-xs text-[var(--foreground)]/50 font-sans mb-0.5">카카오톡 ID</p>
-                <p className="text-lg text-[var(--foreground)] font-sans font-medium select-all">
-                  {profile.kakaoId}
-                </p>
+
+            {isUnlocked ? (
+              <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-[var(--foreground)]/10 shadow-sm">
+                <div>
+                  <p className="text-xs text-[var(--foreground)]/50 font-sans mb-0.5">카카오톡 ID</p>
+                  <p className="text-lg text-[var(--foreground)] font-sans font-medium select-all">
+                    <DecryptedKakaoId encryptedId={profile.kakaoId} fallback="ID 정보 없음" />
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      if (!profile.kakaoId) return;
+
+                      const { data: { session } } = await supabase.auth.getSession();
+                      const token = session?.access_token;
+
+                      if (!token) {
+                        toast.error("로그인이 필요합니다");
+                        return;
+                      }
+
+                      const response = await fetch('/api/decrypt/kakao', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ encryptedId: profile.kakaoId })
+                      });
+
+                      if (response.ok) {
+                        const data = await response.json();
+                        await navigator.clipboard.writeText(data.decryptedId);
+                        toast.success("카카오톡 ID가 복사되었습니다");
+                      } else {
+                        throw new Error("Decryption failed");
+                      }
+                    } catch (e) {
+                      console.error("Copy error:", e);
+                      toast.error("복사에 실패했습니다");
+                    }
+                  }}
+                  className="text-xs bg-[var(--foreground)]/5 hover:bg-[var(--foreground)]/10 text-[var(--foreground)] px-3 py-1.5 rounded-md transition-colors font-sans"
+                >
+                  복사
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(profile.kakaoId || "");
-                  toast.success("카카오톡 ID가 복사되었습니다");
-                }}
-                className="text-xs bg-[var(--foreground)]/5 hover:bg-[var(--foreground)]/10 text-[var(--foreground)] px-3 py-1.5 rounded-md transition-colors font-sans"
-              >
-                복사
-              </button>
-            </div>
+            ) : (
+              <div className="bg-white p-4 rounded-lg border border-[var(--foreground)]/10 shadow-sm text-center">
+                <p className="text-sm text-[var(--foreground)]/60 font-sans mb-3">
+                  연락처를 확인하려면 잠금해제가 필요합니다.
+                </p>
+                <button
+                  onClick={handlePayment}
+                  className="w-full bg-[var(--primary)] text-white font-sans font-medium py-3 rounded-lg hover:bg-[var(--primary)]/90 transition-colors shadow-md flex items-center justify-center gap-2"
+                >
+                  <span>연락처 잠금해제 (9,900원)</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 

@@ -203,14 +203,14 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
                 isPenalized: matchedUserIds.has(member.id) // Add flag for sorting
               };
             })
-            .filter((p): p is UserProfile => p !== null)
+            .filter((p) => p !== null)
             // Sort: Non-penalized first, then Penalized. Within groups, random or by ID.
             // Let's just put penalized at the bottom.
             .sort((a, b) => {
               // We filtered out nulls, so a and b are UserProfile
               if (a.isPenalized === b.isPenalized) return 0;
               return a.isPenalized ? 1 : -1;
-            });
+            }) as UserProfile[];
 
           setProfiles(formattedProfiles);
         }

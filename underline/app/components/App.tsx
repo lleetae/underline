@@ -31,7 +31,9 @@ export default function App() {
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [selectedProfilePenalized, setSelectedProfilePenalized] = useState(false);
   const [selectedProfileWithdrawn, setSelectedProfileWithdrawn] = useState(false);
-  const [selectedProfileKakaoId, setSelectedProfileKakaoId] = useState<string | null>(null); // New state // New state for penalty
+  const [selectedProfileKakaoId, setSelectedProfileKakaoId] = useState<string | null>(null);
+  const [selectedProfileIsUnlocked, setSelectedProfileIsUnlocked] = useState(false); // New state
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null); // New state
   const [profileSource, setProfileSource] = useState<"home" | "mailbox">("home");
   const [mailboxActiveTab, setMailboxActiveTab] = useState<"matched" | "sent" | "received" | "messages">("matched");
   const [sentMatchRequests, setSentMatchRequests] = useState<Array<{
@@ -97,6 +99,29 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Handle Payment Redirect
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const paymentSuccess = params.get('payment_success');
+      const paymentError = params.get('payment_error');
+
+      if (paymentSuccess) {
+        setCurrentView("mailbox");
+        setMailboxActiveTab("matched");
+        toast.success("결제가 완료되었습니다! 연락처가 공개되었습니다.");
+        // Clean up URL
+        window.history.replaceState({}, '', '/');
+      } else if (paymentError) {
+        setCurrentView("mailbox");
+        setMailboxActiveTab("matched");
+        toast.error(`결제 실패: ${decodeURIComponent(paymentError)}`);
+        // Clean up URL
+        window.history.replaceState({}, '', '/');
+      }
+    }
+  }, []);
+
   // Realtime Subscription for Match Requests
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -114,9 +139,7 @@ export default function App() {
         },
         (payload) => {
           console.log('Realtime match request update received:', payload);
-          // Refresh profile data when any change happens to match_requests
-          // In a production app with RLS, we would only receive relevant events.
-          // Even without RLS on realtime, checking profile is safe as it fetches fresh data.
+          // toast.info("매칭 정보가 업데이트되었습니다."); // Debug toast
           checkProfile(session.user.id);
         }
       )
@@ -295,83 +318,23 @@ export default function App() {
           setSentMatchRequests(formattedSentRequests);
         }
 
-        // Fetch matches (accepted requests)
-        console.log("Fetching matches...");
-        const { data: matchesData, error: matchesError } = await supabase
-          .from('match_requests')
-          .select(`
-            id,
-            sender_id,
-            receiver_id,
-            status,
-            letter,
-            created_at,
-            sender_kakao_id,
-            receiver_kakao_id,
-            sender:member!sender_id (id, nickname, age, birth_date, location, photo_url, photos, auth_id),
-            receiver:member!receiver_id (id, nickname, age, birth_date, location, photo_url, photos, auth_id)
-          `)
-          .or(`sender_id.eq.${data.id},receiver_id.eq.${data.id}`)
-          .eq('status', 'accepted')
-          .gte('created_at', cycleStartDate.toISOString()) // Filter by cycle
-          .order('created_at', { ascending: false });
-
-        console.log("Matches fetch result:", matchesData, matchesError);
-
-        if (!matchesError && matchesData) {
-          const formattedMatches = matchesData.map((match: any) => {
-            const isSender = match.sender_id === data.id;
-            const partner = isSender ? match.receiver : match.sender;
-            const isWithdrawn = partner.auth_id === null;
-            const partnerKakaoId = isSender ? match.receiver_kakao_id : match.sender_kakao_id;
-
-            // Helper to get original photo URL
-            const getOriginalPhotoUrl = (url: string) => {
-              if (!url) return "";
-              if (url.includes("profile-photos-blurred")) {
-                return url.replace("profile-photos-blurred", "profile-photos-original").replace("blurred_", "");
-              }
-              return url;
-            };
-
-            // Handle photos
-            let photos = partner.photos && partner.photos.length > 0
-              ? partner.photos
-              : (partner.photo_url ? [partner.photo_url] : []);
-
-            // Transform to original URLs for matches
-            photos = photos.map((p: string) => getOriginalPhotoUrl(p));
-
-            // Handle age
-            const age = partner.age || (partner.birth_date
-              ? new Date().getFullYear() - parseInt(partner.birth_date.substring(0, 4))
-              : 0);
-
-            // Helper for location
-            const getLocationText = (location: string) => {
-              const locationMap: { [key: string]: string } = {
-                seoul: "서울", busan: "부산", incheon: "인천", daegu: "대구",
-                daejeon: "대전", gwangju: "광주", other: "기타"
-              };
-              return locationMap[location] || location;
-            };
-
-            return {
-              id: match.id,
-              profileId: partner.id.toString(),
-              userImage: photos[0] || "",
-              nickname: isWithdrawn ? "알수없음 (탈퇴)" : partner.nickname,
-              age: age,
-              location: getLocationText(partner.location),
-              bookTitle: match.letter ? (match.letter.length > 20 ? match.letter.substring(0, 20) + "..." : match.letter) : "매칭된 책", // Use letter as fallback
-              isUnlocked: false, // Default to locked for now
-              contactId: "kakao_id_placeholder", // Placeholder
-              isBlurred: false, // Matched profiles are NOT blurred
-              isWithdrawn: isWithdrawn, // Add withdrawn flag
-              partnerKakaoId: partnerKakaoId // Add snapshot ID
-            };
+        // Fetch matches (accepted requests) via API to bypass RLS issues
+        console.log("Fetching matches via API...");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const response = await fetch('/api/matches/list', {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            }
           });
-          setMatches(formattedMatches);
+
+          if (response.ok) {
+            const { matches: apiMatches } = await response.json();
+            console.log("Matches API result:", apiMatches);
+            setMatches(apiMatches);
+          } else {
+            console.error("Failed to fetch matches from API");
+          }
         }
 
       } else {
@@ -401,7 +364,7 @@ export default function App() {
 
 
 
-  const handleProfileClick = (profileId: string, source: "home" | "mailbox" = "home", metadata?: { isPenalized?: boolean; isWithdrawn?: boolean; partnerKakaoId?: string }) => {
+  const handleProfileClick = (profileId: string, source: "home" | "mailbox" = "home", metadata?: { isPenalized?: boolean; isWithdrawn?: boolean; partnerKakaoId?: string; isUnlocked?: boolean; matchId?: string }) => {
     if (!isSignedUp) {
       setShowLoginModal(true);
       return;
@@ -410,7 +373,9 @@ export default function App() {
     setProfileSource(source);
     setSelectedProfilePenalized(metadata?.isPenalized || false);
     setSelectedProfileWithdrawn(metadata?.isWithdrawn || false);
-    setSelectedProfileKakaoId(metadata?.partnerKakaoId || null); // Set Kakao ID
+    setSelectedProfileKakaoId(metadata?.partnerKakaoId || null);
+    setSelectedProfileIsUnlocked(metadata?.isUnlocked || false);
+    setSelectedMatchId(metadata?.matchId || null);
     setCurrentView("profileDetail");
   };
 
@@ -419,7 +384,9 @@ export default function App() {
     setCurrentView(previousView);
     setSelectedProfileId(null);
     setSelectedProfileWithdrawn(false);
-    setSelectedProfileKakaoId(null); // Reset
+    setSelectedProfileKakaoId(null);
+    setSelectedProfileIsUnlocked(false);
+    setSelectedMatchId(null);
   };
 
   const handleMatchRequest = (profileData: {
@@ -791,8 +758,10 @@ export default function App() {
                - Else -> Show Recruiting View (for NEXT batch)
             2. If System is in REGISTRATION phase (Sun-Thu):
                - Show Recruiting View (for CURRENT batch)
+            
+            Dev Override: isDatingPhase state forces Dating View
           */}
-          {BatchUtils.getCurrentSystemState() === 'MATCHING' && isParticipant ? (
+          {(isDatingPhase || (BatchUtils.getCurrentSystemState() === 'MATCHING' && isParticipant)) ? (
             <HomeDatingView
               isSignedUp={isSignedUp}
               onProfileClick={handleProfileClick}
@@ -882,10 +851,13 @@ export default function App() {
                 onBack={handleBackFromProfileDetail}
                 onMatchRequest={handleMatchRequest}
                 sentMatchRequests={sentMatchRequests}
-                isMatched={matches.some(m => m.profileId === selectedProfileId)} // Check if matched
+                isMatched={profileSource === "mailbox" && mailboxActiveTab === "matched"}
                 disableMatching={profileSource === "mailbox" || selectedProfilePenalized || selectedProfileWithdrawn}
                 isWithdrawn={selectedProfileWithdrawn}
                 partnerKakaoId={selectedProfileKakaoId} // Pass Kakao ID
+                isUnlocked={selectedProfileIsUnlocked}
+                // @ts-ignore
+                matchId={selectedMatchId} // We need to add this prop to ProfileDetailViewWithInteraction interface if we want to be strict, but I used orderId=profileId in previous step. Wait, I need to fix ProfileDetailViewWithInteraction to use matchId.
               />
             </div>
           )}

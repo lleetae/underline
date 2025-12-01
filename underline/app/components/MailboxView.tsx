@@ -54,7 +54,7 @@ export function MailboxView({
   sentMatchRequests?: SentMatchRequest[];
   receivedMatchRequests?: ReceivedMatchRequest[];
   matches?: Match[];
-  onProfileClick?: (profileId: string, source: "home" | "mailbox", metadata?: { isPenalized?: boolean; isWithdrawn?: boolean; partnerKakaoId?: string }) => void;
+  onProfileClick?: (profileId: string, source: "home" | "mailbox", metadata?: { isPenalized?: boolean; isWithdrawn?: boolean; partnerKakaoId?: string; matchId?: string; isUnlocked?: boolean }) => void;
   activeTab: string;
   onTabChange: (tab: string) => void;
   onAcceptMatch?: (requestId: string) => void;
@@ -309,7 +309,7 @@ export function MailboxView({
               )}
             </div>
           ) : activeTab === "matched" ? (
-            <MatchList matches={matches} onProfileClick={onProfileClick} />
+            <MatchList matches={matches} onProfileClick={(profileId, source, metadata) => onProfileClick?.(profileId, source, metadata)} />
           ) : activeTab === "sent" ? (
             <div className="px-6 py-4">
               {sentMatchRequests && sentMatchRequests.length > 0 ? (

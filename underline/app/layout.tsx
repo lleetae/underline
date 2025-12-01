@@ -18,6 +18,7 @@ export default function RootLayout({
             <body className="antialiased">
                 {children}
                 <Toaster position="top-center" />
+                <script src="https://pay.nicepay.co.kr/v1/js/"></script>
             </body>
         </html>
     );
