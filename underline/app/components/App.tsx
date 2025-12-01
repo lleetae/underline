@@ -258,7 +258,7 @@ export default function App() {
 
         if (!requestsError && receivedRequests) {
           const formattedRequests = receivedRequests
-            .filter((req: any) => req.sender.auth_id !== null) // Filter out withdrawn users
+            .filter((req: any) => req.sender && req.sender.auth_id !== null) // Filter out withdrawn users
             .map((req: any) => {
               // Handle photos: check photos array first, then photo_url
               const photos = req.sender.photos && req.sender.photos.length > 0

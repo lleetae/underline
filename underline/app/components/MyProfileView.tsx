@@ -609,9 +609,11 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
 
           {/* Library Stats */}
           <div className="mt-6 bg-[var(--primary)]/5 border border-[var(--primary)]/20 rounded-lg p-4">
-            <p className="text-xs text-center text-[var(--foreground)]/70 font-sans leading-relaxed">
-              책을 추가하면 다른 사람들에게 당신의 취향이 공개되며,<br />
-              <span className="text-[var(--primary)]">더 잘 맞는 매칭을 찾을 수 있습니다</span>
+            <p className="text-sm text-[var(--foreground)]/60 font-sans mb-1">
+              나를 가장 잘 설명하는 책은 무엇인가요?
+            </p>
+            <p className="text-sm text-[var(--primary)] font-sans font-medium">
+              책 한 권이 백 마디 말보다 나를 더 잘 보여줍니다
             </p>
           </div>
         </div>
