@@ -35,6 +35,7 @@ export function ProfileDetailViewWithInteraction({
   onBack,
   onMatchRequest,
   sentMatchRequests = [],
+  receivedMatchRequests = [],
   disableMatching = false,
   isMatched = false,
   isWithdrawn = false,
@@ -53,6 +54,16 @@ export function ProfileDetailViewWithInteraction({
     letter: string;
   }) => void;
   sentMatchRequests?: Array<{
+    profileId: string;
+    nickname: string;
+    age: number;
+    location: string;
+    photo: string;
+    letter: string;
+    timestamp: Date;
+  }>;
+  receivedMatchRequests?: Array<{
+    id: string;
     profileId: string;
     nickname: string;
     age: number;
@@ -164,11 +175,11 @@ export function ProfileDetailViewWithInteraction({
     fetchProfileDetail();
   }, [profileId, isMatched, partnerKakaoId]);
 
-  // Check if already sent request to this profile
+  // Check if request already sent OR received
   const existingRequest = sentMatchRequests.find(req => req.profileId === profileId);
   const isRequestSent = !!existingRequest;
-
-
+  const isRequestReceived = receivedMatchRequests.some(req => req.profileId === profileId);
+  const canRequest = !disableMatching && !isRequestSent && !isRequestReceived && !isMatched && !isWithdrawn;
 
   // Helper function to display religion text
   const getReligionText = (religion: string) => {
@@ -749,17 +760,44 @@ export function ProfileDetailViewWithInteraction({
 
 
       {/* Floating Match Request Button */}
-      {!disableMatching && !isRequestSent && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-6 pb-8">
-          <button
-            onClick={handleOpenLetterModal}
-            className="w-full max-w-md mx-auto bg-[var(--primary)] text-white font-sans font-medium py-4 rounded-xl hover:bg-[var(--primary)]/90 transition-all duration-300 shadow-2xl shadow-[var(--primary)]/30 flex items-center justify-center gap-2"
-          >
-            <Send className="w-5 h-5" />
-            <span>매칭 신청하기</span>
-          </button>
-        </div>
-      )}
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-6 pb-8">
+        <button
+          onClick={handleOpenLetterModal}
+          disabled={!canRequest}
+          className={`w-full max-w-md mx-auto font-sans font-medium py-4 rounded-xl transition-all duration-300 shadow-2xl flex items-center justify-center gap-2
+            ${canRequest
+              ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/30"
+              : "bg-[var(--foreground)]/10 text-[var(--foreground)]/40 cursor-not-allowed shadow-none"
+            }`}
+        >
+          {isMatched ? (
+            <>
+              <Heart className="w-5 h-5 fill-current" />
+              <span>매칭된 상대입니다</span>
+            </>
+          ) : isRequestReceived ? (
+            <>
+              <Heart className="w-5 h-5" />
+              <span>매칭 신청을 받았습니다</span>
+            </>
+          ) : isRequestSent ? (
+            <>
+              <Send className="w-5 h-5" />
+              <span>매칭 신청 완료</span>
+            </>
+          ) : disableMatching ? (
+            <>
+              <Heart className="w-5 h-5" />
+              <span>매칭 신청 불가</span>
+            </>
+          ) : (
+            <>
+              <Send className="w-5 h-5" />
+              <span>매칭 신청하기</span>
+            </>
+          )}
+        </button>
+      </div>
 
       {/* Letter Modal */}
       <MatchRequestLetterModal

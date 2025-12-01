@@ -407,7 +407,7 @@ export default function App() {
             console.log("Matches API result:", apiMatches);
             setMatches(apiMatches);
           } else {
-            console.error("Failed to fetch matches from API");
+            console.error("Failed to fetch matches from API", await response.text());
           }
         }
 
@@ -925,6 +925,7 @@ export default function App() {
                 onBack={handleBackFromProfileDetail}
                 onMatchRequest={handleMatchRequest}
                 sentMatchRequests={sentMatchRequests}
+                receivedMatchRequests={receivedMatchRequests}
                 isMatched={profileSource === "mailbox" && mailboxActiveTab === "matched"}
                 disableMatching={profileSource === "mailbox" || selectedProfilePenalized || selectedProfileWithdrawn}
                 isWithdrawn={selectedProfileWithdrawn}
