@@ -60,6 +60,7 @@ export function MailboxView({
   onAcceptMatch?: (requestId: string) => void;
   onRejectMatch?: (requestId: string) => void;
   onShowNotifications?: () => void;
+  onRefreshMatches?: () => Promise<void>;
 }) {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<ReceivedMatchRequest | null>(null);
@@ -192,8 +193,14 @@ export function MailboxView({
     // Trigger a small transition on tab change for smoothness
     setIsAnimating(true);
     const timer = setTimeout(() => setIsAnimating(false), 260);
+
+    // Refresh matches when switching to matched tab
+    if (activeTab === "matched" && onRefreshMatches) {
+      onRefreshMatches();
+    }
+
     return () => clearTimeout(timer);
-  }, [activeTab]);
+  }, [activeTab, onRefreshMatches]);
 
   const dragOffset = Math.max(-60, Math.min(60, touchDeltaX));
   const slideOffset =

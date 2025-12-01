@@ -25,6 +25,8 @@ export default function App() {
   const [isParticipant, setIsParticipant] = useState(false); // User is active in the CURRENT batch (for Dating View)
   const [isApplied, setIsApplied] = useState(false); // User has applied for the TARGET batch (for Button Status)
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [myMemberId, setMyMemberId] = useState<string | null>(null);
+  const [myGender, setMyGender] = useState<string | null>(null);
 
   const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
@@ -227,13 +229,33 @@ export default function App() {
     };
   }, [session]);
 
+  const fetchMatches = async () => {
+    console.log("Fetching matches via API...");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const response = await fetch('/api/matches/list', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const { matches: apiMatches } = await response.json();
+        console.log("Matches API result:", apiMatches);
+        setMatches(apiMatches);
+      } else {
+        console.error("Failed to fetch matches from API", await response.text());
+      }
+    }
+  };
+
   const checkProfile = async (userId: string) => {
     console.log("checkProfile called with:", userId);
     try {
       console.log("Fetching member profile...");
       const { data, error: _error } = await supabase
         .from('member')
-        .select('id')
+        .select('*')
         .eq('auth_id', userId)
         .single();
 
@@ -264,11 +286,13 @@ export default function App() {
         } else {
           setIsParticipant(false);
         }
+        setMyMemberId(data.id);
+        setMyGender(data.gender);
 
-        // 2. Check if user has APPLIED for the TARGET batch (for Button Status in Recruiting View)
+
+
+        // Check if user has applied for the NEXT cycle
         const targetBatchDate = BatchUtils.getTargetBatchStartDate();
-        // If target is same as current (Sun-Thu), we check the same range.
-        // If target is next week (Fri-Sat), we need the range for NEXT batch.
         const { start: targetStart, end: targetEnd } = BatchUtils.getBatchApplicationRange(targetBatchDate);
 
         const { data: applicationData } = await supabase
@@ -277,7 +301,7 @@ export default function App() {
           .eq('member_id', data.id)
           .gte('created_at', targetStart.toISOString())
           .lte('created_at', targetEnd.toISOString())
-          .neq('status', 'cancelled') // Check for any non-cancelled status
+          .neq('status', 'cancelled')
           .maybeSingle();
 
         if (applicationData) {
@@ -286,7 +310,7 @@ export default function App() {
           setIsApplied(false);
         }
 
-        // 3. Get Current Interaction Cycle Start Date (for Mailbox Filtering)
+        // Get Current Interaction Cycle Start Date (for Mailbox Filtering)
         const cycleStartDate = BatchUtils.getCurrentInteractionCycleStart();
 
         // Fetch received match requests
@@ -393,23 +417,7 @@ export default function App() {
         }
 
         // Fetch matches (accepted requests) via API to bypass RLS issues
-        console.log("Fetching matches via API...");
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const response = await fetch('/api/matches/list', {
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`
-            }
-          });
-
-          if (response.ok) {
-            const { matches: apiMatches } = await response.json();
-            console.log("Matches API result:", apiMatches);
-            setMatches(apiMatches);
-          } else {
-            console.error("Failed to fetch matches from API", await response.text());
-          }
-        }
+        await fetchMatches();
 
       } else {
         console.log("No profile found");
