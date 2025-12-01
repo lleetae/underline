@@ -145,6 +145,19 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Safety Timeout for Loading State
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Loading timed out, forcing render.");
+        setIsLoading(false);
+        toast.error("데이터 로딩이 지연되어 강제로 화면을 표시합니다.");
+      }
+    }, 5000); // 5 seconds timeout
+
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
   // Handle Payment Redirect
   useEffect(() => {
     if (typeof window !== 'undefined') {
