@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         }
 
         const memberId = memberData.id;
-        console.log("Fetching matches for memberId:", memberId);
+        console.log(`[API] Fetching matches for memberId: ${memberId}`);
 
         // Fetch matches where current user is sender OR receiver
         // NOTE: We are avoiding JOINs here because they were causing issues even when data existed.
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: matchesError.message }, { status: 500 });
         }
 
-        console.log("Raw matches found (accepted):", matchesData?.length);
+        console.log(`[API] Raw matches found (accepted): ${matchesData?.length}`);
 
         // 4. Format Data with Manual Member Fetching
         const formattedMatches = await Promise.all(matchesData.map(async (match: any) => {
