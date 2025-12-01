@@ -159,6 +159,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
             .from('match_requests')
             .select('sender_id, receiver_id')
             .eq('status', 'accepted')
+            .or(`sender_id.eq.${myMemberId},receiver_id.eq.${myMemberId}`)
             .gte('created_at', oneWeekAgo.toISOString());
 
           const matchedUserIds = new Set<number>();

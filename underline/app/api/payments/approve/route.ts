@@ -1,8 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "../../../lib/supabase";
+import { createClient } from '@supabase/supabase-js';
+
+export const dynamic = 'force-dynamic';
+
+// Server-side Supabase client with service role
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabaseAdmin = supabaseServiceKey
+    ? createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    })
+    : null;
 
 export async function POST(request: NextRequest) {
     try {
+        if (!supabaseAdmin) {
+            console.error('Supabase Admin client not initialized');
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
         console.log("Payment approval request received");
 
         // Parse the request body from NicePayments returnUrl
@@ -82,7 +102,7 @@ export async function POST(request: NextRequest) {
             const matchRequestId = orderId;
             console.log(`Updating match request ${matchRequestId} to unlocked`);
 
-            const { error } = await supabase
+            const { error } = await supabaseAdmin
                 .from("match_requests")
                 .update({
                     is_unlocked: true,
