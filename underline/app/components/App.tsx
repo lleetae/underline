@@ -555,8 +555,11 @@ export default function App() {
       // Update local state
       setReceivedMatchRequests(prev => prev.filter(req => req.id !== requestId));
 
-      // Refresh matches
-      checkProfile(session.user.id);
+      // Refresh matches directly
+      await fetchMatches();
+
+      // Switch to matched tab
+      setMailboxActiveTab("matched");
 
       toast.success("매칭이 성사되었습니다!");
     } catch (error) {
