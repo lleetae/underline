@@ -71,10 +71,13 @@ export default function App() {
 
   // Check Auth State
   useEffect(() => {
+    console.log("App mounted, starting auth check...");
     // 1. Manual Hash Recovery (Fallback for Implicit Flow)
     const handleHash = async () => {
+      console.log("handleHash called. Hash:", window.location.hash);
       if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
         try {
+          console.log("Hash contains access_token, parsing...");
           // Parse hash manually
           const hash = window.location.hash.substring(1); // remove #
           const params = new URLSearchParams(hash);
@@ -82,30 +85,37 @@ export default function App() {
           const refreshToken = params.get('refresh_token');
 
           if (accessToken) {
+            console.log("Access token found in hash, setting session...");
             const { data, error } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken || '',
             });
 
             if (error) {
+              console.error("Session set error:", error);
               toast.error("세션 복구 실패: " + error.message);
               setIsLoading(false);
             } else if (data.session) {
+              console.log("Session set successfully from hash:", data.session.user.id);
               setSession(data.session);
               checkProfile(data.session.user.id);
               // Clear hash to prevent loop or clutter
               window.history.replaceState(null, '', window.location.pathname);
               return; // Session established, skip standard getSession
             } else {
+              console.log("No session data returned after setSession");
               setIsLoading(false);
             }
           } else {
+            console.log("No access token found in parsed hash");
             setIsLoading(false);
           }
         } catch (e) {
           console.error("Error parsing hash:", e);
           setIsLoading(false);
         }
+      } else {
+        console.log("No access_token in hash");
       }
     };
 
@@ -113,6 +123,7 @@ export default function App() {
 
     // 2. Standard Supabase Session Check
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("getSession result:", session ? "Session found" : "No session");
       if (session) {
         setSession(session);
         checkProfile(session.user.id);
@@ -121,8 +132,11 @@ export default function App() {
         // But since handleHash is async, we might have a race. 
         // Ideally we wait, but for now let's rely on the state update.
         if (!window.location.hash.includes('access_token')) {
+          console.log("No session and no hash, setting isLoading false");
           setIsSignedUp(false);
           setIsLoading(false);
+        } else {
+          console.log("No session but hash exists, waiting for handleHash");
         }
       }
     });
@@ -130,6 +144,7 @@ export default function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("onAuthStateChange event:", _event, session ? "Session exists" : "No session");
       setSession(session);
       if (session) {
         checkProfile(session.user.id);
@@ -145,15 +160,15 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Safety Timeout for Loading State
+  // Safety Timeout
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isLoading) {
         console.warn("Loading timed out, forcing render.");
         setIsLoading(false);
-        toast.error("데이터 로딩이 지연되어 강제로 화면을 표시합니다.");
+        toast.error("로딩이 지연되어 화면을 표시합니다.");
       }
-    }, 5000); // 5 seconds timeout
+    }, 5000); // 5 seconds
 
     return () => clearTimeout(timer);
   }, [isLoading]);
