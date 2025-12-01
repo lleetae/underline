@@ -343,7 +343,11 @@ export function SignUpStep1Book({
                 <button
                     onClick={handleNext}
                     disabled={!selectedBook || !bookReview.trim()}
-                    className="w-full bg-[var(--primary)] text-white font-sans font-medium py-3.5 rounded-lg hover:bg-[var(--primary)]/90 transition-all duration-300 shadow-lg shadow-[var(--primary)]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className={`w-full font-sans font-medium py-3.5 rounded-lg transition-all duration-300 shadow-lg flex items-center justify-center gap-2
+                        ${!selectedBook || !bookReview.trim()
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                            : "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/20"
+                        }`}
                 >
                     다음 단계
                 </button>
