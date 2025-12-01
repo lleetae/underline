@@ -175,6 +175,9 @@ export function SignUpStep4Admin({
         });
     };
 
+    const uploadedCount = photos.filter(p => p.url !== null).length;
+    const isValid = kakaoId && uploadedCount >= 1;
+
     return (
         <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
             <SignUpHeader
@@ -267,7 +270,12 @@ export function SignUpStep4Admin({
             <div className="sticky bottom-0 z-50 bg-[#FCFCFA] border-t border-[var(--foreground)]/10 px-6 py-4">
                 <button
                     onClick={handleComplete}
-                    className="w-full bg-[var(--primary)] text-white font-sans font-medium py-3.5 rounded-lg hover:bg-[var(--primary)]/90 transition-all duration-300 shadow-lg shadow-[var(--primary)]/20 flex items-center justify-center gap-2"
+                    disabled={!isValid}
+                    className={`w-full font-sans font-medium py-3.5 rounded-lg transition-all duration-300 shadow-lg flex items-center justify-center gap-2
+                        ${!isValid
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                            : "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/20"
+                        }`}
                 >
                     <Check className="w-5 h-5" />
                     가입 완료하기

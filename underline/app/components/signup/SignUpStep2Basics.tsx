@@ -94,6 +94,8 @@ export function SignUpStep2Basics({
         });
     };
 
+    const isValid = nickname && isNicknameChecked && gender && birthDate && location && height;
+
     return (
         <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
             <SignUpHeader
@@ -244,7 +246,12 @@ export function SignUpStep2Basics({
             <div className="sticky bottom-0 z-50 bg-[#FCFCFA] border-t border-[var(--foreground)]/10 px-6 py-4">
                 <button
                     onClick={handleNext}
-                    className="w-full bg-[var(--primary)] text-white font-sans font-medium py-3.5 rounded-lg hover:bg-[var(--primary)]/90 transition-all duration-300 shadow-lg shadow-[var(--primary)]/20"
+                    disabled={!isValid}
+                    className={`w-full font-sans font-medium py-3.5 rounded-lg transition-all duration-300 shadow-lg flex items-center justify-center gap-2
+                        ${!isValid
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                            : "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/20"
+                        }`}
                 >
                     다음 단계
                 </button>
