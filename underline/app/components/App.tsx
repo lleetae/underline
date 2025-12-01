@@ -46,9 +46,12 @@ export default function App() {
   } = useMatches(session?.user?.id, profileId);
 
   // Combined Loading State
-  const isLoading = authLoading || profileLoading || matchesLoading;
-
   // UI State
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+
+  // Combined Loading State
+  const isLoading = (authLoading || profileLoading || matchesLoading) && !loadingTimeout;
+
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications">("home");
@@ -145,7 +148,7 @@ export default function App() {
     const timer = setTimeout(() => {
       if (isLoading) {
         console.warn("Loading timed out, forcing render.");
-        setIsLoading(false);
+        setLoadingTimeout(true);
         toast.error("데이터 로딩이 지연되어 강제로 화면을 표시합니다.");
       }
     }, 5000); // 5 seconds timeout
