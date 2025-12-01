@@ -53,6 +53,16 @@ export async function GET(request: NextRequest) {
         const memberId = memberData.id;
         console.log(`[API] Fetching matches for memberId: ${memberId}`);
 
+        // DEBUG: Specific check for 52 <-> 57
+        if (memberId === 52 || memberId === 57) {
+            const partnerId = memberId === 52 ? 57 : 52;
+            const { data: specificMatch, error: specificError } = await supabaseAdmin
+                .from('match_requests')
+                .select('*')
+                .or(`and(sender_id.eq.${memberId},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${memberId})`);
+            console.log(`[API] DEBUG 52-57 check: Found ${specificMatch?.length} records.`, specificMatch);
+        }
+
         // Fetch matches where current user is sender OR receiver
         // NOTE: We are avoiding JOINs here because they were causing issues even when data existed.
         const { data: matchesData, error: matchesError } = await supabaseAdmin
