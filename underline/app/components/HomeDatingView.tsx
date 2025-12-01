@@ -169,9 +169,9 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
             });
           }
 
-          const formattedProfiles: UserProfile[] = data
-            .filter(member => member.member_books && member.member_books.length > 0) // Only show members with books
-            .map(member => {
+          const formattedProfiles: UserProfile[] = (data as any)
+            .filter((member: any) => member.member_books && member.member_books.length > 0) // Only show members with books
+            .map((member: any) => {
               // Sort books by created_at desc to get the latest one
               const books = Array.isArray(member.member_books) ? member.member_books : [member.member_books];
               const sortedBooks = [...books].sort((a: any, b: any) =>
@@ -203,10 +203,10 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
                 isPenalized: matchedUserIds.has(member.id) // Add flag for sorting
               };
             })
-            .filter((p): p is UserProfile => p !== null)
+            .filter((p: any): p is UserProfile => p !== null)
             // Sort: Non-penalized first, then Penalized. Within groups, random or by ID.
             // Let's just put penalized at the bottom.
-            .sort((a, b) => {
+            .sort((a: UserProfile, b: UserProfile) => {
               // We filtered out nulls, so a and b are UserProfile
               if (a.isPenalized === b.isPenalized) return 0;
               return a.isPenalized ? 1 : -1;
@@ -271,7 +271,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
       </div>
 
       {/* Profile Feed */}
-      <div className="flex-1 overflow-y-auto pb-24 px-6 py-4">
+      <div className="flex-1 overflow-y-auto pb-24 px-4 py-3">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-3"></div>
@@ -279,7 +279,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
           </div>
         ) : profiles.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3">
               {profiles.map((profile) => (
                 <div
                   key={profile.id}
@@ -287,7 +287,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
                   className="bg-white border border-[var(--foreground)]/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group"
                 >
                   {/* Photo Section */}
-                  <div className="relative aspect-[4/5] overflow-hidden">
+                  <div className="relative aspect-[3/4] overflow-hidden">
                     <ImageWithFallback
                       src={profile.photos[0]}
                       alt={profile.nickname}
@@ -298,10 +298,10 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
                     {/* Info Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                       <div className="flex items-end justify-between mb-2">
                         <div>
-                          <h3 className="font-sans text-xl font-medium mb-1">
+                          <h3 className="font-sans text-lg font-medium mb-1">
                             {profile.nickname}
                           </h3>
                           <p className="text-sm text-white/90 font-sans">
@@ -317,7 +317,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
                   </div>
 
                   {/* Bio and Book Review Section */}
-                  <div className="p-5 bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] space-y-4">
+                  <div className="p-4 bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] space-y-3">
                     {/* Bio */}
                     <div>
                       <h4 className="text-xs text-[var(--foreground)]/50 font-sans mb-2">자기소개</h4>
@@ -333,7 +333,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
             </div>
 
             {/* Load More Hint */}
-            <div className="text-center py-8">
+            <div className="text-center py-6">
               <p className="text-sm text-[var(--foreground)]/40 font-sans">
                 더 많은 프로필이 준비 중입니다
               </p>
