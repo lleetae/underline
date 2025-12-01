@@ -14,7 +14,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function inspectSchema() {
     const { data, error } = await supabase
-        .from('member')
+        .from('match_requests')
         .select('*')
         .limit(1);
 

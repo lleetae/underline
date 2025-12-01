@@ -1,0 +1,109 @@
+import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "../../../lib/supabase";
+
+export async function POST(request: NextRequest) {
+    try {
+        console.log("Payment approval request received");
+
+        // Parse the request body from NicePayments returnUrl
+        const contentType = request.headers.get("content-type") || "";
+        let body: any = {};
+
+        if (contentType.includes("application/json")) {
+            body = await request.json();
+        } else if (contentType.includes("application/x-www-form-urlencoded")) {
+            const formData = await request.formData();
+            formData.forEach((value, key) => {
+                body[key] = value;
+            });
+        }
+
+        console.log(`NicePayments Callback Body: ${JSON.stringify(body, null, 2)}`);
+
+        const { authResultCode, authResultMsg, tid, orderId, amount } = body;
+
+        // 1. Check if authentication was successful
+        if (authResultCode !== "0000") {
+            console.log(`NicePayments Auth Failed: ${authResultMsg}`);
+            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(authResultMsg)}`, request.url));
+        }
+
+        // 2. Call NicePayments Approval API
+        const nicepayClientId = process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID;
+        const nicepaySecretKey = process.env.NICEPAY_SECRET_KEY;
+
+        if (!nicepayClientId || !nicepaySecretKey) {
+            throw new Error("Missing NicePayments keys");
+        }
+
+        const authorization = Buffer.from(`${nicepayClientId}:${nicepaySecretKey}`).toString("base64");
+
+        // 2.1 Get Access Token
+        console.log("Requesting Access Token...");
+        const tokenResponse = await fetch("https://sandbox-api.nicepay.co.kr/v1/access-token", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Basic ${authorization}`,
+            },
+            body: JSON.stringify({}),
+        });
+
+        const tokenResult = await tokenResponse.json();
+        console.log(`Access Token Result: ${JSON.stringify(tokenResult, null, 2)}`);
+
+        if (tokenResult.resultCode !== "0000" || !tokenResult.accessToken) {
+            throw new Error(`Failed to get access token: ${tokenResult.resultMsg}`);
+        }
+
+        const accessToken = tokenResult.accessToken;
+        const apiUrl = `https://sandbox-api.nicepay.co.kr/v1/payments/${tid}`;
+
+        console.log(`Calling Approval API: ${apiUrl} with Bearer Token`);
+
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+                amount: amount || 9900, // Ensure amount matches
+            }),
+        });
+
+        const paymentResult = await response.json();
+        console.log(`Payment Approval Result Code: ${paymentResult.resultCode}`);
+        console.log(`Payment Approval Result Msg: ${paymentResult.resultMsg}`);
+        console.log(`Full Payment Result: ${JSON.stringify(paymentResult, null, 2)}`);
+
+        if (paymentResult.resultCode === "0000") {
+            // 3. Update Database
+            const matchRequestId = orderId;
+            console.log(`Updating match request ${matchRequestId} to unlocked`);
+
+            const { error } = await supabase
+                .from("match_requests")
+                .update({
+                    is_unlocked: true,
+                    payment_tid: tid,
+                })
+                .eq("id", matchRequestId);
+
+            if (error) {
+                console.log(`Error updating match request: ${JSON.stringify(error)}`);
+                return NextResponse.redirect(new URL(`/?payment_error=db_update_failed`, request.url));
+            }
+
+            console.log("Payment flow completed successfully");
+            return NextResponse.redirect(new URL(`/?payment_success=true`, request.url));
+        } else {
+            console.log(`Payment Approval Failed: ${paymentResult.resultMsg}`);
+            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url));
+        }
+
+    } catch (error) {
+        console.error("Error processing payment:", error);
+        return NextResponse.redirect(new URL(`/?payment_error=internal_error`, request.url));
+    }
+}

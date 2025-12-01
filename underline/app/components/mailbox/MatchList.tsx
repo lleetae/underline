@@ -2,6 +2,8 @@ import React from "react";
 import { Lock, Copy } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { toast } from "sonner";
+import { DecryptedKakaoId } from "../DecryptedKakaoId";
+import { supabase } from "../../lib/supabase";
 
 interface Match {
   id: string;
@@ -21,7 +23,7 @@ export function MatchList({
   onProfileClick
 }: {
   matches?: Match[];
-  onProfileClick?: (profileId: string, source: "home" | "mailbox", metadata?: { isPenalized?: boolean; isWithdrawn?: boolean; partnerKakaoId?: string }) => void;
+  onProfileClick?: (profileId: string, source: "home" | "mailbox", metadata?: { isPenalized?: boolean; isWithdrawn?: boolean; partnerKakaoId?: string; matchId?: string; isUnlocked?: boolean }) => void;
 }) {
   if (!matches || matches.length === 0) {
     return (
@@ -31,29 +33,76 @@ export function MatchList({
     );
   }
 
-  const handleCopyContact = () => {
-    const contactInfo = "underline_lover";
-
-    // Fallback method for browsers that don't support Clipboard API
-    const textArea = document.createElement("textarea");
-    textArea.value = contactInfo;
-    textArea.style.position = "fixed";
-    textArea.style.left = "-999999px";
-    textArea.style.top = "-999999px";
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-
+  const handleCopyContact = async (encryptedId: string) => {
     try {
-      document.execCommand('copy');
-      textArea.remove();
-      toast.success("카카오톡 ID가 복사되었습니다", {
-        duration: 2000,
+      // Decrypt first
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        toast.error("로그인이 필요합니다");
+        return;
+      }
+
+      const response = await fetch('/api/decrypt/kakao', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ encryptedId })
       });
+
+      if (!response.ok) {
+        throw new Error("Decryption failed");
+      }
+
+      const data = await response.json();
+      const contactInfo = data.decryptedId;
+
+      // Copy to clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(contactInfo);
+        toast.success("카카오톡 ID가 복사되었습니다");
+      } else {
+        // Fallback
+        const textArea = document.createElement("textarea");
+        textArea.value = contactInfo;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+        toast.success("카카오톡 ID가 복사되었습니다");
+      }
     } catch (err) {
-      textArea.remove();
+      console.error("Copy error:", err);
       toast.error("복사에 실패했습니다");
     }
+  };
+
+  const handlePayment = (match: Match) => {
+    // @ts-ignore
+    if (typeof window.AUTHNICE === 'undefined') {
+      toast.error("결제 시스템을 불러오지 못했습니다. 새로고침 해주세요.");
+      return;
+    }
+
+    // @ts-ignore
+    window.AUTHNICE.requestPay({
+      clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID || 'S2_ff3bfd3d0db14308b7375e9f74f8b695',
+      method: 'card',
+      orderId: match.id,
+      amount: 9900,
+      goodsName: '연락처 잠금해제',
+      returnUrl: `${window.location.origin}/api/payments/approve`,
+      fnError: function (result: any) {
+        toast.error('결제 중 오류가 발생했습니다: ' + result.errorMsg);
+      }
+    });
   };
 
   return (
@@ -65,7 +114,7 @@ export function MatchList({
         >
           {/* Match Profile Info */}
           <div
-            onClick={() => onProfileClick?.(match.profileId, "mailbox", { partnerKakaoId: match.partnerKakaoId })}
+            onClick={() => onProfileClick?.(match.profileId, "mailbox", { partnerKakaoId: match.partnerKakaoId, matchId: match.id, isUnlocked: match.isUnlocked })}
             className="flex items-center gap-3 cursor-pointer hover:bg-[var(--foreground)]/5 p-2 rounded-lg transition-colors -mx-2"
           >
             <div className="w-12 h-12 rounded-full overflow-hidden border border-[var(--foreground)]/10 flex-shrink-0">
@@ -96,7 +145,9 @@ export function MatchList({
           <div className="relative bg-white border-2 border-[var(--foreground)]/10 rounded-xl p-4 text-center overflow-hidden">
             {match.isUnlocked ? (
               <div className="space-y-1">
-                <p className="text-sm font-bold text-[var(--foreground)]">카카오톡 ID: underline_lover</p>
+                <p className="text-sm font-bold text-[var(--foreground)] flex items-center justify-center gap-1">
+                  카카오톡 ID: <DecryptedKakaoId encryptedId={match.partnerKakaoId} />
+                </p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-1 space-y-1.5">
@@ -112,7 +163,10 @@ export function MatchList({
           {/* Action */}
           {!match.isUnlocked && (
             <div className="space-y-2">
-              <button className="w-full bg-[var(--primary)] text-white hover:bg-[#b30000] font-sans font-medium py-3.5 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2 shadow-lg shadow-[var(--primary)]/20">
+              <button
+                onClick={() => handlePayment(match)}
+                className="w-full bg-[var(--primary)] text-white hover:bg-[#b30000] font-sans font-medium py-3.5 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2 shadow-lg shadow-[var(--primary)]/20"
+              >
                 연락처 잠금해제 (9,900원)
               </button>
               <p className="text-[10px] text-center text-[var(--foreground)]/40">
@@ -123,7 +177,7 @@ export function MatchList({
 
           {match.isUnlocked && (
             <button
-              onClick={handleCopyContact}
+              onClick={() => handleCopyContact(match.partnerKakaoId || "")}
               className="w-full bg-[var(--foreground)] text-white font-sans font-medium py-3 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2 hover:bg-[var(--foreground)]/90"
             >
               <Copy className="w-4 h-4" />
