@@ -90,11 +90,24 @@ export function SignUpStep4Admin({
         // Reset input
         e.target.value = '';
 
-        const loadingToast = toast.loading("사진을 검사하고 있습니다...");
+        const loadingToast = toast.loading("사진을 최적화하고 검사하고 있습니다...");
 
         try {
-            // 1. Check Nudity
-            const isNsfw = await checkNudity(file);
+            // 0. Compress Image
+            const imageCompression = (await import('browser-image-compression')).default;
+
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true
+            };
+
+            const compressedFile = await imageCompression(file, options);
+            console.log(`Original size: ${file.size / 1024 / 1024} MB`);
+            console.log(`Compressed size: ${compressedFile.size / 1024 / 1024} MB`);
+
+            // 1. Check Nudity (Use compressed file for faster check)
+            const isNsfw = await checkNudity(compressedFile);
 
             if (isNsfw) {
                 toast.dismiss(loadingToast);
@@ -116,7 +129,7 @@ export function SignUpStep4Admin({
             }
 
             const formData = new FormData();
-            formData.append('photo', file);
+            formData.append('photo', compressedFile); // Upload compressed file
             formData.append('userId', session.user.id);
 
             const response = await fetch('/api/upload/photo', {

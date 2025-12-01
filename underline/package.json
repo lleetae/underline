@@ -34,6 +34,7 @@
             "@supabase/supabase-js": "^2.84.0",
             "@tensorflow/tfjs": "^4.22.0",
             "bad-words": "^4.0.0",
+            "browser-image-compression": "^2.0.2",
             "buffer": "^6.0.3",
             "class-variance-authority": "^0.7.1",
             "clsx": "*",
