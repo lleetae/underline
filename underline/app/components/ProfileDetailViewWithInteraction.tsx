@@ -437,7 +437,7 @@ export function ProfileDetailViewWithInteraction({
                 }}
               />
 
-              <div className="relative z-10 font-serif text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words flex-1 overflow-y-auto pr-2">
+              <div className="relative z-10 font-serif text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words flex-1 overflow-y-auto pr-2 [scrollbar-gutter:stable]">
                 {selectedBook.review}
               </div>
             </div>
