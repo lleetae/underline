@@ -429,7 +429,7 @@ export function ProfileDetailViewWithInteraction({
             </div>
 
             {/* Review */}
-            <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-6 shadow-sm relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-6 shadow-sm relative overflow-hidden h-96 flex flex-col">
               <div
                 className="absolute inset-0 opacity-[0.03] pointer-events-none"
                 style={{
@@ -437,7 +437,7 @@ export function ProfileDetailViewWithInteraction({
                 }}
               />
 
-              <div className="relative z-10 font-serif text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words">
+              <div className="relative z-10 font-serif text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words flex-1 overflow-y-auto pr-2">
                 {selectedBook.review}
               </div>
             </div>
