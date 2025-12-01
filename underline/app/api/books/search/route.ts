@@ -27,8 +27,21 @@ export async function GET(request: NextRequest) {
             query
         )}&QueryType=Title&MaxResults=10&start=1&SearchTarget=Book&output=js&Version=20131101&Cover=Big`;
 
+        console.log('Search Query:', query);
+        console.log('API Key configured:', !!ALADIN_API_KEY);
+        console.log('Request URL:', aladinUrl);
+
         const response = await fetch(aladinUrl);
-        const data = await response.json();
+        const text = await response.text();
+        console.log('Aladin Raw Response:', text.substring(0, 200)); // Log first 200 chars
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('Failed to parse JSON:', e);
+            throw new Error('Invalid JSON response from Aladin');
+        }
 
         return NextResponse.json(data);
     } catch (error) {
