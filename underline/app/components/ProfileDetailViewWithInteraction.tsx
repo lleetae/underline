@@ -562,7 +562,7 @@ export function ProfileDetailViewWithInteraction({
               {profile.nickname}
             </h2>
             <div className="flex items-center gap-4 text-white/90 mb-3">
-              <span className="text-sm font-sans">{profile.age}세</span>
+              <span className="text-sm font-sans">만 {profile.age}세</span>
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm font-sans">{getLocationText(profile.location)}</span>
