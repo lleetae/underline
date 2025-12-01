@@ -898,6 +898,7 @@ export default function App() {
                 onAcceptMatch={handleAcceptMatch}
                 onRejectMatch={handleRejectMatch}
                 onShowNotifications={handleShowNotifications}
+                onRefreshMatches={fetchMatches}
               />
               <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
             </>
@@ -916,6 +917,7 @@ export default function App() {
                 onAcceptMatch={handleAcceptMatch}
                 onRejectMatch={handleRejectMatch}
                 onShowNotifications={handleShowNotifications}
+                onRefreshMatches={fetchMatches}
               />
               <BottomNav activeTab="mailbox" onTabChange={handleTabChange} />
             </>
