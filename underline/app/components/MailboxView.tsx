@@ -49,7 +49,8 @@ export function MailboxView({
   onTabChange,
   onAcceptMatch,
   onRejectMatch,
-  onShowNotifications
+  onShowNotifications,
+  onRefreshMatches
 }: {
   sentMatchRequests?: SentMatchRequest[];
   receivedMatchRequests?: ReceivedMatchRequest[];

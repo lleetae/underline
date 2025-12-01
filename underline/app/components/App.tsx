@@ -25,8 +25,7 @@ export default function App() {
   const [isParticipant, setIsParticipant] = useState(false); // User is active in the CURRENT batch (for Dating View)
   const [isApplied, setIsApplied] = useState(false); // User has applied for the TARGET batch (for Button Status)
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [myMemberId, setMyMemberId] = useState<string | null>(null);
-  const [myGender, setMyGender] = useState<string | null>(null);
+
 
   const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
@@ -286,8 +285,7 @@ export default function App() {
         } else {
           setIsParticipant(false);
         }
-        setMyMemberId(data.id);
-        setMyGender(data.gender);
+
 
 
 
