@@ -36,35 +36,29 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const userId = user.id;
 
-        // 2. Fetch Member ID
+
+        // Get member_id from member table
         const { data: memberData, error: memberError } = await supabaseAdmin
             .from('member')
             .select('id')
-            .eq('auth_id', userId)
+            .eq('auth_id', user.id)
             .single();
 
         if (memberError || !memberData) {
+            console.error("Member not found for user:", user.id);
             return NextResponse.json({ error: 'Member not found' }, { status: 404 });
         }
 
         const memberId = memberData.id;
+        console.log("Fetching matches for memberId:", memberId);
 
-        // 3. Fetch Matches (Accepted Requests)
-        // We fetch matches where the user is either sender or receiver
+        // Fetch matches where current user is sender OR receiver
         const { data: matchesData, error: matchesError } = await supabaseAdmin
             .from('match_requests')
             .select(`
-        id,
-        sender_id,
-        receiver_id,
-        status,
-        letter,
-        created_at,
-        sender_kakao_id,
-        receiver_kakao_id,
-        is_unlocked,
+        id, sender_id, receiver_id, status, letter, created_at,
+        sender_kakao_id, receiver_kakao_id, is_unlocked,
         sender:member!sender_id (id, nickname, age, birth_date, location, photo_url, photos, auth_id),
         receiver:member!receiver_id (id, nickname, age, birth_date, location, photo_url, photos, auth_id)
       `)
@@ -73,10 +67,11 @@ export async function GET(request: NextRequest) {
             .order('created_at', { ascending: false });
 
         if (matchesError) {
-            console.error('Error fetching matches:', matchesError);
-            return NextResponse.json({ error: 'Failed to fetch matches' }, { status: 500 });
+            console.error("Error fetching matches:", matchesError);
+            return NextResponse.json({ error: matchesError.message }, { status: 500 });
         }
 
+        console.log("Raw matches found:", matchesData?.length);
         // 4. Format Data
         const formattedMatches = matchesData.map((match: any) => {
             const isSender = match.sender_id === memberId;
