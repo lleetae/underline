@@ -767,7 +767,7 @@ export function ProfileDetailViewWithInteraction({
           className={`w-full max-w-md mx-auto font-sans font-medium py-4 rounded-xl transition-all duration-300 shadow-2xl flex items-center justify-center gap-2
             ${canRequest
               ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/30"
-              : "bg-[var(--foreground)]/10 text-[var(--foreground)]/40 cursor-not-allowed shadow-none"
+              : "bg-[#F5F5F0] text-[var(--foreground)]/40 cursor-not-allowed shadow-none"
             }`}
         >
           {isMatched ? (
