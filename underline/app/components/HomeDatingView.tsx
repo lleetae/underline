@@ -17,7 +17,7 @@ interface UserProfile {
   bookTitle: string;
   bookReview: string;
   reviewExcerpt: string;
-  isPenalized?: boolean;
+  isPenalized: boolean;
 }
 
 export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications }: {
@@ -169,7 +169,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
             });
           }
 
-          const formattedProfiles: UserProfile[] = data
+          const formattedProfiles = data
             .filter(member => member.member_books && member.member_books.length > 0) // Only show members with books
             .map(member => {
               // Sort books by created_at desc to get the latest one

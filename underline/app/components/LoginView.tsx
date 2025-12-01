@@ -36,8 +36,10 @@ export function LoginView() {
                         onClick={handleKakaoLogin}
                         className="w-full bg-[#FEE500] text-[#000000] font-sans font-medium py-3.5 rounded-lg hover:bg-[#FEE500]/90 transition-all duration-300 shadow-lg shadow-[#FEE500]/20 flex items-center justify-center gap-2.5"
                     >
-                        <MessageCircle className="w-5 h-5 fill-current" />
-                        카카오로 시작하기
+                        <span className="relative z-10 flex items-center justify-center gap-2.5">
+                            <MessageCircle className="w-5 h-5 fill-current" />
+                            <span className="font-medium">카카오로 3초 만에 시작하기</span>
+                        </span>
                     </button>
 
                     <div className="text-center">

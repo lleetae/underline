@@ -125,7 +125,7 @@ export function MyBookDetailView({
             </div>
 
             {/* Aladin Attribution */}
-            <div className="flex justify-end items-center gap-2 mb-4">
+            <div className="flex justify-end items-center gap-2">
               <span className="text-[10px] text-[var(--foreground)]/40 font-sans">
                 도서 DB 제공 : 알라딘
               </span>
@@ -139,13 +139,12 @@ export function MyBookDetailView({
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>
+          </div>
 
-            <div className="h-px bg-[var(--primary)]/30 mb-4" />
-
-            <div className="flex items-center gap-2 mb-3">
-              <BookOpen className="w-4 h-4 text-[var(--primary)]" />
-              <h3 className="font-serif text-base text-[var(--foreground)]">나의 감상</h3>
-            </div>
+          {/* My Review Header */}
+          <div className="flex items-center gap-2 mt-8 px-1">
+            <BookOpen className="w-4 h-4 text-[var(--primary)]" />
+            <h3 className="font-serif text-lg text-[var(--foreground)]">나의 감상</h3>
           </div>
 
           {/* Review Content */}
