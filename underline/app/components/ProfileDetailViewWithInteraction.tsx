@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, MapPin, BookOpen, Heart, Send } from "lucide-react";
+import { ArrowLeft, MapPin, BookOpen, Heart, Send, ExternalLink } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 import { MatchRequestLetterModal } from "./MatchRequestLetterModal";
@@ -11,6 +11,7 @@ interface Book {
   author: string;
   cover: string;
   review: string;
+  isbn13?: string;
 }
 
 interface ProfileDetailData {
@@ -108,7 +109,8 @@ export function ProfileDetailViewWithInteraction({
             title: book.book_title,
             author: book.book_author,
             cover: book.book_cover || "https://via.placeholder.com/150?text=No+Cover",
-            review: book.book_review
+            review: book.book_review,
+            isbn13: book.book_isbn13
           }));
 
           let photos = memberData.photos && memberData.photos.length > 0 ? memberData.photos : (memberData.photo_url ? [memberData.photo_url] : []);
@@ -387,6 +389,22 @@ export function ProfileDetailViewWithInteraction({
               </div>
             </div>
 
+            {/* Aladin Attribution */}
+            <div className="flex justify-end items-center gap-2 -mt-4 mb-2">
+              <span className="text-[10px] text-[var(--foreground)]/40 font-sans">
+                도서 DB 제공 : 알라딘
+              </span>
+              <a
+                href={selectedBook.isbn13 ? `https://www.aladin.co.kr/shop/wproduct.aspx?ISBN=${selectedBook.isbn13}` : `https://www.aladin.co.kr/search/wsearchresult.aspx?SearchTarget=Book&SearchWord=${encodeURIComponent(selectedBook.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-[var(--foreground)]/60 hover:text-[var(--primary)] font-sans flex items-center gap-0.5 transition-colors"
+              >
+                자세히 보기
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
             {/* Review */}
             <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-6 shadow-sm relative overflow-hidden">
               <div
@@ -447,7 +465,7 @@ export function ProfileDetailViewWithInteraction({
             animation: slide-up 0.3s ease-out;
           }
         `}</style>
-      </div>
+      </div >
     );
   }
 
@@ -606,7 +624,7 @@ export function ProfileDetailViewWithInteraction({
         <div className="px-6 py-8">
           <div className="flex items-center gap-2 mb-6">
             <BookOpen className="w-5 h-5 text-[var(--primary)]" />
-            <h3 className="font-serif text-xl text-[var(--foreground)]">나의 책장 {profile.books.length}권</h3>
+            <h3 className="font-serif text-xl text-[var(--foreground)]">{profile.nickname}님의 책장 {profile.books.length}권</h3>
             <div className="h-px flex-1 bg-[var(--primary)]/20 ml-2" />
           </div>
 

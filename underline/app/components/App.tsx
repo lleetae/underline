@@ -69,13 +69,53 @@ export default function App() {
 
   // Check Auth State
   useEffect(() => {
+    // 1. Manual Hash Recovery (Fallback for Implicit Flow)
+    const handleHash = async () => {
+      if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+        try {
+          // Parse hash manually
+          const hash = window.location.hash.substring(1); // remove #
+          const params = new URLSearchParams(hash);
+          const accessToken = params.get('access_token');
+          const refreshToken = params.get('refresh_token');
+
+          if (accessToken) {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+            });
+
+            if (error) {
+              toast.error("세션 복구 실패: " + error.message);
+            } else if (data.session) {
+              setSession(data.session);
+              checkProfile(data.session.user.id);
+              // Clear hash to prevent loop or clutter
+              window.history.replaceState(null, '', window.location.pathname);
+              return; // Session established, skip standard getSession
+            }
+          }
+        } catch (e) {
+          console.error("Error parsing hash:", e);
+        }
+      }
+    };
+
+    handleHash();
+
+    // 2. Standard Supabase Session Check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
       if (session) {
+        setSession(session);
         checkProfile(session.user.id);
       } else {
-        setIsSignedUp(false);
-        setIsLoading(false);
+        // Only set loading false if we didn't just manually set session
+        // But since handleHash is async, we might have a race. 
+        // Ideally we wait, but for now let's rely on the state update.
+        if (!window.location.hash.includes('access_token')) {
+          setIsSignedUp(false);
+          setIsLoading(false);
+        }
       }
     });
 
@@ -791,8 +831,10 @@ export default function App() {
                - Else -> Show Recruiting View (for NEXT batch)
             2. If System is in REGISTRATION phase (Sun-Thu):
                - Show Recruiting View (for CURRENT batch)
+            
+            DEBUG OVERRIDE: isDatingPhase toggle forces Dating View
           */}
-          {BatchUtils.getCurrentSystemState() === 'MATCHING' && isParticipant ? (
+          {(BatchUtils.getCurrentSystemState() === 'MATCHING' || isDatingPhase) && (isParticipant || isDatingPhase) ? (
             <HomeDatingView
               isSignedUp={isSignedUp}
               onProfileClick={handleProfileClick}
