@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
     title: "Underline - 책으로 시작하는 인연",
     description: "좋아하는 책의 문장으로 소개팅을 시작하세요",
-    viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+    viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
 };
 
 export default function RootLayout({
