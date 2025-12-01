@@ -1,19 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
+
 // Server-side Supabase client with service role
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
+const supabaseAdmin = supabaseServiceKey
+    ? createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    })
+    : null;
 
 export async function GET(request: NextRequest) {
     try {
+        if (!supabaseAdmin) {
+            console.error('Supabase Admin client not initialized');
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
         // 1. Verify Authentication
         const authHeader = request.headers.get('Authorization');
         if (!authHeader) {

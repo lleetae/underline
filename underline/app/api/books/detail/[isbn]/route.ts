@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 const ALADIN_API_KEY = process.env.ALADIN_API_KEY;
 
 export async function GET(
