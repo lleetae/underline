@@ -38,7 +38,7 @@ export function SignUpHeader({
                             key={index}
                             className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${index < currentStep
                                 ? "bg-[var(--foreground)]"
-                                : "bg-[var(--foreground)]/10"
+                                : "bg-gray-200"
                                 }`}
                         />
                     ))}
