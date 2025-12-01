@@ -53,39 +53,6 @@ export async function GET(request: NextRequest) {
         const memberId = memberData.id;
         console.log("Fetching matches for memberId:", memberId);
 
-        // DEBUG: Check ALL requests for this user regardless of status
-        const { data: allRequests, error: allError } = await supabaseAdmin
-            .from('match_requests')
-            .select('id, status, sender_id, receiver_id')
-            .or(`sender_id.eq.${memberId},receiver_id.eq.${memberId}`);
-
-        if (allRequests) {
-            console.log(`DEBUG: Found ${allRequests.length} total requests for user ${memberId}`);
-            for (const req of allRequests) {
-                console.log(`- Request ${req.id}: status='${req.status}', sender=${req.sender_id}, receiver=${req.receiver_id}`);
-
-                if (req.status === 'accepted') {
-                    // Check if sender exists
-                    const { data: senderMember } = await supabaseAdmin
-                        .from('member')
-                        .select('id, nickname')
-                        .eq('id', req.sender_id)
-                        .single();
-                    console.log(`  > Sender (${req.sender_id}) exists? ${!!senderMember} (${senderMember?.nickname || 'null'})`);
-
-                    // Check if receiver exists
-                    const { data: receiverMember } = await supabaseAdmin
-                        .from('member')
-                        .select('id, nickname')
-                        .eq('id', req.receiver_id)
-                        .single();
-                    console.log(`  > Receiver (${req.receiver_id}) exists? ${!!receiverMember} (${receiverMember?.nickname || 'null'})`);
-                }
-            }
-        } else {
-            console.log("DEBUG: No requests found at all for user", memberId, allError);
-        }
-
         // Fetch matches where current user is sender OR receiver
         // NOTE: We are avoiding JOINs here because they were causing issues even when data existed.
         const { data: matchesData, error: matchesError } = await supabaseAdmin

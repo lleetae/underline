@@ -242,10 +242,10 @@ export default function App() {
         const { matches: apiMatches } = await response.json();
         console.log("Matches API result:", apiMatches);
         setMatches(apiMatches);
-        toast.success(`매칭 목록을 불러왔습니다. (${apiMatches.length}개)`);
+        // toast.success(`매칭 목록을 불러왔습니다. (${apiMatches.length}개)`);
       } else {
         console.error("Failed to fetch matches from API", await response.text());
-        toast.error("매칭 목록 불러오기 실패");
+        // toast.error("매칭 목록 불러오기 실패");
       }
     } else {
       console.log("No session for fetchMatches");
