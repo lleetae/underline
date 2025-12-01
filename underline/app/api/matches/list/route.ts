@@ -53,6 +53,15 @@ export async function GET(request: NextRequest) {
         const memberId = memberData.id;
         console.log(`[API] Fetching matches for memberId: ${memberId}`);
 
+        // DEBUG: Specific check for the exact match ID user provided
+        const targetMatchId = 'c5abba53-14e9-4f0f-b340-6a380cf7e106';
+        const { data: exactMatch } = await supabaseAdmin
+            .from('match_requests')
+            .select('*')
+            .eq('id', targetMatchId)
+            .single();
+        console.log(`[API] DEBUG Exact Match Check (${targetMatchId}):`, exactMatch ? "Found" : "Not Found", exactMatch);
+
         // DEBUG: Specific check for 52 <-> 57
         if (memberId === 52 || memberId === 57) {
             const partnerId = memberId === 52 ? 57 : 52;
@@ -95,7 +104,7 @@ export async function GET(request: NextRequest) {
                 .single();
 
             if (partnerError || !partner) {
-                console.error(`Failed to fetch partner ${partnerId} for match ${match.id}`);
+                console.error(`[API] SKIP match ${match.id}: Partner ${partnerId} not found or error.`, partnerError);
                 return null; // Skip this match if partner not found
             }
 
