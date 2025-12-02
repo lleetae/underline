@@ -176,8 +176,8 @@ export async function POST(request: NextRequest) {
 
             if (payerMemberIdStr) {
                 try {
-                    const payerMemberId = payerMemberIdStr;
-                    console.log(`Parsed PayerMemberId: ${payerMemberId}`);
+                    const payerMemberId = parseInt(payerMemberIdStr);
+                    console.log(`Parsed PayerMemberId: ${payerMemberId} (Original: ${payerMemberIdStr})`);
 
                     // Fetch match request to find sender and receiver
                     const { data: matchRequest, error: matchError } = await supabaseAdmin
@@ -192,11 +192,16 @@ export async function POST(request: NextRequest) {
                         console.log(`Match Request found: sender=${matchRequest.sender_id}, receiver=${matchRequest.receiver_id}`);
 
                         // Determine target user (the one who did NOT pay)
-                        const targetMemberId = matchRequest.sender_id === payerMemberId
-                            ? matchRequest.receiver_id
-                            : matchRequest.sender_id;
+                        // Ensure strict comparison by converting both to numbers
+                        const senderId = Number(matchRequest.sender_id);
+                        const receiverId = Number(matchRequest.receiver_id);
+                        const payerId = Number(payerMemberId);
 
-                        console.log(`Target Member ID (Receiver of notification): ${targetMemberId}`);
+                        const targetMemberId = senderId === payerId
+                            ? receiverId
+                            : senderId;
+
+                        console.log(`Target Member ID (Receiver of notification): ${targetMemberId} (Sender: ${senderId}, Payer: ${payerId})`);
 
                         // Get target user's auth_id
                         const { data: targetMember, error: targetError } = await supabaseAdmin
