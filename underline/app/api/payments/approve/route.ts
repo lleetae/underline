@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
 
             if (payerMemberIdStr) {
                 try {
-                    const payerMemberId = parseInt(payerMemberIdStr);
+                    const payerMemberId = payerMemberIdStr;
                     console.log(`Parsed PayerMemberId: ${payerMemberId}`);
 
                     // Fetch match request to find sender and receiver
