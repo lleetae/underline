@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { TermsContent, PrivacyContent } from "../utils/PolicyComponents";
-import { Bell, BookOpen, User, Mail, Edit } from "lucide-react";
+import { Bell, BookOpen, User, Mail, Edit, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCountdown } from "../hooks/useCountdown";
@@ -89,12 +89,18 @@ export function HomeRecruitingView({
   useEffect(() => {
     const fetchReviews = async () => {
       try {
+        console.log("Fetching reviews...");
         const { data, error } = await supabase
           .from('reviews')
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase error fetching reviews:", error);
+          throw error;
+        }
+
+        console.log("Reviews data fetched:", data);
 
         if (data) {
           const mappedReviews: SuccessStory[] = data.map((item: any) => ({
@@ -105,7 +111,10 @@ export function HomeRecruitingView({
             detailQuestion: item.detail_question,
             detailAnswer: item.detail_answer
           }));
+          console.log("Mapped reviews:", mappedReviews);
           setReviews(mappedReviews);
+        } else {
+          console.log("No data returned from reviews table");
         }
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -272,6 +281,14 @@ export function HomeRecruitingView({
             className="relative w-full max-w-sm"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedReview(null)}
+              className="absolute -top-12 right-0 p-2 text-white/80 hover:text-white transition-colors"
+            >
+              <X className="w-8 h-8" />
+            </button>
+
             <div className="bg-white rounded-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
               <div className="p-1.5">
                 <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl">
