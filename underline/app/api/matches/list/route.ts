@@ -57,6 +57,23 @@ export async function GET(request: NextRequest) {
 
         const memberId = Number(memberData.id); // Ensure number type
         console.log(`[API] Fetching matches for memberId: ${memberId} (Type: ${typeof memberId})`);
+        console.log(`[API] Service Key Prefix: ${supabaseServiceKey?.substring(0, 5)}...`);
+
+        // DEBUG: Check specific match for member 63
+        const match63Id = '9aaf2960-4293-4a7f-84cd-4d5dd1298a50';
+        const { data: match63 } = await supabaseAdmin
+            .from('match_requests')
+            .select('*')
+            .eq('id', match63Id)
+            .single();
+        console.log(`[API] DEBUG Match 63 Check (${match63Id}):`, match63 ? "Found" : "Not Found", match63);
+
+        // DEBUG: Check count without status filter
+        const { count: totalSent } = await supabaseAdmin
+            .from('match_requests')
+            .select('*', { count: 'exact', head: true })
+            .eq('sender_id', memberId);
+        console.log(`[API] DEBUG Total Sent (no status filter): ${totalSent}`);
 
         // DEBUG: Specific check for the exact match ID user provided
         const targetMatchId = 'c5abba53-14e9-4f0f-b340-6a380cf7e106';
