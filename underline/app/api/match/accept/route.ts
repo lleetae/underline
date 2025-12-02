@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         // 5. Send Notification to the Sender of the request
         try {
             // Get sender's auth_id (to receive notification)
-            const { data: senderMember, error: senderAuthError } = await supabaseAdmin
+            const { data: senderMember, error: _senderAuthError } = await supabaseAdmin
                 .from('member')
                 .select('auth_id')
                 .eq('id', matchRequest.sender_id)
