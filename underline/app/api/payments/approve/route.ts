@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         // 1. Check if authentication was successful
         if (authResultCode !== "0000") {
             console.log(`NicePayments Auth Failed: ${authResultMsg}`);
-            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(authResultMsg)}`, request.url));
+            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(authResultMsg)}`, request.url), { status: 303 });
         }
 
         // 2. Call NicePayments Approval API
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
 
             if (error) {
                 console.log(`Error updating match request: ${JSON.stringify(error)}`);
-                return NextResponse.redirect(new URL(`/?payment_error=db_update_failed`, request.url));
+                return NextResponse.redirect(new URL(`/?payment_error=db_update_failed`, request.url), { status: 303 });
             }
 
             // 4. Insert into payments table
@@ -158,15 +158,15 @@ export async function POST(request: NextRequest) {
             }
 
             console.log("Payment flow completed successfully");
-            return NextResponse.redirect(new URL(`/?payment_success=true`, request.url));
+            return NextResponse.redirect(new URL(`/?payment_success=true`, request.url), { status: 303 });
         } else {
             console.log(`Payment Approval Failed: ${paymentResult.resultMsg}`);
-            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url));
+            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url), { status: 303 });
         }
 
     } catch (error: any) {
         console.error("Error processing payment:", error);
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(errorMessage)}`, request.url));
+        return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(errorMessage)}`, request.url), { status: 303 });
     }
 }
