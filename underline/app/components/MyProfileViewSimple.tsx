@@ -226,6 +226,27 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
             age = currentYear - birthYear;
           }
 
+          // Encrypt kakao_id before saving
+          let encryptedKakaoId = updatedData.kakaoId;
+          try {
+            const encryptResponse = await fetch('/api/encrypt/kakao', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ kakaoId: updatedData.kakaoId })
+            });
+
+            if (!encryptResponse.ok) {
+              throw new Error('카카오톡 ID 암호화 실패');
+            }
+
+            const encryptData = await encryptResponse.json();
+            encryptedKakaoId = encryptData.encryptedId;
+          } catch (encryptError) {
+            console.error("Encryption error:", encryptError);
+            toast.error("카카오톡 ID 처리 중 오류가 발생했습니다");
+            return;
+          }
+
           const { error } = await supabase.from('member').update({
             nickname: updatedData.nickname,
             location: updatedData.location,
@@ -234,7 +255,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
             smoking: updatedData.smoking,
             drinking: updatedData.drinking,
             bio: updatedData.bio,
-            kakao_id: updatedData.kakaoId,
+            kakao_id: encryptedKakaoId,
             age: age,
             photo_url: updatedData.profilePhotos?.[0]?.url,
             photos: updatedData.profilePhotos?.map(p => p.url)
