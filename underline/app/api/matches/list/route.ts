@@ -234,24 +234,16 @@ export async function GET(request: NextRequest) {
         // Filter out nulls (failed fetches)
         const validMatches = formattedMatches.filter(m => m !== null);
 
-        const totalTime = Date.now() - startTime;
-        console.log(`[API] Total execution time: ${totalTime}ms`);
-
         return NextResponse.json({
             matches: validMatches,
-            version: "v_perf_debug_1",
-            debug: {
-                totalTime,
-                authTime: Date.now() - authStart, // approximate
-                queryTime: Date.now() - queryStart // approximate
-            }
+            version: "v_batch_optimized_1"
         });
 
     } catch (error: any) {
         console.error('Matches API error:', error);
         return NextResponse.json({
             error: error.message || 'Internal server error',
-            version: "v_perf_debug_1"
+            version: "v_batch_optimized_1"
         }, { status: 500 });
     }
 }
