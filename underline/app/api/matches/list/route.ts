@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Member not found' }, { status: 404 });
         }
 
-        const memberId = memberData.id;
-        console.log(`[API] Fetching matches for memberId: ${memberId}`);
+        const memberId = Number(memberData.id); // Ensure number type
+        console.log(`[API] Fetching matches for memberId: ${memberId} (Type: ${typeof memberId})`);
 
         // DEBUG: Specific check for the exact match ID user provided
         const targetMatchId = 'c5abba53-14e9-4f0f-b340-6a380cf7e106';
@@ -78,6 +78,9 @@ export async function GET(request: NextRequest) {
 
         // Fetch matches where current user is sender OR receiver
         // NOTE: Split into two queries to avoid OR filter issues in production
+        console.log(`[API] Querying sent matches for sender_id=${memberId}...`);
+        console.log(`[API] Querying received matches for receiver_id=${memberId}...`);
+
         const [sentMatchesResult, receivedMatchesResult] = await Promise.all([
             supabaseAdmin
                 .from('match_requests')
@@ -100,6 +103,9 @@ export async function GET(request: NextRequest) {
 
         const sentMatches = sentMatchesResult.data || [];
         const receivedMatches = receivedMatchesResult.data || [];
+
+        console.log(`[API] Sent matches found: ${sentMatches.length}`);
+        console.log(`[API] Received matches found: ${receivedMatches.length}`);
 
         // Combine and sort by created_at desc
         const matchesData = [...sentMatches, ...receivedMatches].sort((a, b) =>
@@ -193,9 +199,16 @@ export async function GET(request: NextRequest) {
         // Filter out nulls (failed fetches)
         const validMatches = formattedMatches.filter(m => m !== null);
 
-        return NextResponse.json({ matches: validMatches });
+        return NextResponse.json({
+            matches: validMatches,
+            version: "v_batch_optimized_1"
+        });
 
-    } catch (error) {
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Matches API error:', error);
+        return NextResponse.json({
+            error: error.message || 'Internal server error',
+            version: "v_batch_optimized_1"
+        }, { status: 500 });
     }
 }
