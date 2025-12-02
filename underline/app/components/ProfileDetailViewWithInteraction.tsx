@@ -116,7 +116,7 @@ export function ProfileDetailViewWithInteraction({
         const { data: memberData, error: memberError } = await supabase
           .from('member')
           .select('*')
-          .eq('id', parseInt(profileId))
+          .eq('id', profileId)
           .single();
 
         if (memberError) throw memberError;
@@ -125,7 +125,7 @@ export function ProfileDetailViewWithInteraction({
         const { data: booksData, error: booksError } = await supabase
           .from('member_books')
           .select('*')
-          .eq('member_id', parseInt(profileId))
+          .eq('member_id', profileId)
           .order('created_at', { ascending: false });
 
         if (booksError) throw booksError;
