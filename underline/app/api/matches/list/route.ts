@@ -77,35 +77,66 @@ export async function GET(request: NextRequest) {
         }
 
         // Fetch matches where current user is sender OR receiver
-        // NOTE: We are avoiding JOINs here because they were causing issues even when data existed.
-        const { data: matchesData, error: matchesError } = await supabaseAdmin
-            .from('match_requests')
-            .select('*')
-            .or(`sender_id.eq.${memberId},receiver_id.eq.${memberId}`)
-            .eq('status', 'accepted')
-            .order('created_at', { ascending: false });
+        // NOTE: Split into two queries to avoid OR filter issues in production
+        const [sentMatchesResult, receivedMatchesResult] = await Promise.all([
+            supabaseAdmin
+                .from('match_requests')
+                .select('*')
+                .eq('sender_id', memberId)
+                .eq('status', 'accepted'),
+            supabaseAdmin
+                .from('match_requests')
+                .select('*')
+                .eq('receiver_id', memberId)
+                .eq('status', 'accepted')
+        ]);
 
-        if (matchesError) {
-            console.error("Error fetching matches:", matchesError);
-            return NextResponse.json({ error: matchesError.message }, { status: 500 });
+        if (sentMatchesResult.error) {
+            console.error("Error fetching sent matches:", sentMatchesResult.error);
         }
+        if (receivedMatchesResult.error) {
+            console.error("Error fetching received matches:", receivedMatchesResult.error);
+        }
+
+        const sentMatches = sentMatchesResult.data || [];
+        const receivedMatches = receivedMatchesResult.data || [];
+
+        // Combine and sort by created_at desc
+        const matchesData = [...sentMatches, ...receivedMatches].sort((a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
 
         console.log(`[API] Raw matches found (accepted): ${matchesData?.length}`);
 
-        // 4. Format Data with Manual Member Fetching
-        const formattedMatches = await Promise.all(matchesData.map(async (match: any) => {
+        // 4. Batch Fetch Partner Data
+        // Extract all unique partner IDs
+        const partnerIds = [...new Set(matchesData.map((match: any) =>
+            match.sender_id === memberId ? match.receiver_id : match.sender_id
+        ))];
+
+        let partnersMap = new Map();
+        if (partnerIds.length > 0) {
+            const { data: partnersData, error: partnersError } = await supabaseAdmin
+                .from('member')
+                .select('id, nickname, age, birth_date, location, photo_url, photos, auth_id')
+                .in('id', partnerIds);
+
+            if (partnersError) {
+                console.error("Error fetching partners batch:", partnersError);
+            } else {
+                partnersData?.forEach(p => partnersMap.set(p.id, p));
+            }
+        }
+
+        // 5. Format Data using fetched partners
+        const formattedMatches = matchesData.map((match: any) => {
             const isSender = match.sender_id === memberId;
             const partnerId = isSender ? match.receiver_id : match.sender_id;
 
-            // Fetch partner data manually
-            const { data: partner, error: partnerError } = await supabaseAdmin
-                .from('member')
-                .select('id, nickname, age, birth_date, location, photo_url, photos, auth_id')
-                .eq('id', partnerId)
-                .single();
+            const partner = partnersMap.get(partnerId);
 
-            if (partnerError || !partner) {
-                console.error(`[API] SKIP match ${match.id}: Partner ${partnerId} not found or error.`, partnerError);
+            if (!partner) {
+                console.error(`[API] SKIP match ${match.id}: Partner ${partnerId} not found in batch.`);
                 return null; // Skip this match if partner not found
             }
 
@@ -157,7 +188,7 @@ export async function GET(request: NextRequest) {
                 isWithdrawn: isWithdrawn,
                 partnerKakaoId: partnerKakaoId
             };
-        }));
+        });
 
         // Filter out nulls (failed fetches)
         const validMatches = formattedMatches.filter(m => m !== null);
