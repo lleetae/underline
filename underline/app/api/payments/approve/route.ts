@@ -115,6 +115,48 @@ export async function POST(request: NextRequest) {
                 return NextResponse.redirect(new URL(`/?payment_error=db_update_failed`, request.url));
             }
 
+            // 4. Insert into payments table
+            try {
+                // Get sender_id from match_request to find the user who paid
+                const { data: matchData } = await supabaseAdmin
+                    .from('match_requests')
+                    .select('sender_id')
+                    .eq('id', matchRequestId)
+                    .single();
+
+                if (matchData?.sender_id) {
+                    // Get auth_id from member table
+                    const { data: memberData } = await supabaseAdmin
+                        .from('member')
+                        .select('auth_id')
+                        .eq('id', matchData.sender_id)
+                        .single();
+
+                    if (memberData?.auth_id) {
+                        const { error: paymentError } = await supabaseAdmin
+                            .from('payments')
+                            .insert({
+                                user_id: memberData.auth_id,
+                                match_id: matchRequestId,
+                                amount: typeof amount === 'string' ? parseInt(amount) : amount,
+                                status: 'paid',
+                                payment_method: body.payMethod || 'card',
+                                transaction_id: tid,
+                                completed_at: new Date().toISOString()
+                            });
+
+                        if (paymentError) {
+                            console.error("Error inserting payment record:", paymentError);
+                            // Don't fail the request if just history logging fails, but log it
+                        } else {
+                            console.log("Payment record inserted successfully");
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to save payment history:", e);
+            }
+
             console.log("Payment flow completed successfully");
             return NextResponse.redirect(new URL(`/?payment_success=true`, request.url));
         } else {
