@@ -69,6 +69,10 @@ export async function GET(request: NextRequest) {
                 .from('match_requests')
                 .select('*')
                 .or(`and(sender_id.eq.${memberId},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${memberId})`);
+
+            if (specificError) {
+                console.error(`[API] DEBUG 52-57 check error:`, specificError);
+            }
             console.log(`[API] DEBUG 52-57 check: Found ${specificMatch?.length} records.`, specificMatch);
         }
 
