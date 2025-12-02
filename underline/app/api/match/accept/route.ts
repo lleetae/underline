@@ -113,15 +113,23 @@ export async function POST(request: NextRequest) {
 
         // 5. Send Notification to the Sender of the request
         try {
+            console.log(`Attempting to send match_accepted notification. MatchId: ${requestId}, Original Sender (Target): ${matchRequest.sender_id}, Acceptor (Sender): ${currentMember.id}`);
+
             // Get sender's auth_id (to receive notification)
-            const { data: senderMember, error: _senderAuthError } = await supabaseAdmin
+            const { data: senderMember, error: senderAuthError } = await supabaseAdmin
                 .from('member')
                 .select('auth_id')
                 .eq('id', matchRequest.sender_id)
                 .single();
 
-            if (senderMember && senderMember.auth_id) {
-                await supabaseAdmin
+            if (senderAuthError) {
+                console.error("Error fetching original sender auth_id:", senderAuthError);
+            } else if (!senderMember || !senderMember.auth_id) {
+                console.error(`Original sender ${matchRequest.sender_id} has no auth_id`);
+            } else {
+                console.log(`Found target auth_id: ${senderMember.auth_id}`);
+
+                const { error: insertError } = await supabaseAdmin
                     .from('notifications')
                     .insert({
                         user_id: senderMember.auth_id, // Receiver of notification (Original Sender)
@@ -131,7 +139,12 @@ export async function POST(request: NextRequest) {
                         is_read: false,
                         metadata: {}
                     });
-                console.log(`Match accepted notification sent to member ${matchRequest.sender_id}`);
+
+                if (insertError) {
+                    console.error("Error inserting match_accepted notification:", insertError);
+                } else {
+                    console.log(`Match accepted notification sent successfully to member ${matchRequest.sender_id}`);
+                }
             }
         } catch (notifyError) {
             console.error("Error sending match accept notification:", notifyError);
