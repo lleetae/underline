@@ -85,7 +85,7 @@ function TotalPagesStats({ books }: { books: Book[] }) {
   );
 }
 
-export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
+export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogout?: () => void; onNavigate: (view: any, params?: any, options?: { replace?: boolean }) => void; selectedBookId?: string; }) {
   const [loading, setLoading] = useState(true);
   const [books, setBooks] = useState<Book[]>([]);
   const [profileData, setProfileData] = useState({
@@ -102,11 +102,14 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
     profilePhotos: [] as { id: string; url: string }[],
   });
 
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  // const [selectedBook, setSelectedBook] = useState<Book | null>(null); // Removed local state
   const [showAddBookView, setShowAddBookView] = useState(false);
   const [showProfileEditView, setShowProfileEditView] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+
+  // Derived state for selected book
+  const selectedBook = books.find(b => b.id === selectedBookId) || null;
 
   useEffect(() => {
     fetchProfileData();
@@ -236,7 +239,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
     return (
       <MyBookDetailView
         book={selectedBook}
-        onBack={() => setSelectedBook(null)}
+        onBack={() => window.history.back()}
         onUpdate={async (updatedReview) => {
           try {
             const { error } = await supabase
@@ -251,7 +254,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
                 ? { ...b, review: updatedReview, reviewPreview: updatedReview.split('\n')[0].slice(0, 80) + "..." }
                 : b
             ));
-            setSelectedBook({ ...selectedBook, review: updatedReview });
+            // setSelectedBook({ ...selectedBook, review: updatedReview }); // No local state update needed
           } catch (error) {
             console.error("Error updating review:", error);
             toast.error("감상문 수정에 실패했습니다");
@@ -268,7 +271,8 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
             if (error) throw error;
 
             setBooks(books.filter(b => b.id !== selectedBook.id));
-            setSelectedBook(null);
+            // setSelectedBook(null); // No local state update needed, history back will handle it? No, delete means we should go back.
+            window.history.back();
           } catch (error) {
             console.error("Error deleting book:", error);
             toast.error("책 삭제에 실패했습니다");
@@ -609,7 +613,7 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
               <button
                 key={book.id}
                 className="aspect-[2/3] rounded-lg overflow-hidden border border-[var(--foreground)]/10 hover:border-[var(--primary)] hover:shadow-lg transition-all cursor-pointer"
-                onClick={() => setSelectedBook(book)}
+                onClick={() => onNavigate("profile", { bookId: book.id })}
               >
                 <ImageWithFallback
                   src={book.cover}
