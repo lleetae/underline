@@ -22,7 +22,7 @@ export function MyBookDetailView({
 }: {
   book: Book;
   onBack: () => void;
-  onUpdate?: (updatedReview: string) => void;
+  onUpdate?: (updatedReview: string) => Promise<void> | void;
   onDelete?: () => Promise<void>;
   isLastBook?: boolean;
 }) {
@@ -30,14 +30,19 @@ export function MyBookDetailView({
   const [editedReview, setEditedReview] = useState(book.review);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editedReview.trim()) {
       toast.error("감상문을 입력해주세요");
       return;
     }
-    onUpdate?.(editedReview);
-    setIsEditing(false);
-    toast.success("감상문이 수정되었습니다");
+    try {
+      await onUpdate?.(editedReview);
+      setIsEditing(false);
+      toast.success("감상문이 수정되었습니다");
+    } catch (error) {
+      // Error is handled in the parent component
+      console.error("Failed to update review:", error);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -95,7 +100,7 @@ export function MyBookDetailView({
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div className="flex-1 overflow-y-auto pb-24 [scrollbar-gutter:stable]">
         <div className="px-6 py-6 space-y-6">
           {/* Book Info Card */}
           <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-6 shadow-sm">

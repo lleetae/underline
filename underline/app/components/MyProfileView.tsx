@@ -237,13 +237,26 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
       <MyBookDetailView
         book={selectedBook}
         onBack={() => setSelectedBook(null)}
-        onUpdate={(updatedReview) => {
-          setBooks(books.map(b =>
-            b.id === selectedBook.id
-              ? { ...b, review: updatedReview, reviewPreview: updatedReview.split('\n')[0].slice(0, 80) + "..." }
-              : b
-          ));
-          setSelectedBook({ ...selectedBook, review: updatedReview });
+        onUpdate={async (updatedReview) => {
+          try {
+            const { error } = await supabase
+              .from('member_books')
+              .update({ book_review: updatedReview })
+              .eq('id', selectedBook.id);
+
+            if (error) throw error;
+
+            setBooks(books.map(b =>
+              b.id === selectedBook.id
+                ? { ...b, review: updatedReview, reviewPreview: updatedReview.split('\n')[0].slice(0, 80) + "..." }
+                : b
+            ));
+            setSelectedBook({ ...selectedBook, review: updatedReview });
+          } catch (error) {
+            console.error("Error updating review:", error);
+            toast.error("감상문 수정에 실패했습니다");
+            throw error; // Re-throw to let MyBookDetailView know it failed
+          }
         }}
         onDelete={async () => {
           try {
