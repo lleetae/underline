@@ -135,120 +135,110 @@ export async function POST(request: NextRequest) {
                 }
 
                 if (matchData?.sender_id) {
-                    // Get auth_id from member table
-                    const { data: memberData, error: memberError } = await supabaseAdmin
-                        .from('member')
-                        .select('auth_id')
-                        .eq('id', matchData.sender_id)
-                        .single();
 
-                    if (memberError) {
-                        console.error("Error fetching member for payment record:", memberError);
+
+                    // 4. Insert into payments table
+                    const { error: paymentError } = await supabaseAdmin
+                        .from('payments')
+                        .insert({
+                            send_user_id: matchData.sender_id,
+                            receive_user_id: matchData.receiver_id,
+                            match_id: matchRequestId,
+                            amount: typeof amount === 'string' ? parseInt(amount) : amount,
+                            status: 'completed',
+                            payment_method: body.payMethod || 'card',
+                            transaction_id: tid,
+                            completed_at: new Date().toISOString()
+                        });
+
+                    if (paymentError) {
+                        console.error("Error inserting payment record:", paymentError);
+                        console.error("Payment Insert Payload:", {
+                            user_id: memberData.auth_id,
+                            match_id: matchRequestId,
+                            amount: typeof amount === 'string' ? parseInt(amount) : amount,
+                            status: 'completed',
+                            payment_method: body.payMethod || 'card',
+                            transaction_id: tid,
+                            completed_at: new Date().toISOString()
+                        });
                     } else {
-                        console.log(`Found Member Auth ID: ${memberData?.auth_id}`);
-                    }
-
-                    if (memberData?.auth_id) {
-                        const { error: paymentError } = await supabaseAdmin
-                            .from('payments')
-                            .insert({
-                                user_id: memberData.auth_id,
-                                match_id: matchRequestId,
-                                amount: typeof amount === 'string' ? parseInt(amount) : amount,
-                                status: 'completed',
-                                payment_method: body.payMethod || 'card',
-                                transaction_id: tid,
-                                completed_at: new Date().toISOString()
-                            });
-
-                        if (paymentError) {
-                            console.error("Error inserting payment record:", paymentError);
-                            console.error("Payment Insert Payload:", {
-                                user_id: memberData.auth_id,
-                                match_id: matchRequestId,
-                                amount: typeof amount === 'string' ? parseInt(amount) : amount,
-                                status: 'completed',
-                                payment_method: body.payMethod || 'card',
-                                transaction_id: tid,
-                                completed_at: new Date().toISOString()
-                            });
-                        } else {
-                            console.log("Payment record inserted successfully.");
-                        }
-                    } else {
-                        console.error("Could not find auth_id for member:", matchData.sender_id);
+                        console.log("Payment record inserted successfully.");
                     }
                 } else {
-                    console.error("Could not find sender_id for match request:", matchRequestId);
+                    console.error("Could not find auth_id for member:", matchData.sender_id);
                 }
-            } catch (e) {
-                console.error("Failed to save payment history:", e);
+            } else {
+                console.error("Could not find sender_id for match request:", matchRequestId);
             }
-
-            // 4. Send Notification to the OTHER party
-            if (payerMemberIdStr) {
-                try {
-                    const payerMemberId = parseInt(payerMemberIdStr);
-
-                    // Fetch match request to find sender and receiver
-                    const { data: matchRequest, error: matchError } = await supabaseAdmin
-                        .from('match_requests')
-                        .select('sender_id, receiver_id')
-                        .eq('id', matchRequestId)
-                        .single();
-
-                    if (!matchError && matchRequest) {
-                        // Determine target user (the one who did NOT pay)
-                        const targetMemberId = matchRequest.sender_id === payerMemberId
-                            ? matchRequest.receiver_id
-                            : matchRequest.sender_id;
-
-                        // Get target user's auth_id
-                        const { data: targetMember, error: targetError } = await supabaseAdmin
-                            .from('member')
-                            .select('auth_id')
-                            .eq('id', targetMemberId)
-                            .single();
-
-                        if (!targetError && targetMember && targetMember.auth_id) {
-                            // Get payer's auth_id (sender of notification)
-                            const { data: payerMember } = await supabaseAdmin
-                                .from('member')
-                                .select('auth_id')
-                                .eq('id', payerMemberId)
-                                .single();
-
-                            if (payerMember) {
-                                await supabaseAdmin
-                                    .from('notifications')
-                                    .insert({
-                                        user_id: targetMember.auth_id, // Receiver of notification
-                                        type: 'contact_revealed',
-                                        match_id: matchRequestId,
-                                        sender_id: payerMemberId, // Sender of notification (Payer Member ID - BigInt)
-                                        is_read: false,
-                                        metadata: {}
-                                    });
-                                console.log(`Notification sent to member ${targetMemberId}`);
-                            }
-                        }
-                    }
-                } catch (notifyError) {
-                    console.error("Error sending payment notification:", notifyError);
-                    // Don't fail the payment if notification fails
-                }
-            }
-
-            console.log("Payment flow completed successfully");
-            return NextResponse.redirect(new URL(`/?payment_success=true`, request.url), { status: 303 });
-        } else {
-            console.log(`Payment Approval Failed: ${paymentResult.resultMsg}`);
-            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url), { status: 303 });
+        } catch (e) {
+            console.error("Failed to save payment history:", e);
         }
 
-    } catch (error: any) {
-        console.error("Error processing payment:", error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(errorMessage)}`, request.url), { status: 303 });
+        // 4. Send Notification to the OTHER party
+        if (payerMemberIdStr) {
+            try {
+                const payerMemberId = parseInt(payerMemberIdStr);
+
+                // Fetch match request to find sender and receiver
+                const { data: matchRequest, error: matchError } = await supabaseAdmin
+                    .from('match_requests')
+                    .select('sender_id, receiver_id')
+                    .eq('id', matchRequestId)
+                    .single();
+
+                if (!matchError && matchRequest) {
+                    // Determine target user (the one who did NOT pay)
+                    const targetMemberId = matchRequest.sender_id === payerMemberId
+                        ? matchRequest.receiver_id
+                        : matchRequest.sender_id;
+
+                    // Get target user's auth_id
+                    const { data: targetMember, error: targetError } = await supabaseAdmin
+                        .from('member')
+                        .select('auth_id')
+                        .eq('id', targetMemberId)
+                        .single();
+
+                    if (!targetError && targetMember && targetMember.auth_id) {
+                        // Get payer's auth_id (sender of notification)
+                        const { data: payerMember } = await supabaseAdmin
+                            .from('member')
+                            .select('auth_id')
+                            .eq('id', payerMemberId)
+                            .single();
+
+                        if (payerMember) {
+                            await supabaseAdmin
+                                .from('notifications')
+                                .insert({
+                                    user_id: targetMember.auth_id, // Receiver of notification
+                                    type: 'contact_revealed',
+                                    match_id: matchRequestId,
+                                    sender_id: payerMemberId, // Sender of notification (Payer Member ID - BigInt)
+                                    is_read: false,
+                                    metadata: {}
+                                });
+                            console.log(`Notification sent to member ${targetMemberId}`);
+                        }
+                    }
+                }
+            } catch (notifyError) {
+                console.error("Error sending payment notification:", notifyError);
+                // Don't fail the payment if notification fails
+            }
+        }
+
+        console.log("Payment flow completed successfully");
+        return NextResponse.redirect(new URL(`/?payment_success=true`, request.url), { status: 303 });
+    } else {
+        console.log(`Payment Approval Failed: ${paymentResult.resultMsg}`);
+        return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url), { status: 303 });
     }
+
+} catch (error: any) {
+    console.error("Error processing payment:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(errorMessage)}`, request.url), { status: 303 });
+}
 }
