@@ -122,8 +122,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url));
         }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error processing payment:", error);
-        return NextResponse.redirect(new URL(`/?payment_error=internal_error`, request.url));
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(errorMessage)}`, request.url));
     }
 }
