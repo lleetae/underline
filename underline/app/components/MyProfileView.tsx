@@ -442,7 +442,12 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
                 kakao_id: encryptedKakaoId,
                 photo_urls_original: originalUrls,
                 photo_urls_blurred: blurredUrls,
-                photos: blurredUrls // Update legacy column for compatibility
+                photos: blurredUrls, // Update legacy column for compatibility
+                location: updatedData.location,
+                height: updatedData.height,
+                religion: updatedData.religion,
+                smoking: updatedData.smoking,
+                drinking: updatedData.drinking
               })
               .eq('auth_id', user.id); // Update by auth_id
 
