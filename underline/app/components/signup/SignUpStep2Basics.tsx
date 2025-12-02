@@ -122,7 +122,8 @@ export function SignUpStep2Basics({
                                     setIsNicknameChecked(false);
                                 }}
                                 className="flex-1 px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors"
-                                placeholder="닉네임을 입력하세요"
+                                placeholder="닉네임을 입력하세요 (최대 7자)"
+                                maxLength={7}
                             />
                             <button
                                 type="button"
