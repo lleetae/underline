@@ -27,16 +27,12 @@ const supabaseAdmin = supabaseServiceKey
 
 export async function GET(request: NextRequest) {
     try {
-        const startTime = Date.now();
-        console.log('[API] Request started');
-
         if (!supabaseAdmin) {
             console.error('Supabase Admin client not initialized');
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
         // 1. Verify Authentication
-        const authStart = Date.now();
         const authHeader = request.headers.get('Authorization');
         if (!authHeader) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -44,20 +40,17 @@ export async function GET(request: NextRequest) {
 
         const token = authHeader.replace('Bearer ', '');
         const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-        console.log(`[API] Auth check took: ${Date.now() - authStart}ms`);
 
         if (authError || !user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         // Get member_id from member table
-        const memberStart = Date.now();
         const { data: memberData, error: memberError } = await supabaseAdmin
             .from('member')
             .select('id')
             .eq('auth_id', user.id)
             .single();
-        console.log(`[API] Member lookup took: ${Date.now() - memberStart}ms`);
 
         if (memberError || !memberData) {
             console.error("Member not found for user:", user.id);
@@ -65,54 +58,9 @@ export async function GET(request: NextRequest) {
         }
 
         const memberId = Number(memberData.id); // Ensure number type
-        console.log(`[API] Fetching matches for memberId: ${memberId} (Type: ${typeof memberId})`);
-        console.log(`[API] Service Key Prefix: ${supabaseServiceKey?.substring(0, 5)}...`);
-
-        // DEBUG: Check specific match for member 63
-        const match63Id = '9aaf2960-4293-4a7f-84cd-4d5dd1298a50';
-        const { data: match63 } = await supabaseAdmin
-            .from('match_requests')
-            .select('*')
-            .eq('id', match63Id)
-            .single();
-        console.log(`[API] DEBUG Match 63 Check (${match63Id}):`, match63 ? "Found" : "Not Found", match63);
-
-        // DEBUG: Check count without status filter
-        const { count: totalSent } = await supabaseAdmin
-            .from('match_requests')
-            .select('*', { count: 'exact', head: true })
-            .eq('sender_id', memberId);
-        console.log(`[API] DEBUG Total Sent (no status filter): ${totalSent}`);
-
-        // DEBUG: Specific check for the exact match ID user provided
-        const targetMatchId = 'c5abba53-14e9-4f0f-b340-6a380cf7e106';
-        const { data: exactMatch } = await supabaseAdmin
-            .from('match_requests')
-            .select('*')
-            .eq('id', targetMatchId)
-            .single();
-        console.log(`[API] DEBUG Exact Match Check (${targetMatchId}):`, exactMatch ? "Found" : "Not Found");
-
-        // DEBUG: Specific check for 52 <-> 57
-        if (memberId === 52 || memberId === 57) {
-            const partnerId = memberId === 52 ? 57 : 52;
-            const { data: specificMatch, error: specificError } = await supabaseAdmin
-                .from('match_requests')
-                .select('*')
-                .or(`and(sender_id.eq.${memberId},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${memberId})`);
-
-            if (specificError) {
-                console.error(`[API] DEBUG 52-57 check error:`, specificError);
-            }
-            console.log(`[API] DEBUG 52-57 check: Found ${specificMatch?.length} records.`, specificMatch);
-        }
 
         // Fetch matches where current user is sender OR receiver
         // NOTE: Split into two queries to avoid OR filter issues in production
-        const queryStart = Date.now();
-        console.log(`[API] Querying sent matches for sender_id=${memberId}...`);
-        console.log(`[API] Querying received matches for receiver_id=${memberId}...`);
-
         const [sentMatchesResult, receivedMatchesResult] = await Promise.all([
             supabaseAdmin
                 .from('match_requests')
@@ -125,7 +73,6 @@ export async function GET(request: NextRequest) {
                 .eq('receiver_id', memberId)
                 .eq('status', 'accepted')
         ]);
-        console.log(`[API] Match queries took: ${Date.now() - queryStart}ms`);
 
         if (sentMatchesResult.error) {
             console.error("Error fetching sent matches:", sentMatchesResult.error);
@@ -137,18 +84,12 @@ export async function GET(request: NextRequest) {
         const sentMatches = sentMatchesResult.data || [];
         const receivedMatches = receivedMatchesResult.data || [];
 
-        console.log(`[API] Sent matches found: ${sentMatches.length}`);
-        console.log(`[API] Received matches found: ${receivedMatches.length}`);
-
         // Combine and sort by created_at desc
         const matchesData = [...sentMatches, ...receivedMatches].sort((a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
 
-        console.log(`[API] Raw matches found (accepted): ${matchesData?.length}`);
-
         // 4. Batch Fetch Partner Data
-        const partnerStart = Date.now();
         // Extract all unique partner IDs
         const partnerIds = [...new Set(matchesData.map((match: any) =>
             match.sender_id === memberId ? match.receiver_id : match.sender_id
@@ -167,7 +108,6 @@ export async function GET(request: NextRequest) {
                 partnersData?.forEach(p => partnersMap.set(p.id, p));
             }
         }
-        console.log(`[API] Partner batch fetch took: ${Date.now() - partnerStart}ms`);
 
         // 5. Format Data using fetched partners
         const formattedMatches = matchesData.map((match: any) => {
@@ -177,7 +117,6 @@ export async function GET(request: NextRequest) {
             const partner = partnersMap.get(partnerId);
 
             if (!partner) {
-                console.error(`[API] SKIP match ${match.id}: Partner ${partnerId} not found in batch.`);
                 return null; // Skip this match if partner not found
             }
 
