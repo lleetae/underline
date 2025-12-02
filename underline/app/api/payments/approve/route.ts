@@ -99,7 +99,9 @@ export async function POST(request: NextRequest) {
 
         if (paymentResult.resultCode === "0000") {
             // 3. Update Database
-            const matchRequestId = orderId;
+            // orderId format: matchRequestId_payerMemberId (new) OR matchRequestId (old)
+            const [matchRequestId, payerMemberIdStr] = orderId.split('_');
+
             console.log(`Updating match request ${matchRequestId} to unlocked`);
 
             const { error } = await supabaseAdmin
@@ -181,6 +183,60 @@ export async function POST(request: NextRequest) {
                 }
             } catch (e) {
                 console.error("Failed to save payment history:", e);
+            }
+
+            // 4. Send Notification to the OTHER party
+            if (payerMemberIdStr) {
+                try {
+                    const payerMemberId = parseInt(payerMemberIdStr);
+
+                    // Fetch match request to find sender and receiver
+                    const { data: matchRequest, error: matchError } = await supabaseAdmin
+                        .from('match_requests')
+                        .select('sender_id, receiver_id')
+                        .eq('id', matchRequestId)
+                        .single();
+
+                    if (!matchError && matchRequest) {
+                        // Determine target user (the one who did NOT pay)
+                        const targetMemberId = matchRequest.sender_id === payerMemberId
+                            ? matchRequest.receiver_id
+                            : matchRequest.sender_id;
+
+                        // Get target user's auth_id
+                        const { data: targetMember, error: targetError } = await supabaseAdmin
+                            .from('member')
+                            .select('auth_id')
+                            .eq('id', targetMemberId)
+                            .single();
+
+                        if (!targetError && targetMember && targetMember.auth_id) {
+                            // Get payer's auth_id (sender of notification)
+                            const { data: payerMember } = await supabaseAdmin
+                                .from('member')
+                                .select('auth_id')
+                                .eq('id', payerMemberId)
+                                .single();
+
+                            if (payerMember) {
+                                await supabaseAdmin
+                                    .from('notifications')
+                                    .insert({
+                                        user_id: targetMember.auth_id, // Receiver of notification
+                                        type: 'contact_revealed',
+                                        match_id: matchRequestId,
+                                        sender_id: payerMember.auth_id, // Sender of notification (Payer)
+                                        is_read: false,
+                                        metadata: {}
+                                    });
+                                console.log(`Notification sent to member ${targetMemberId}`);
+                            }
+                        }
+                    }
+                } catch (notifyError) {
+                    console.error("Error sending payment notification:", notifyError);
+                    // Don't fail the payment if notification fails
+                }
             }
 
             console.log("Payment flow completed successfully");

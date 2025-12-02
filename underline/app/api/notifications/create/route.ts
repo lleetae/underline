@@ -63,14 +63,28 @@ export async function POST(request: NextRequest) {
             recipientId = memberData.auth_id;
         }
 
+        // 1.5 Get Sender Member ID
+        const { data: senderMember, error: senderError } = await supabaseAdmin
+            .from('member')
+            .select('id')
+            .eq('auth_id', user.id)
+            .single();
+
+        if (senderError || !senderMember) {
+            console.error('Error finding sender member:', senderError);
+            return NextResponse.json({ error: 'Sender profile not found' }, { status: 404 });
+        }
+
         // 2. Create notification
+        console.log(`Creating notification: type=${type}, recipient=${recipientId}, sender=${senderMember.id}, match=${matchId}`);
+
         const { data: notification, error } = await supabaseAdmin
             .from('notifications')
             .insert({
                 user_id: recipientId, // The user receiving the notification
                 type: type,
                 match_id: matchId,
-                sender_id: user.id, // The user triggering the notification (current user)
+                sender_id: senderMember.id, // Sender Member ID (BigInt)
                 is_read: false,
                 metadata: {}
             })
@@ -81,6 +95,8 @@ export async function POST(request: NextRequest) {
             console.error('Error creating notification:', error);
             return NextResponse.json({ error: 'Failed to create notification' }, { status: 500 });
         }
+
+        console.log('Notification created successfully:', notification);
 
         return NextResponse.json({
             success: true,

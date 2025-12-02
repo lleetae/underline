@@ -48,14 +48,7 @@ export async function GET(request: NextRequest) {
         // 3. Build query
         let query = supabaseAdmin
             .from('notifications')
-            .select(`
-                *,
-                sender:sender_id (
-                    id,
-                    nickname,
-                    photo_urls_blurred
-                )
-            `)
+            .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .range(offset, offset + limit - 1);
@@ -64,11 +57,37 @@ export async function GET(request: NextRequest) {
             query = query.eq('is_read', false);
         }
 
-        const { data: notifications, error } = await query;
+        const { data: notificationsData, error } = await query;
 
         if (error) {
             console.error('Error fetching notifications:', error);
             return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
+        }
+
+        // Manually fetch sender details
+        let notifications = [];
+        if (notificationsData && notificationsData.length > 0) {
+            const senderIds = Array.from(new Set(notificationsData.map(n => n.sender_id).filter(id => id !== null)));
+
+            let sendersMap: Record<string, any> = {};
+            if (senderIds.length > 0) {
+                const { data: senders, error: sendersError } = await supabaseAdmin
+                    .from('member')
+                    .select('id, nickname, photo_urls_blurred')
+                    .in('id', senderIds);
+
+                if (!sendersError && senders) {
+                    sendersMap = senders.reduce((acc, sender) => {
+                        acc[sender.id] = sender;
+                        return acc;
+                    }, {} as Record<string, any>);
+                }
+            }
+
+            notifications = notificationsData.map(n => ({
+                ...n,
+                sender: n.sender_id ? sendersMap[n.sender_id] : null
+            }));
         }
 
         // 4. Get unread count

@@ -326,7 +326,7 @@ export function ProfileDetailViewWithInteraction({
     }
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     console.log("handlePayment called");
     if (!profile) {
       console.log("Profile is missing");
@@ -342,21 +342,50 @@ export function ProfileDetailViewWithInteraction({
       return;
     }
 
-    console.log("Calling requestPay with matchId:", matchId || profileId);
-
-    // @ts-ignore
-    window.AUTHNICE.requestPay({
-      clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID || 'S2_ff3bfd3d0db14308b7375e9f74f8b695',
-      method: 'card',
-      orderId: matchId || profileId, // Use matchId if available
-      amount: 9900,
-      goodsName: '연락처 잠금해제',
-      returnUrl: `${window.location.origin}/api/payments/approve`,
-      fnError: function (result: any) {
-        console.error("NicePayments error:", result);
-        toast.error('결제 중 오류가 발생했습니다: ' + result.errorMsg);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("로그인이 필요합니다.");
+        return;
       }
-    });
+
+      // Get member id for the current user
+      const { data: member } = await supabase
+        .from('member')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single();
+
+      if (!member) {
+        toast.error("회원 정보를 찾을 수 없습니다.");
+        return;
+      }
+
+      const matchRequestId = matchId || profileId;
+      // Format: matchRequestId_payerMemberId
+      // We use this composite key to identify WHO paid in the callback
+      const orderId = `${matchRequestId}_${member.id}`;
+
+      console.log("Calling requestPay with orderId:", orderId);
+
+      // @ts-ignore
+      window.AUTHNICE.requestPay({
+        clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID || 'S2_ff3bfd3d0db14308b7375e9f74f8b695',
+        method: 'card',
+        orderId: orderId,
+        amount: 9900,
+        goodsName: '연락처 잠금해제',
+        returnUrl: `${window.location.origin}/api/payments/approve`,
+        fnError: function (result: any) {
+          console.error("NicePayments error:", result);
+          toast.error('결제 중 오류가 발생했습니다: ' + result.errorMsg);
+        }
+      });
+
+    } catch (error) {
+      console.error("Error preparing payment:", error);
+      toast.error("결제 준비 중 오류가 발생했습니다.");
+    }
   };
 
 
