@@ -47,7 +47,6 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
 
             if (response.ok) {
                 const data = await response.json();
-                console.log("NotificationsView fetched:", data);
                 setNotifications(data.notifications || []);
                 setUnreadCount(data.unreadCount || 0);
             }
