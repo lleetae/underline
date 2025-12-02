@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
                             console.log("Payment record inserted successfully.");
                         }
                     } else {
-                        console.error("Could not find auth_id for member:", matchData.sender_id);
+                        console.error("Could not find sender_id for match request. MatchData:", matchData);
                     }
                 } else {
                     console.error("Could not find sender_id for match request:", matchRequestId);
@@ -186,9 +186,12 @@ export async function POST(request: NextRequest) {
             }
 
             // 4. Send Notification to the OTHER party
+            console.log(`Processing payment notification. OrderId: ${orderId}, PayerMemberIdStr: ${payerMemberIdStr}`);
+
             if (payerMemberIdStr) {
                 try {
                     const payerMemberId = parseInt(payerMemberIdStr);
+                    console.log(`Parsed PayerMemberId: ${payerMemberId}`);
 
                     // Fetch match request to find sender and receiver
                     const { data: matchRequest, error: matchError } = await supabaseAdmin
@@ -197,11 +200,17 @@ export async function POST(request: NextRequest) {
                         .eq('id', matchRequestId)
                         .single();
 
-                    if (!matchError && matchRequest) {
+                    if (matchError || !matchRequest) {
+                        console.error("Error fetching match request for notification:", matchError);
+                    } else {
+                        console.log(`Match Request found: sender=${matchRequest.sender_id}, receiver=${matchRequest.receiver_id}`);
+
                         // Determine target user (the one who did NOT pay)
                         const targetMemberId = matchRequest.sender_id === payerMemberId
                             ? matchRequest.receiver_id
                             : matchRequest.sender_id;
+
+                        console.log(`Target Member ID (Receiver of notification): ${targetMemberId}`);
 
                         // Get target user's auth_id
                         const { data: targetMember, error: targetError } = await supabaseAdmin
@@ -210,8 +219,16 @@ export async function POST(request: NextRequest) {
                             .eq('id', targetMemberId)
                             .single();
 
-                        if (!targetError && targetMember && targetMember.auth_id) {
-                            // Get payer's auth_id (sender of notification)
+                        if (targetError || !targetMember) {
+                            console.error("Error fetching target member auth_id:", targetError);
+                        } else {
+                            console.log(`Target Member Auth ID: ${targetMember.auth_id}`);
+
+                            // Get payer's auth_id (sender of notification) - Just to verify it exists if needed, 
+                            // but we use payerMemberId for sender_id column now.
+                            // Actually, we don't strictly need payerMember auth_id for the insert anymore 
+                            // since we use payerMemberId (int) for sender_id.
+                            // But let's keep the check to ensure payer exists.
                             const { data: payerMember } = await supabaseAdmin
                                 .from('member')
                                 .select('auth_id')
@@ -219,7 +236,8 @@ export async function POST(request: NextRequest) {
                                 .single();
 
                             if (payerMember) {
-                                await supabaseAdmin
+                                console.log(`Inserting notification: user_id=${targetMember.auth_id}, sender_id=${payerMemberId}`);
+                                const { error: insertError } = await supabaseAdmin
                                     .from('notifications')
                                     .insert({
                                         user_id: targetMember.auth_id, // Receiver of notification
@@ -229,7 +247,14 @@ export async function POST(request: NextRequest) {
                                         is_read: false,
                                         metadata: {}
                                     });
-                                console.log(`Notification sent to member ${targetMemberId}`);
+
+                                if (insertError) {
+                                    console.error("Error inserting payment notification:", insertError);
+                                } else {
+                                    console.log(`Notification sent successfully to member ${targetMemberId}`);
+                                }
+                            } else {
+                                console.error("Payer member not found");
                             }
                         }
                     }
@@ -237,6 +262,8 @@ export async function POST(request: NextRequest) {
                     console.error("Error sending payment notification:", notifyError);
                     // Don't fail the payment if notification fails
                 }
+            } else {
+                console.warn("No payerMemberId found in orderId, skipping notification");
             }
 
             console.log("Payment flow completed successfully");
