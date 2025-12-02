@@ -137,8 +137,8 @@ export default function App() {
               console.log("Session set successfully from hash:", data.session.user.id);
               setSession(data.session);
               checkProfile(data.session.user.id);
-              // Clear hash to prevent loop or clutter
-              window.history.replaceState(null, '', window.location.pathname);
+              // Clear hash to prevent loop or clutter, but preserve view state
+              window.history.replaceState({ view: "home" }, '', window.location.pathname);
               return; // Session established, skip standard getSession
             } else {
               console.log("No session data returned after setSession");
@@ -219,17 +219,15 @@ export default function App() {
       const paymentError = params.get('payment_error');
 
       if (paymentSuccess) {
-        setCurrentView("mailbox");
         setMailboxActiveTab("matched");
         toast.success("결제가 완료되었습니다! 연락처가 공개되었습니다.");
-        // Clean up URL
-        window.history.replaceState({}, '', '/');
+        // Clean up URL and set state
+        navigateTo("mailbox", {}, { replace: true });
       } else if (paymentError) {
-        setCurrentView("mailbox");
         setMailboxActiveTab("matched");
         toast.error(`결제 실패: ${decodeURIComponent(paymentError)}`);
-        // Clean up URL
-        window.history.replaceState({}, '', '/');
+        // Clean up URL and set state
+        navigateTo("mailbox", {}, { replace: true });
       }
     }
   }, []);
