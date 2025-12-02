@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
             .select('*')
             .eq('id', targetMatchId)
             .single();
-        console.log(`[API] DEBUG Exact Match Check (${targetMatchId}):`, exactMatch ? "Found" : "Not Found", exactMatch);
+        console.log(`[API] DEBUG Exact Match Check (${targetMatchId}):`, exactMatch ? "Found" : "Not Found");
 
         // DEBUG: Specific check for 52 <-> 57
         if (memberId === 52 || memberId === 57) {
@@ -80,10 +80,7 @@ export async function GET(request: NextRequest) {
         // NOTE: We are avoiding JOINs here because they were causing issues even when data existed.
         const { data: matchesData, error: matchesError } = await supabaseAdmin
             .from('match_requests')
-            .select(`
-                id, sender_id, receiver_id, status, letter, created_at,
-                sender_kakao_id, receiver_kakao_id, is_unlocked
-            `)
+            .select('*')
             .or(`sender_id.eq.${memberId},receiver_id.eq.${memberId}`)
             .eq('status', 'accepted')
             .order('created_at', { ascending: false });
@@ -168,7 +165,6 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ matches: validMatches });
 
     } catch (error) {
-        console.error('Matches API error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
