@@ -111,6 +111,33 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Failed to accept match' }, { status: 500 });
         }
 
+        // 5. Send Notification to the Sender of the request
+        try {
+            // Get sender's auth_id (to receive notification)
+            const { data: senderMember, error: _senderAuthError } = await supabaseAdmin
+                .from('member')
+                .select('auth_id')
+                .eq('id', matchRequest.sender_id)
+                .single();
+
+            if (senderMember && senderMember.auth_id) {
+                await supabaseAdmin
+                    .from('notifications')
+                    .insert({
+                        user_id: senderMember.auth_id, // Receiver of notification (Original Sender)
+                        type: 'match_accepted',
+                        match_id: requestId,
+                        sender_id: currentMember.id, // Sender of notification (Current User/Receiver)
+                        is_read: false,
+                        metadata: {}
+                    });
+                console.log(`Match accepted notification sent to member ${matchRequest.sender_id}`);
+            }
+        } catch (notifyError) {
+            console.error("Error sending match accept notification:", notifyError);
+            // Don't fail the request if notification fails
+        }
+
         return NextResponse.json({ success: true, match: updatedMatch });
 
     } catch (error) {
