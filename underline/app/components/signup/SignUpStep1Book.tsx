@@ -167,7 +167,7 @@ export function SignUpStep1Book({
     };
 
     return (
-        <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+        <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 h-[100dvh] overflow-hidden bg-[#FCFCFA] flex flex-col">
             <SignUpHeader
                 currentStep={1}
                 totalSteps={4}
@@ -321,7 +321,7 @@ export function SignUpStep1Book({
                                     onChange={(e) => setBookReview(e.target.value)}
                                     maxLength={10000}
                                     rows={10}
-                                    className="w-full px-4 py-3 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-serif text-sm focus:outline-none focus:border-[var(--primary)] transition-colors resize-none bg-white leading-relaxed"
+                                    className="w-full px-4 py-3 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors resize-none bg-white leading-relaxed"
                                     placeholder="이 책이 당신에게 어떤 의미인가요?&#10;&#10;당신의 마음을 움직인 문장이나 생각을 자유롭게 적어주세요..."
                                 />
                                 <div className="mt-2 space-y-1">
@@ -339,7 +339,7 @@ export function SignUpStep1Book({
             </div>
 
             {/* Bottom Action */}
-            <div className="sticky bottom-0 z-50 bg-[#FCFCFA] border-t border-[var(--foreground)]/10 px-6 py-4">
+            <div className="bg-[#FCFCFA] border-t border-[var(--foreground)]/10 px-6 py-4">
                 <button
                     onClick={handleNext}
                     disabled={!selectedBook || !bookReview.trim()}
