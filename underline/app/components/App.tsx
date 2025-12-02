@@ -631,7 +631,7 @@ export default function App() {
         throw new Error('Failed to accept match');
       }
 
-      const { match: updatedMatch } = await response.json();
+      await response.json();
 
       // Notification is now handled server-side in /api/match/accept
 
