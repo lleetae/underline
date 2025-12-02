@@ -190,7 +190,7 @@ export function SignUpStep1Book({
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         onKeyPress={(e) => e.key === 'Enter' && searchBooks()}
-                                        className="flex-1 px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors"
+                                        className="flex-1 px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-base focus:outline-none focus:border-[var(--primary)] transition-colors"
                                         placeholder="책 제목 또는 저자명을 입력하세요"
                                     />
                                     <button
@@ -321,7 +321,7 @@ export function SignUpStep1Book({
                                     onChange={(e) => setBookReview(e.target.value)}
                                     maxLength={10000}
                                     rows={10}
-                                    className="w-full px-4 py-3 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors resize-none bg-white leading-relaxed"
+                                    className="w-full px-4 py-3 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-base focus:outline-none focus:border-[var(--primary)] transition-colors resize-none bg-white leading-relaxed"
                                     placeholder="이 책이 당신에게 어떤 의미인가요?&#10;&#10;당신의 마음을 움직인 문장이나 생각을 자유롭게 적어주세요..."
                                 />
                                 <div className="mt-2 space-y-1">
