@@ -108,20 +108,35 @@ export async function GET(request: NextRequest) {
 
         console.log(`[API] Raw matches found (accepted): ${matchesData?.length}`);
 
-        // 4. Format Data with Manual Member Fetching
-        const formattedMatches = await Promise.all(matchesData.map(async (match: any) => {
+        // 4. Batch Fetch Partner Data
+        // Extract all unique partner IDs
+        const partnerIds = [...new Set(matchesData.map((match: any) =>
+            match.sender_id === memberId ? match.receiver_id : match.sender_id
+        ))];
+
+        let partnersMap = new Map();
+        if (partnerIds.length > 0) {
+            const { data: partnersData, error: partnersError } = await supabaseAdmin
+                .from('member')
+                .select('id, nickname, age, birth_date, location, photo_url, photos, auth_id')
+                .in('id', partnerIds);
+
+            if (partnersError) {
+                console.error("Error fetching partners batch:", partnersError);
+            } else {
+                partnersData?.forEach(p => partnersMap.set(p.id, p));
+            }
+        }
+
+        // 5. Format Data using fetched partners
+        const formattedMatches = matchesData.map((match: any) => {
             const isSender = match.sender_id === memberId;
             const partnerId = isSender ? match.receiver_id : match.sender_id;
 
-            // Fetch partner data manually
-            const { data: partner, error: partnerError } = await supabaseAdmin
-                .from('member')
-                .select('id, nickname, age, birth_date, location, photo_url, photos, auth_id')
-                .eq('id', partnerId)
-                .single();
+            const partner = partnersMap.get(partnerId);
 
-            if (partnerError || !partner) {
-                console.error(`[API] SKIP match ${match.id}: Partner ${partnerId} not found or error.`, partnerError);
+            if (!partner) {
+                console.error(`[API] SKIP match ${match.id}: Partner ${partnerId} not found in batch.`);
                 return null; // Skip this match if partner not found
             }
 
@@ -173,7 +188,7 @@ export async function GET(request: NextRequest) {
                 isWithdrawn: isWithdrawn,
                 partnerKakaoId: partnerKakaoId
             };
-        }));
+        });
 
         // Filter out nulls (failed fetches)
         const validMatches = formattedMatches.filter(m => m !== null);
