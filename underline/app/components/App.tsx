@@ -389,6 +389,9 @@ export default function App() {
             fetchMatches();
           } else if (newNotification.type === 'match_request') {
             toast.info("새로운 매칭 신청이 도착했습니다!");
+          } else if (newNotification.type === 'contact_revealed') {
+            toast.success("상대방이 결제를 완료하여 연락처가 공개되었습니다!");
+            fetchMatches();
           }
         }
       )
