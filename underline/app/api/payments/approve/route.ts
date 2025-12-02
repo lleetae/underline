@@ -117,20 +117,34 @@ export async function POST(request: NextRequest) {
 
             // 4. Insert into payments table
             try {
+                console.log(`Attempting to insert payment record for Match Request ID: ${matchRequestId}`);
+
                 // Get sender_id from match_request to find the user who paid
-                const { data: matchData } = await supabaseAdmin
+                const { data: matchData, error: matchError } = await supabaseAdmin
                     .from('match_requests')
                     .select('sender_id')
                     .eq('id', matchRequestId)
                     .single();
 
+                if (matchError) {
+                    console.error("Error fetching match request for payment record:", matchError);
+                } else {
+                    console.log(`Found Match Request Sender ID: ${matchData?.sender_id}`);
+                }
+
                 if (matchData?.sender_id) {
                     // Get auth_id from member table
-                    const { data: memberData } = await supabaseAdmin
+                    const { data: memberData, error: memberError } = await supabaseAdmin
                         .from('member')
                         .select('auth_id')
                         .eq('id', matchData.sender_id)
                         .single();
+
+                    if (memberError) {
+                        console.error("Error fetching member for payment record:", memberError);
+                    } else {
+                        console.log(`Found Member Auth ID: ${memberData?.auth_id}`);
+                    }
 
                     if (memberData?.auth_id) {
                         const { error: paymentError } = await supabaseAdmin
@@ -147,26 +161,43 @@ export async function POST(request: NextRequest) {
 
                         if (paymentError) {
                             console.error("Error inserting payment record:", paymentError);
-                            // Don't fail the request if just history logging fails, but log it
+                            console.error("Payment Insert Payload:", {
+                                user_id: memberData.auth_id,
+                                match_id: matchRequestId,
+                                amount: typeof amount === 'string' ? parseInt(amount) : amount,
+                                status: 'paid',
+                                payment_method: body.payMethod || 'card',
+                                transaction_id: tid,
+                                completed_at: new Date().toISOString()
+                            });
                         } else {
-                            console.log("Payment record inserted successfully");
+                            console.log("Payment record inserted successfully.");
                         }
+                    } else {
+                        console.error("Could not find auth_id for member:", matchData.sender_id);
                     }
+                } else {
+                    console.error("Could not find sender_id for match request:", matchRequestId);
                 }
-            } catch (e) {
-                console.error("Failed to save payment history:", e);
+            } else {
+                console.log("Payment record inserted successfully");
             }
-
-            console.log("Payment flow completed successfully");
-            return NextResponse.redirect(new URL(`/?payment_success=true`, request.url), { status: 303 });
-        } else {
-            console.log(`Payment Approval Failed: ${paymentResult.resultMsg}`);
-            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url), { status: 303 });
         }
+    }
+            } catch (e) {
+    console.error("Failed to save payment history:", e);
+}
+
+console.log("Payment flow completed successfully");
+return NextResponse.redirect(new URL(`/?payment_success=true`, request.url), { status: 303 });
+        } else {
+    console.log(`Payment Approval Failed: ${paymentResult.resultMsg}`);
+    return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url), { status: 303 });
+}
 
     } catch (error: any) {
-        console.error("Error processing payment:", error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(errorMessage)}`, request.url), { status: 303 });
-    }
+    console.error("Error processing payment:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(errorMessage)}`, request.url), { status: 303 });
+}
 }
