@@ -70,6 +70,43 @@ export default function App() {
     contactId?: string;
   }>>([]);
 
+  // Generic View Params State
+  const [viewParams, setViewParams] = useState<any>({});
+
+  // Navigation Helper
+  const navigateTo = useCallback((view: typeof currentView, params?: any, options?: { replace?: boolean }) => {
+    const state = { view, ...params };
+    if (options?.replace) {
+      window.history.replaceState(state, "", "");
+    } else {
+      window.history.pushState(state, "", "");
+    }
+    setCurrentView(view);
+    setViewParams(params || {});
+  }, []);
+
+  // Handle Browser Back/Forward
+  useEffect(() => {
+    // Initialize history state
+    window.history.replaceState({ view: "home" }, "", "");
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.view) {
+        setCurrentView(event.state.view);
+        // Extract params (everything except view)
+        const { view, ...params } = event.state;
+        setViewParams(params);
+      } else {
+        // Fallback if state is missing (e.g. external navigation)
+        setCurrentView("home");
+        setViewParams({});
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   // Check Auth State
   useEffect(() => {
     console.log("App mounted, starting auth check...");
@@ -440,7 +477,7 @@ export default function App() {
   const handleSignUpComplete = () => {
     setHasProfile(true);
     setIsSignedUp(true);
-    setCurrentView("home");
+    navigateTo("home", { replace: true });
   };
 
   const handleBackToHome = () => {
@@ -461,17 +498,11 @@ export default function App() {
     setSelectedProfileKakaoId(metadata?.partnerKakaoId || null);
     setSelectedProfileIsUnlocked(metadata?.isUnlocked || false);
     setSelectedMatchId(metadata?.matchId || null);
-    setCurrentView("profileDetail");
+    navigateTo("profileDetail");
   };
 
   const handleBackFromProfileDetail = () => {
-    const previousView = selectedProfileId ? profileSource : "home";
-    setCurrentView(previousView);
-    setSelectedProfileId(null);
-    setSelectedProfileWithdrawn(false);
-    setSelectedProfileKakaoId(null);
-    setSelectedProfileIsUnlocked(false);
-    setSelectedMatchId(null);
+    window.history.back();
   };
 
   const handleMatchRequest = (profileData: {
@@ -500,7 +531,7 @@ export default function App() {
       setShowLoginModal(true);
       return;
     }
-    setCurrentView(tab);
+    navigateTo(tab);
   };
 
   const handleLogout = async () => {
@@ -510,7 +541,7 @@ export default function App() {
     setIsSignedUp(false);
     setIsParticipant(false);
     setIsApplied(false);
-    setCurrentView("home");
+    navigateTo("home", { replace: true });
   };
 
   const handleAcceptMatch = async (requestId: string) => {
@@ -607,12 +638,12 @@ export default function App() {
       setShowLoginModal(true);
       return;
     }
-    setCurrentView("notifications");
+    navigateTo("notifications");
   };
 
   const handleNotificationNavigateToMatch = (_matchId: string, notificationType: 'match_request' | 'match_accepted' | 'contact_revealed') => {
     // Navigate to mailbox with appropriate tab
-    setCurrentView("mailbox");
+    navigateTo("mailbox");
 
     // Match request -> 받음 (received) tab
     // Match accepted, Contact revealed -> 매칭 됨 (matched) tab
@@ -883,7 +914,7 @@ export default function App() {
 
       {currentView === "notifications" && (
         <NotificationsView
-          onBack={() => setCurrentView("home")}
+          onBack={() => window.history.back()}
           onNavigateToMatch={handleNotificationNavigateToMatch}
         />
       )}
@@ -929,7 +960,11 @@ export default function App() {
 
           {currentView === "profile" && (
             <>
-              <MyProfileView onLogout={handleLogout} />
+              <MyProfileView
+                onLogout={handleLogout}
+                onNavigate={navigateTo}
+                selectedBookId={viewParams.bookId}
+              />
               <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
             </>
           )}
@@ -939,6 +974,8 @@ export default function App() {
               <ProfileDetailViewWithInteraction
                 profileId={selectedProfileId}
                 onBack={handleBackFromProfileDetail}
+                onNavigate={navigateTo}
+                selectedBookId={viewParams.bookId}
                 onMatchRequest={handleMatchRequest}
                 sentMatchRequests={sentMatchRequests}
                 receivedMatchRequests={receivedMatchRequests}

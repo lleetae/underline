@@ -33,18 +33,22 @@ interface ProfileDetailData {
 export function ProfileDetailViewWithInteraction({
   profileId,
   onBack,
+  onNavigate, // New prop
+  selectedBookId, // New prop
   onMatchRequest,
   sentMatchRequests = [],
   receivedMatchRequests = [],
   disableMatching = false,
   isMatched = false,
   isWithdrawn = false,
-  partnerKakaoId, // New prop
-  isUnlocked, // New prop
-  matchId // New prop
+  partnerKakaoId,
+  isUnlocked,
+  matchId
 }: {
   profileId: string;
   onBack: () => void;
+  onNavigate: (view: any, params?: any, options?: { replace?: boolean }) => void; // New prop type
+  selectedBookId?: string; // New prop type
   onMatchRequest?: (profileData: {
     profileId: string;
     nickname: string;
@@ -76,10 +80,10 @@ export function ProfileDetailViewWithInteraction({
   isMatched?: boolean;
   isWithdrawn?: boolean;
   partnerKakaoId?: string | null;
-  isUnlocked?: boolean; // New prop
-  matchId?: string | null; // New prop
+  isUnlocked?: boolean;
+  matchId?: string | null;
 }) {
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  // const [selectedBook, setSelectedBook] = useState<Book | null>(null); // Removed local state
   const [showLetterModal, setShowLetterModal] = useState(false);
   const [isSendingRequest, setIsSendingRequest] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -87,6 +91,9 @@ export function ProfileDetailViewWithInteraction({
   const [profile, setProfile] = useState<ProfileDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  // Derived state for selected book
+  const selectedBook = profile?.books.find(b => b.id === selectedBookId) || null;
 
   // Reset scroll position when profileId changes
   useEffect(() => {
@@ -98,6 +105,8 @@ export function ProfileDetailViewWithInteraction({
   useEffect(() => {
     const fetchProfileDetail = async () => {
       if (!profileId) return;
+      // ... (rest of fetch logic remains same)
+
 
       setIsLoading(true);
       try {
@@ -232,11 +241,13 @@ export function ProfileDetailViewWithInteraction({
   };
 
   const handleBookClick = (book: Book) => {
-    setSelectedBook(book);
+    // setSelectedBook(book);
+    onNavigate("profileDetail", { bookId: book.id });
   };
 
   const handleCloseBookDetail = () => {
-    setSelectedBook(null);
+    // setSelectedBook(null);
+    window.history.back();
   };
 
   const handleOpenLetterModal = () => {
