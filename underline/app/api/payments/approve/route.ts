@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
                                 user_id: memberData.auth_id,
                                 match_id: matchRequestId,
                                 amount: typeof amount === 'string' ? parseInt(amount) : amount,
-                                status: 'paid',
+                                status: 'completed',
                                 payment_method: body.payMethod || 'card',
                                 transaction_id: tid,
                                 completed_at: new Date().toISOString()
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
                                 user_id: memberData.auth_id,
                                 match_id: matchRequestId,
                                 amount: typeof amount === 'string' ? parseInt(amount) : amount,
-                                status: 'paid',
+                                status: 'completed',
                                 payment_method: body.payMethod || 'card',
                                 transaction_id: tid,
                                 completed_at: new Date().toISOString()
