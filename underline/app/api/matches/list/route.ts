@@ -2,16 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // Server-side Supabase client with service role
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+// Custom fetch to bypass Next.js cache
+const customFetch = (url: any, options: any) => {
+    return fetch(url, { ...options, cache: 'no-store' });
+};
 
 const supabaseAdmin = supabaseServiceKey
     ? createClient(supabaseUrl, supabaseServiceKey, {
         auth: {
             autoRefreshToken: false,
             persistSession: false
+        },
+        global: {
+            fetch: customFetch
         }
     })
     : null;
