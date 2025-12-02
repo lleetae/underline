@@ -113,25 +113,54 @@ export function MatchList({
     }
   };
 
-  const handlePayment = (match: Match) => {
-    // @ts-ignore
-    if (typeof window.AUTHNICE === 'undefined') {
-      toast.error("결제 시스템을 불러오지 못했습니다. 새로고침 해주세요.");
-      return;
-    }
-
-    // @ts-ignore
-    window.AUTHNICE.requestPay({
-      clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID || 'S2_ff3bfd3d0db14308b7375e9f74f8b695',
-      method: 'card',
-      orderId: match.id,
-      amount: 9900,
-      goodsName: '연락처 잠금해제',
-      returnUrl: `${window.location.origin}/api/payments/approve`,
-      fnError: function (result: any) {
-        toast.error('결제 중 오류가 발생했습니다: ' + result.errorMsg);
+  const handlePayment = async (match: Match) => {
+    try {
+      // @ts-ignore
+      if (typeof window.AUTHNICE === 'undefined') {
+        toast.error("결제 시스템을 불러오지 못했습니다. 새로고침 해주세요.");
+        return;
       }
-    });
+
+      // 1. Get current user's member ID
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("로그인이 필요합니다.");
+        return;
+      }
+
+      const { data: member, error } = await supabase
+        .from('member')
+        .select('id')
+        .eq('auth_id', session.user.id)
+        .single();
+
+      if (error || !member) {
+        console.error("Error fetching member for payment:", error);
+        toast.error("회원 정보를 찾을 수 없습니다.");
+        return;
+      }
+
+      // 2. Construct Order ID: matchRequestId_payerMemberId
+      const orderId = `${match.id}_${member.id}`;
+      console.log("MatchList: Requesting payment with orderId:", orderId);
+
+      // @ts-ignore
+      window.AUTHNICE.requestPay({
+        clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID || 'S2_ff3bfd3d0db14308b7375e9f74f8b695',
+        method: 'card',
+        orderId: orderId,
+        amount: 9900,
+        goodsName: '연락처 잠금해제',
+        returnUrl: `${window.location.origin}/api/payments/approve`,
+        fnError: function (result: any) {
+          console.error("NicePayments error:", result);
+          toast.error('결제 중 오류가 발생했습니다: ' + result.errorMsg);
+        }
+      });
+    } catch (e) {
+      console.error("Payment handler error:", e);
+      toast.error("결제 시작 중 오류가 발생했습니다.");
+    }
   };
 
   return (
