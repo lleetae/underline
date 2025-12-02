@@ -27,7 +27,9 @@ interface ProfileDetailData {
   bio: string;
   photos: string[];
   books: Book[];
-  kakaoId?: string; // Added field
+
+  kakaoId?: string;
+  gender: string; // Added field
 }
 
 export function ProfileDetailViewWithInteraction({
@@ -161,7 +163,17 @@ export function ProfileDetailViewWithInteraction({
           setProfile({
             id: memberData.id,
             nickname: memberData.nickname || "익명",
-            age: memberData.age || (memberData.birth_date ? new Date().getFullYear() - parseInt(memberData.birth_date.substring(0, 4)) : 0),
+            gender: memberData.gender || "",
+            age: memberData.age || (memberData.birth_date ? (() => {
+              const birthDate = new Date(memberData.birth_date);
+              const today = new Date();
+              let age = today.getFullYear() - birthDate.getFullYear();
+              const m = today.getMonth() - birthDate.getMonth();
+              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+              }
+              return age;
+            })() : 0),
             location: memberData.location || "알 수 없음",
             religion: memberData.religion || "none",
             height: memberData.height || "",
@@ -621,6 +633,7 @@ export function ProfileDetailViewWithInteraction({
               {profile.nickname}
             </h2>
             <div className="flex items-center gap-4 text-white/90 mb-3">
+              <span className="text-sm font-sans">{profile.gender === 'male' ? '남성' : profile.gender === 'female' ? '여성' : profile.gender}</span>
               <span className="text-sm font-sans">만 {profile.age}세</span>
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
