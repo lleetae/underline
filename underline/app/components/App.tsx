@@ -268,16 +268,26 @@ export default function App() {
       const paymentSuccess = params.get('payment_success');
       const paymentError = params.get('payment_error');
 
-      if (paymentSuccess) {
-        setMailboxActiveTab("matched");
-        toast.success("결제가 완료되었습니다! 연락처가 공개되었습니다.");
-        // Clean up URL and set state
-        navigateTo("mailbox", {}, { replace: true });
-      } else if (paymentError) {
-        setMailboxActiveTab("matched");
-        toast.error(`결제 실패: ${decodeURIComponent(paymentError)}`);
-        // Clean up URL and set state
-        navigateTo("mailbox", {}, { replace: true });
+      if (paymentSuccess || paymentError) {
+        if (paymentSuccess) {
+          setMailboxActiveTab("matched");
+          toast.success("결제가 완료되었습니다! 연락처가 공개되었습니다.");
+        } else if (paymentError) {
+          setMailboxActiveTab("matched");
+          toast.error(`결제 실패: ${decodeURIComponent(paymentError)}`);
+        }
+
+        // Clean up URL params manually to ensure they are removed
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('payment_success');
+        newUrl.searchParams.delete('payment_error');
+        newUrl.searchParams.set('view', 'mailbox');
+
+        // Update history without adding a new entry
+        window.history.replaceState({ view: 'mailbox' }, "", newUrl.toString());
+
+        // Sync state
+        setCurrentView("mailbox");
       }
     }
   }, [isSignedUp]);
