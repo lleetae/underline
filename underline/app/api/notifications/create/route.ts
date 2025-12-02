@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
 
         // 2. Create notification
         console.log(`Creating notification: type=${type}, recipient=${recipientId}, sender=${senderMember.id}, match=${matchId}`);
+        console.log(`Debug IDs: targetMemberId=${targetMemberId} (type: ${typeof targetMemberId}), senderMember.id=${senderMember.id} (type: ${typeof senderMember.id})`);
 
         const { data: notification, error } = await supabaseAdmin
             .from('notifications')
