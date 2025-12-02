@@ -363,6 +363,42 @@ export default function App() {
     }
   }, []);
 
+  // Realtime Subscription for Notifications
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    console.log("Setting up notification subscription for user:", session.user.id);
+
+    const channel = supabase
+      .channel('public:notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${session.user.id}`
+        },
+        (payload) => {
+          console.log('Realtime notification received:', payload);
+          const newNotification = payload.new as any;
+
+          if (newNotification.type === 'match_accepted') {
+            toast.success("매칭이 성사되었습니다! 연락처가 공개되었습니다.");
+            // Optionally refresh matches or notifications count here
+            fetchMatches();
+          } else if (newNotification.type === 'match_request') {
+            toast.info("새로운 매칭 신청이 도착했습니다!");
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session, fetchMatches]);
+
   const checkProfile = async (userId: string) => {
     console.log("checkProfile called with:", userId);
     try {
