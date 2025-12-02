@@ -286,11 +286,16 @@ export function ProfileDetailViewWithInteraction({
 
       if (insertError) throw insertError;
 
-      // Send Notification
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session && matchRequest) {
-          await fetch('/api/notifications/create', {
+          console.log("Sending notification request...", {
+            type: 'match_request',
+            targetMemberId: profile.id,
+            matchId: matchRequest.id
+          });
+
+          const notifyRes = await fetch('/api/notifications/create', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -302,6 +307,9 @@ export function ProfileDetailViewWithInteraction({
               matchId: matchRequest.id
             })
           });
+
+          const notifyData = await notifyRes.json();
+          console.log("Notification API Response:", notifyRes.status, notifyData);
         }
       } catch (e) {
         console.error("Error sending notification:", e);
