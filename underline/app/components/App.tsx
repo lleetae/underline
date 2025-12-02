@@ -332,6 +332,37 @@ export default function App() {
     };
   }, [session]);
 
+  const fetchMatches = useCallback(async () => {
+    console.log("Fetching matches via API...");
+    const startTime = performance.now();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const response = await fetch('/api/matches/list', {
+        cache: 'no-store',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      console.log(`[Frontend] API Fetch took: ${duration.toFixed(2)}ms`);
+
+      if (response.ok) {
+        const { matches: apiMatches, version, debug } = await response.json();
+        console.log(`[Frontend] Matches API Success. Version: ${version}, Count: ${apiMatches.length}`);
+        if (debug) console.log("[Frontend] Server Timing:", debug);
+        setMatches(apiMatches);
+        // toast.success(`매칭 목록을 불러왔습니다. (${apiMatches.length}개)`);
+      } else {
+        console.error("Failed to fetch matches from API", await response.text());
+        // toast.error("매칭 목록 불러오기 실패");
+      }
+    } else {
+      console.log("No session for fetchMatches");
+    }
+  }, []);
+
   // Realtime Subscription for Notifications
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -367,37 +398,6 @@ export default function App() {
       supabase.removeChannel(channel);
     };
   }, [session, fetchMatches]);
-
-  const fetchMatches = useCallback(async () => {
-    console.log("Fetching matches via API...");
-    const startTime = performance.now();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      const response = await fetch('/api/matches/list', {
-        cache: 'no-store',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-      console.log(`[Frontend] API Fetch took: ${duration.toFixed(2)}ms`);
-
-      if (response.ok) {
-        const { matches: apiMatches, version, debug } = await response.json();
-        console.log(`[Frontend] Matches API Success. Version: ${version}, Count: ${apiMatches.length}`);
-        if (debug) console.log("[Frontend] Server Timing:", debug);
-        setMatches(apiMatches);
-        // toast.success(`매칭 목록을 불러왔습니다. (${apiMatches.length}개)`);
-      } else {
-        console.error("Failed to fetch matches from API", await response.text());
-        // toast.error("매칭 목록 불러오기 실패");
-      }
-    } else {
-      console.log("No session for fetchMatches");
-    }
-  }, []);
 
   const checkProfile = async (userId: string) => {
     console.log("checkProfile called with:", userId);
