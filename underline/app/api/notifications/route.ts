@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        console.log(`Fetching notifications for Auth User ID: ${user.id}`);
+
         // 2. Parse query parameters
         const searchParams = request.nextUrl.searchParams;
 
@@ -63,6 +65,8 @@ export async function GET(request: NextRequest) {
             console.error('Error fetching notifications:', error);
             return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
         }
+
+        console.log(`Found ${notificationsData?.length || 0} raw notifications`);
 
         // Manually fetch sender details
         let notifications = [];
