@@ -130,7 +130,9 @@ export default function App() {
       } else {
         // Default to home if no view param
         if (!window.history.state) {
-          window.history.replaceState({ view: "home" }, "", "/?view=home");
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.set("view", "home");
+          window.history.replaceState({ view: "home" }, "", newUrl.toString());
         }
       }
     };
@@ -260,7 +262,8 @@ export default function App() {
 
   // Handle Payment Redirect
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    // Only proceed if we are signed up (auth loaded)
+    if (typeof window !== 'undefined' && isSignedUp) {
       const params = new URLSearchParams(window.location.search);
       const paymentSuccess = params.get('payment_success');
       const paymentError = params.get('payment_error');
@@ -277,7 +280,7 @@ export default function App() {
         navigateTo("mailbox", {}, { replace: true });
       }
     }
-  }, []);
+  }, [isSignedUp]);
 
   // Realtime Subscription for Match Requests
   useEffect(() => {
