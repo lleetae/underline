@@ -121,10 +121,10 @@ export async function POST(request: NextRequest) {
             try {
                 console.log(`Attempting to insert payment record for Match Request ID: ${matchRequestId}`);
 
-                // Get sender_id from match_request to find the user who paid
+                // Get sender_id and receiver_id from match_request
                 const { data: matchData, error: matchError } = await supabaseAdmin
                     .from('match_requests')
-                    .select('sender_id')
+                    .select('sender_id, receiver_id')
                     .eq('id', matchRequestId)
                     .single();
 
@@ -135,57 +135,43 @@ export async function POST(request: NextRequest) {
                 }
 
                 if (matchData?.sender_id) {
-                    // Get auth_id from member table
-                    const { data: memberData, error: memberError } = await supabaseAdmin
-                        .from('member')
-                        .select('auth_id')
-                        .eq('id', matchData.sender_id)
-                        .single();
+                    // Insert into payments table using member IDs
+                    const { error: paymentError } = await supabaseAdmin
+                        .from('payments')
+                        .insert({
+                            send_user_id: matchData.sender_id,
+                            receive_user_id: matchData.receiver_id,
+                            match_id: matchRequestId,
+                            amount: typeof amount === 'string' ? parseInt(amount) : amount,
+                            status: 'completed',
+                            payment_method: body.payMethod || 'card',
+                            transaction_id: tid,
+                            completed_at: new Date().toISOString()
+                        });
 
-                    if (memberError) {
-                        console.error("Error fetching member for payment record:", memberError);
+                    if (paymentError) {
+                        console.error("Error inserting payment record:", paymentError);
+                        console.error("Payment Insert Payload:", {
+                            send_user_id: matchData.sender_id,
+                            receive_user_id: matchData.receiver_id,
+                            match_id: matchRequestId,
+                            amount: typeof amount === 'string' ? parseInt(amount) : amount,
+                            status: 'completed',
+                            payment_method: body.payMethod || 'card',
+                            transaction_id: tid,
+                            completed_at: new Date().toISOString()
+                        });
                     } else {
-                        console.log(`Found Member Auth ID: ${memberData?.auth_id}`);
-                    }
-
-                    if (memberData?.auth_id) {
-                        const { error: paymentError } = await supabaseAdmin
-                            .from('payments')
-                            .insert({
-                                user_id: memberData.auth_id,
-                                match_id: matchRequestId,
-                                amount: typeof amount === 'string' ? parseInt(amount) : amount,
-                                status: 'completed',
-                                payment_method: body.payMethod || 'card',
-                                transaction_id: tid,
-                                completed_at: new Date().toISOString()
-                            });
-
-                        if (paymentError) {
-                            console.error("Error inserting payment record:", paymentError);
-                            console.error("Payment Insert Payload:", {
-                                user_id: memberData.auth_id,
-                                match_id: matchRequestId,
-                                amount: typeof amount === 'string' ? parseInt(amount) : amount,
-                                status: 'completed',
-                                payment_method: body.payMethod || 'card',
-                                transaction_id: tid,
-                                completed_at: new Date().toISOString()
-                            });
-                        } else {
-                            console.log("Payment record inserted successfully.");
-                        }
-                    } else {
-                        console.error("Could not find sender_id for match request. MatchData:", matchData);
+                        console.log("Payment record inserted successfully.");
                     }
                 } else {
-                    console.error("Could not find sender_id for match request:", matchRequestId);
+                    console.error("Could not find sender_id for match request. MatchData:", matchData);
                 }
             } catch (e) {
                 console.error("Failed to save payment history:", e);
             }
 
-            // 4. Send Notification to the OTHER party
+            // 5. Send Notification to the OTHER party
             console.log(`Processing payment notification. OrderId: ${orderId}, PayerMemberIdStr: ${payerMemberIdStr}`);
 
             if (payerMemberIdStr) {
@@ -224,11 +210,7 @@ export async function POST(request: NextRequest) {
                         } else {
                             console.log(`Target Member Auth ID: ${targetMember.auth_id}`);
 
-                            // Get payer's auth_id (sender of notification) - Just to verify it exists if needed, 
-                            // but we use payerMemberId for sender_id column now.
-                            // Actually, we don't strictly need payerMember auth_id for the insert anymore 
-                            // since we use payerMemberId (int) for sender_id.
-                            // But let's keep the check to ensure payer exists.
+                            // Get payer's auth_id (sender of notification)
                             const { data: payerMember } = await supabaseAdmin
                                 .from('member')
                                 .select('auth_id')
