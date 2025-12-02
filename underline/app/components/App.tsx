@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ProfileDetailViewWithInteraction } from "./ProfileDetailViewWithInteraction";
 import { MailboxView } from "./MailboxView";
 import { MyProfileView } from "./MyProfileView";
@@ -228,7 +228,7 @@ export default function App() {
     };
   }, [session]);
 
-  const fetchMatches = async () => {
+  const fetchMatches = useCallback(async () => {
     console.log("Fetching matches via API...");
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
@@ -251,7 +251,7 @@ export default function App() {
     } else {
       console.log("No session for fetchMatches");
     }
-  };
+  }, []);
 
   const checkProfile = async (userId: string) => {
     console.log("checkProfile called with:", userId);
