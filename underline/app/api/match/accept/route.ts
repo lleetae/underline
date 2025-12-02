@@ -55,6 +55,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Match request not found' }, { status: 404 });
         }
 
+        console.log(`Match Accept Request: ${requestId}`);
+        console.log(`Match Request Data: Sender=${matchRequest.sender_id} (Type: ${typeof matchRequest.sender_id}), Receiver=${matchRequest.receiver_id} (Type: ${typeof matchRequest.receiver_id})`);
+
         // Verify that the current user is the receiver (only receiver can accept)
         // First get member id of current user
         const { data: currentMember, error: memberError } = await supabaseAdmin
@@ -66,6 +69,8 @@ export async function POST(request: NextRequest) {
         if (memberError || !currentMember) {
             return NextResponse.json({ error: 'Member profile not found' }, { status: 404 });
         }
+
+        console.log(`Current Member (Acceptor): ${currentMember.id} (Type: ${typeof currentMember.id})`);
 
         if (matchRequest.receiver_id !== currentMember.id) {
             return NextResponse.json({ error: 'Not authorized to accept this request' }, { status: 403 });

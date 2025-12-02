@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
             if (payerMemberIdStr) {
                 try {
                     const payerMemberId = payerMemberIdStr;
-                    console.log(`PayerMemberId: ${payerMemberId}`);
+                    console.log(`PayerMemberId: ${payerMemberId} (Type: ${typeof payerMemberId})`);
 
                     // Fetch match request to find sender and receiver
                     const { data: matchRequest, error: matchError } = await supabaseAdmin
@@ -189,16 +189,20 @@ export async function POST(request: NextRequest) {
                     if (matchError || !matchRequest) {
                         console.error("Error fetching match request for notification:", matchError);
                     } else {
-                        console.log(`Match Request found: sender=${matchRequest.sender_id}, receiver=${matchRequest.receiver_id}`);
+                        console.log(`Match Request found: sender=${matchRequest.sender_id} (Type: ${typeof matchRequest.sender_id}), receiver=${matchRequest.receiver_id} (Type: ${typeof matchRequest.receiver_id})`);
 
                         // Determine target user (the one who did NOT pay)
-                        const senderId = matchRequest.sender_id;
-                        const receiverId = matchRequest.receiver_id;
-                        const payerId = payerMemberId;
+                        const senderId = String(matchRequest.sender_id).trim();
+                        const receiverId = String(matchRequest.receiver_id).trim();
+                        const payerId = String(payerMemberId).trim();
+
+                        console.log(`Comparing IDs: Sender=${senderId}, Payer=${payerId}`);
 
                         const targetMemberId = senderId === payerId
                             ? receiverId
                             : senderId;
+
+                        console.log(`Target Member ID (Calculated): ${targetMemberId}`);
 
                         console.log(`Target Member ID (Receiver of notification): ${targetMemberId} (Sender: ${senderId}, Payer: ${payerId}) - v2 fix`);
 
