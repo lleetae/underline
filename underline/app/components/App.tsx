@@ -74,21 +74,69 @@ export default function App() {
   const [viewParams, setViewParams] = useState<any>({});
 
   // Navigation Helper
+  // Navigation Helper
   const navigateTo = useCallback((view: typeof currentView, params?: any, options?: { replace?: boolean }) => {
     const state = { view, ...params };
+
+    // Construct URL with query params
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", view);
+
+    // Add other params to URL if they exist
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) url.searchParams.set(key, String(value));
+      });
+    }
+
+    // Special handling for mailbox tab persistence
+    if (view === "mailbox" && mailboxActiveTab) {
+      // If we are navigating TO mailbox, we might want to persist the current tab or a requested tab
+      // But navigateTo doesn't know about mailboxActiveTab state directly if it's not passed in params.
+      // We'll rely on params for now.
+    }
+
     if (options?.replace) {
-      window.history.replaceState(state, "", "");
+      window.history.replaceState(state, "", url.toString());
     } else {
-      window.history.pushState(state, "", "");
+      window.history.pushState(state, "", url.toString());
     }
     setCurrentView(view);
     setViewParams(params || {});
   }, []);
 
-  // Handle Browser Back/Forward
+  // Handle Browser Back/Forward & Initial Load
   useEffect(() => {
-    // Initialize history state
-    window.history.replaceState({ view: "home" }, "", "");
+    const restoreStateFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get("view") as typeof currentView;
+
+      if (viewParam && ["signup", "home", "mailbox", "profile", "profileDetail", "notifications"].includes(viewParam)) {
+        setCurrentView(viewParam);
+
+        // Restore other params
+        const otherParams: any = {};
+        params.forEach((value, key) => {
+          if (key !== "view") {
+            otherParams[key] = value;
+          }
+        });
+        setViewParams(otherParams);
+
+        // Ensure history state matches URL (for initial load)
+        if (!window.history.state) {
+          window.history.replaceState({ view: viewParam, ...otherParams }, "", window.location.href);
+        }
+      } else {
+        // Default to home if no view param
+        if (!window.history.state) {
+          window.history.replaceState({ view: "home" }, "", "/?view=home");
+        }
+      }
+    };
+
+    // Initialize from URL
+    restoreStateFromUrl();
 
     const handlePopState = (event: PopStateEvent) => {
       if (event.state && event.state.view) {
@@ -97,9 +145,8 @@ export default function App() {
         const { view, ...params } = event.state;
         setViewParams(params);
       } else {
-        // Fallback if state is missing (e.g. external navigation)
-        setCurrentView("home");
-        setViewParams({});
+        // Fallback: Try to restore from URL if state is missing
+        restoreStateFromUrl();
       }
     };
 
