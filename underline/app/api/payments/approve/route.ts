@@ -179,25 +179,20 @@ export async function POST(request: NextRequest) {
                 } else {
                     console.error("Could not find sender_id for match request:", matchRequestId);
                 }
-            } else {
-                console.log("Payment record inserted successfully");
-            }
-        }
-    }
             } catch (e) {
-    console.error("Failed to save payment history:", e);
-}
+                console.error("Failed to save payment history:", e);
+            }
 
-console.log("Payment flow completed successfully");
-return NextResponse.redirect(new URL(`/?payment_success=true`, request.url), { status: 303 });
+            console.log("Payment flow completed successfully");
+            return NextResponse.redirect(new URL(`/?payment_success=true`, request.url), { status: 303 });
         } else {
-    console.log(`Payment Approval Failed: ${paymentResult.resultMsg}`);
-    return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url), { status: 303 });
-}
+            console.log(`Payment Approval Failed: ${paymentResult.resultMsg}`);
+            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url), { status: 303 });
+        }
 
     } catch (error: any) {
-    console.error("Error processing payment:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(errorMessage)}`, request.url), { status: 303 });
-}
+        console.error("Error processing payment:", error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(errorMessage)}`, request.url), { status: 303 });
+    }
 }
