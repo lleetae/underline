@@ -282,6 +282,11 @@ export default function App() {
     }
   }, [isSignedUp]);
 
+  // Reset scroll position on view change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView]);
+
   // Realtime Subscription for Match Requests
   useEffect(() => {
     if (!session?.user?.id) return;
