@@ -262,32 +262,36 @@ export default function App() {
 
   // Handle Payment Redirect
   useEffect(() => {
-    // Only proceed if we are signed up (auth loaded)
-    if (typeof window !== 'undefined' && isSignedUp) {
+    if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const paymentSuccess = params.get('payment_success');
       const paymentError = params.get('payment_error');
 
       if (paymentSuccess || paymentError) {
-        if (paymentSuccess) {
-          setMailboxActiveTab("matched");
-          toast.success("결제가 완료되었습니다! 연락처가 공개되었습니다.");
-        } else if (paymentError) {
-          setMailboxActiveTab("matched");
-          toast.error(`결제 실패: ${decodeURIComponent(paymentError)}`);
+        // Log the error for debugging
+        if (paymentError) {
+          console.error("Payment Error from URL:", paymentError);
         }
 
-        // Clean up URL params manually to ensure they are removed
+        // Clean up URL params IMMEDIATELY to prevent persistence
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete('payment_success');
         newUrl.searchParams.delete('payment_error');
         newUrl.searchParams.set('view', 'mailbox');
-
-        // Update history without adding a new entry
         window.history.replaceState({ view: 'mailbox' }, "", newUrl.toString());
 
-        // Sync state
-        setCurrentView("mailbox");
+        // Only show toast and update state if signed up (to avoid hydration issues or premature state updates)
+        if (isSignedUp) {
+          if (paymentSuccess) {
+            setMailboxActiveTab("matched");
+            toast.success("결제가 완료되었습니다! 연락처가 공개되었습니다.");
+            setCurrentView("mailbox");
+          } else if (paymentError) {
+            setMailboxActiveTab("matched");
+            toast.error(`결제 실패: ${decodeURIComponent(paymentError)}`);
+            setCurrentView("mailbox");
+          }
+        }
       }
     }
   }, [isSignedUp]);
