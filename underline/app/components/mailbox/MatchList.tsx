@@ -18,6 +18,10 @@ interface Match {
   partnerKakaoId?: string; // Added
 }
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { useState } from "react";
+
 export function MatchList({
   matches = [],
   onProfileClick
@@ -25,6 +29,9 @@ export function MatchList({
   matches?: Match[];
   onProfileClick?: (profileId: string, source: "home" | "mailbox", metadata?: { isPenalized?: boolean; isWithdrawn?: boolean; partnerKakaoId?: string; matchId?: string; isUnlocked?: boolean }) => void;
 }) {
+  const [copyModalOpen, setCopyModalOpen] = useState(false);
+  const [targetKakaoId, setTargetKakaoId] = useState<string | null>(null);
+
   if (!matches || matches.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-[var(--foreground)]/40 text-sm font-sans">
@@ -60,27 +67,49 @@ export function MatchList({
       const data = await response.json();
       const contactInfo = data.decryptedId;
 
-      // Copy to clipboard
+      setTargetKakaoId(contactInfo);
+      setCopyModalOpen(true);
+
+    } catch (err) {
+      console.error("Copy error:", err);
+      toast.error("연락처 정보를 불러오는데 실패했습니다");
+    }
+  };
+
+  const handleConfirmCopy = async () => {
+    if (!targetKakaoId) return;
+
+    try {
+      // Robust Copy Logic
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(contactInfo);
-        toast.success("카카오톡 ID가 복사되었습니다");
+        await navigator.clipboard.writeText(targetKakaoId);
       } else {
-        // Fallback
+        // Fallback for older browsers / webviews
         const textArea = document.createElement("textarea");
-        textArea.value = contactInfo;
+        textArea.value = targetKakaoId;
         textArea.style.position = "fixed";
-        textArea.style.left = "-999999px";
-        textArea.style.top = "-999999px";
+        textArea.style.left = "0";
+        textArea.style.top = "0";
+        textArea.style.opacity = "0";
+        textArea.style.pointerEvents = "none";
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        document.execCommand('copy');
-        textArea.remove();
-        toast.success("카카오톡 ID가 복사되었습니다");
+
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          throw new Error("Fallback copy failed");
+        } finally {
+          document.body.removeChild(textArea);
+        }
       }
+
+      toast.success("카카오톡 ID가 복사되었습니다");
+      setCopyModalOpen(false);
     } catch (err) {
-      console.error("Copy error:", err);
-      toast.error("복사에 실패했습니다");
+      console.error("Copy failed:", err);
+      toast.error("복사에 실패했습니다. 화면의 ID를 직접 복사해주세요.");
     }
   };
 
@@ -186,6 +215,30 @@ export function MatchList({
           )}
         </div>
       ))}
+
+      {/* Copy Confirm Modal */}
+      <Dialog open={copyModalOpen} onOpenChange={setCopyModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">카카오톡 ID 복사</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-6 py-4">
+            <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">아래 ID를 복사하여 카카오톡 친구추가 하세요</p>
+              <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/50">
+                <p className="text-xl font-bold tracking-wide select-all">{targetKakaoId}</p>
+              </div>
+            </div>
+            <Button
+              onClick={handleConfirmCopy}
+              className="w-full h-12 text-base font-bold bg-[#FAE100] text-[#371D1E] hover:bg-[#FAE100]/90"
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              ID 복사하기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
