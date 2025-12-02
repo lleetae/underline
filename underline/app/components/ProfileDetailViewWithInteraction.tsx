@@ -406,7 +406,7 @@ export function ProfileDetailViewWithInteraction({
         </div>
 
         {/* Book Detail Content */}
-        <div className="flex-1 overflow-y-auto pb-32">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pb-32">
           <div className="px-6 py-8 space-y-6">
             {/* Book Header */}
             <div className="flex gap-4 items-start">

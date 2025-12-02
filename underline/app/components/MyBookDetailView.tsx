@@ -64,6 +64,14 @@ export function MyBookDetailView({
     setShowDeleteModal(true);
   };
 
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, []);
+
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
       {/* Header */}
@@ -100,7 +108,7 @@ export function MyBookDetailView({
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-24 [scrollbar-gutter:stable]">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pb-24 [scrollbar-gutter:stable]">
         <div className="px-6 py-6 space-y-6">
           {/* Book Info Card */}
           <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-6 shadow-sm">
