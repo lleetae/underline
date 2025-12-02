@@ -143,7 +143,13 @@ export function MailboxView({
     if (nextIndex < currentIndex) setAnimateDirection("right");
 
     onTabChange(tab);
+    onRefreshMatches?.();
   };
+
+  // Refresh when activeTab changes (e.g. from external navigation)
+  useEffect(() => {
+    onRefreshMatches?.();
+  }, [activeTab]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
