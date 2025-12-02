@@ -218,7 +218,7 @@ export function MatchList({
 
       {/* Copy Confirm Modal */}
       <Dialog open={copyModalOpen} onOpenChange={setCopyModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader>
             <DialogTitle className="text-center">카카오톡 ID 복사</DialogTitle>
           </DialogHeader>
