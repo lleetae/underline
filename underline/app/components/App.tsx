@@ -633,25 +633,7 @@ export default function App() {
 
       const { match: updatedMatch } = await response.json();
 
-      // Send Notification to the sender
-      try {
-        if (session && updatedMatch) {
-          await fetch('/api/notifications/create', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`
-            },
-            body: JSON.stringify({
-              type: 'match_accepted',
-              targetMemberId: updatedMatch.sender_id, // Notify the sender
-              matchId: updatedMatch.id
-            })
-          });
-        }
-      } catch (e) {
-        console.error("Error sending notification:", e);
-      }
+      // Notification is now handled server-side in /api/match/accept
 
       // Update local state
       setReceivedMatchRequests(prev => prev.filter(req => req.id !== requestId));
