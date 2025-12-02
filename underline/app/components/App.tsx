@@ -312,6 +312,7 @@ export default function App() {
 
   const fetchMatches = useCallback(async () => {
     console.log("Fetching matches via API...");
+    const startTime = performance.now();
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       const response = await fetch('/api/matches/list', {
@@ -321,9 +322,14 @@ export default function App() {
         }
       });
 
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      console.log(`[Frontend] API Fetch took: ${duration.toFixed(2)}ms`);
+
       if (response.ok) {
-        const { matches: apiMatches } = await response.json();
-        console.log("Matches API result:", apiMatches);
+        const { matches: apiMatches, version, debug } = await response.json();
+        console.log(`[Frontend] Matches API Success. Version: ${version}, Count: ${apiMatches.length}`);
+        if (debug) console.log("[Frontend] Server Timing:", debug);
         setMatches(apiMatches);
         // toast.success(`매칭 목록을 불러왔습니다. (${apiMatches.length}개)`);
       } else {
