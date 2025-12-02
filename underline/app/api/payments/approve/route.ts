@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
                             console.log("Payment record inserted successfully.");
                         }
                     } else {
-                        console.error("Could not find auth_id for member:", matchData.sender_id);
+                        console.error("Could not find sender_id for match request. MatchData:", matchData);
                     }
                 } else {
                     console.error("Could not find sender_id for match request:", matchRequestId);
