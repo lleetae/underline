@@ -39,27 +39,22 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
 
-            const response = await fetch('/api/notifications', {
+            const response = await fetch(`/api/notifications?t=${new Date().getTime()}`, {
+                cache: 'no-store',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Server error: ${response.status}`);
+            if (response.ok) {
+                const data = await response.json();
+                console.log("NotificationsView fetched:", data);
+                setNotifications(data.notifications || []);
+                setUnreadCount(data.unreadCount || 0);
             }
-
-            const data = await response.json();
-            console.log("NotificationsView fetched:", data);
-            if (data.notifications) {
-                console.log("First notification client-side:", data.notifications[0]);
-            }
-            setNotifications(data.notifications || []);
-            setUnreadCount(data.unreadCount || 0);
-        } catch (error: any) {
+        } catch (error) {
             console.error("Error fetching notifications:", error);
-            toast.error(error.message || "알림을 불러오는데 실패했습니다");
+            toast.error("알림을 불러오는데 실패했습니다");
         } finally {
             setLoading(false);
         }
