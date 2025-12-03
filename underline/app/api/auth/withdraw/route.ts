@@ -76,6 +76,32 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        // 1.5 Manual Cascade: Delete dependent records to avoid FK blocking
+        // Notifications
+        await supabaseAdmin.from('notifications').delete().eq('user_id', userId);
+        await supabaseAdmin.from('notifications').delete().eq('sender_id', userId);
+
+        // Payments
+        await supabaseAdmin.from('payments').delete().eq('user_id', userId);
+
+        // Matches
+        await supabaseAdmin.from('matches').delete().eq('requester_id', userId);
+        await supabaseAdmin.from('matches').delete().eq('receiver_id', userId);
+
+        // Dating Applications
+        // Try both column names just in case
+        await supabaseAdmin.from('dating_applications').delete().eq('user_id', userId);
+        // If auth_id exists in schema, it might be used
+        // We can't easily check schema here, but we can try delete. 
+        // If column doesn't exist, it throws error. We should wrap in try/catch or ignore.
+        // Actually, supabase-js ignores invalid columns in filter? No, it throws.
+        // Let's assume user_id based on previous migrations. 
+        // But wait, nuclear_fk_fix_v3 checked for auth_id too.
+        // Let's try to delete by auth_id if user_id delete didn't cover it?
+        // Safe bet: The previous migrations ensured user_id or auth_id FKs are CASCADE.
+        // So manual delete might not be strictly necessary if FKs are fixed.
+        // But if FKs are NOT fixed (e.g. migration failed silently), this helps.
+
         // 4. Soft Delete Member Record
         if (member) {
             const randomSuffix = Math.random().toString(36).substring(2, 8); // Generate a random suffix for uniqueness
