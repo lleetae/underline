@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         // 2. Fetch Member Data (to get photos)
         const { data: member, error: memberError } = await supabaseAdmin
             .from('member')
-            .select('id, photo_urls_original, photo_urls_blurred, photos')
+            .select('id, auth_id, photo_urls_original, photo_urls_blurred, photos')
             .eq('auth_id', userId)
             .single();
 
@@ -104,8 +104,9 @@ export async function POST(request: NextRequest) {
                     photo_urls_original: [],
                     photo_urls_blurred: [],
                     photos: [],
-                    referrer_auth_id: null, // Clear referrer
-                    // auth_id: null // KEEP auth_id to preserve history! (Migration 20251203000008 drops FK)
+                    referrer_auth_id: null,
+                    legacy_auth_id: member.auth_id, // Save the original UUID
+                    auth_id: null // Unlink to allow deletion (FK safe)
                 })
                 .eq('id', member.id);
 
