@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         // 2. Fetch Member Data (to get photos)
         const { data: member, error: memberError } = await supabaseAdmin
             .from('member')
-            .select('id, photo_urls_original, photo_urls_blurred, photos')
+            .select('id, auth_id, photo_urls_original, photo_urls_blurred, photos')
             .eq('auth_id', userId)
             .single();
 
@@ -76,22 +76,29 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 4. Delete Member Record (Explicitly)
-        // We delete the member record first. Since payments table has ON DELETE SET NULL (from migration 007),
-        // payment records will be preserved but send_user_id/receive_user_id will become NULL.
-        // This is the "pre-soft-delete" behavior the user requested to rollback to.
+        // 4. Soft Delete Member Record
         if (member) {
-            const { error: deleteMemberError } = await supabaseAdmin
+            const randomSuffix = Math.random().toString(36).substring(2, 8); // Generate a random suffix for uniqueness
+            const { error: updateMemberError } = await supabaseAdmin
                 .from('member')
-                .delete()
+                .update({
+                    nickname: '알수없음',
+                    bio: '',
+                    location: 'unknown',
+                    birth_date: '1900-01-01',
+                    kakao_id: `deleted_${member.id}_${randomSuffix}`, // Ensure uniqueness
+                    photo_urls_original: [],
+                    photo_urls_blurred: [],
+                    photos: [],
+                    referrer_auth_id: null,
+                    legacy_auth_id: member.auth_id, // Save the original UUID
+                    auth_id: null // Unlink to allow deletion (FK safe)
+                })
                 .eq('id', member.id);
 
-            if (deleteMemberError) {
-                console.error("Error deleting member record:", deleteMemberError);
-                // Continue to try deleting auth user, or return error?
-                // If member deletion fails (e.g. other FKs), auth deletion might also fail or leave orphan data.
-                // But let's log and proceed or return.
-                return NextResponse.json({ error: `Failed to delete member record: ${deleteMemberError.message}` }, { status: 500 });
+            if (updateMemberError) {
+                console.error("Error soft deleting member record:", updateMemberError);
+                return NextResponse.json({ error: `Failed to soft delete member record: ${updateMemberError.message}` }, { status: 500 });
             }
         }
 
