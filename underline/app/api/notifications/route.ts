@@ -133,7 +133,13 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
             notifications: notifications || [],
             unreadCount: unreadCount || 0,
-            hasMore: (notifications?.length || 0) === limit
+            hasMore: (notifications?.length || 0) === limit,
+            debugInfo: {
+                queriedUserId: user.id,
+                rawCount: notificationsData?.length || 0,
+                queryError: error,
+                params: { limit, offset, unreadOnly }
+            }
         });
 
     } catch (error) {

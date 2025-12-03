@@ -29,6 +29,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
     const [loading, setLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
     const [userId, setUserId] = useState<string>('');
+    const [debugInfo, setDebugInfo] = useState<any>(null);
 
     useEffect(() => {
         fetchNotifications();
@@ -53,6 +54,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                 console.log("NotificationsView fetched:", data);
                 setNotifications(data.notifications || []);
                 setUnreadCount(data.unreadCount || 0);
+                setDebugInfo(data.debugInfo);
             }
         } catch (error) {
             console.error("Error fetching notifications:", error);
@@ -263,9 +265,12 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
             <div className="p-4 bg-black text-white text-xs overflow-auto max-h-40">
                 <p>Debug Info:</p>
                 <p>My User ID: {userId}</p>
+                <p>Server User ID: {debugInfo?.queriedUserId}</p>
+                <p>Raw Count: {debugInfo?.rawCount}</p>
                 <p>Loading: {loading ? 'true' : 'false'}</p>
                 <p>Count: {notifications.length}</p>
                 <pre>{JSON.stringify(notifications, null, 2)}</pre>
+                <pre>Params: {JSON.stringify(debugInfo?.params)}</pre>
             </div>
         </div>
     );
