@@ -32,7 +32,6 @@ export function useMatches(userId: string | undefined, profileId: string | null)
               nickname,
               age,
               birth_date,
-              location,
               sido,
               sigungu,
               photo_url,
@@ -59,7 +58,6 @@ export function useMatches(userId: string | undefined, profileId: string | null)
               age,
               birth_date,
               birth_date,
-              location,
               sido,
               sigungu,
               photo_url,
@@ -105,7 +103,7 @@ export function useMatches(userId: string | undefined, profileId: string | null)
 
                         const location = (req.sender.sido && req.sender.sigungu)
                             ? `${req.sender.sido} ${req.sender.sigungu}`
-                            : (req.sender.location || "알 수 없음");
+                            : "알 수 없음";
 
                         return {
                             id: req.id,
@@ -137,7 +135,7 @@ export function useMatches(userId: string | undefined, profileId: string | null)
 
                         const location = (req.receiver.sido && req.receiver.sigungu)
                             ? `${req.receiver.sido} ${req.receiver.sigungu}`
-                            : (req.receiver.location || "알 수 없음");
+                            : "알 수 없음";
 
                         return {
                             profileId: req.receiver.id.toString(),

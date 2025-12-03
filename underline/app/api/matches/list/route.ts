@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
         if (partnerIds.length > 0) {
             const { data: partnersData, error: partnersError } = await supabaseAdmin
                 .from('member')
-                .select('id, nickname, age, birth_date, location, sido, sigungu, photo_url, photos, auth_id')
+                .select('id, nickname, age, birth_date, sido, sigungu, photo_url, photos, auth_id')
                 .in('id', partnerIds);
 
             if (partnersError) {
