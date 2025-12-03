@@ -98,9 +98,17 @@ export async function GET(request: NextRequest) {
             }
 
             notifications = notificationsData.map(n => {
-                const sender = n.sender_id ? sendersMap[n.sender_id] : null;
-                if (!sender && n.sender_id) {
-                    console.warn(`Sender details not found for sender_id: ${n.sender_id}`);
+                // Robust lookup: try both raw value and string value
+                const senderId = n.sender_id;
+                let sender = senderId ? sendersMap[senderId] : null;
+
+                if (!sender && senderId) {
+                    sender = sendersMap[String(senderId)];
+                }
+
+                if (!sender && senderId) {
+                    console.warn(`Sender details not found for sender_id: ${senderId} (Type: ${typeof senderId})`);
+                    console.log(`Available keys in sendersMap: ${Object.keys(sendersMap).join(', ')}`);
                 }
                 return {
                     ...n,
