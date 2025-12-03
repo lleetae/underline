@@ -122,6 +122,14 @@ export async function GET(request: Request) {
             .select('*')
             .eq('user_id', targetUserId);
 
+        // 6.1 Test Main API Query (Exact Replica)
+        const { data: mainApiReplica, error: mainApiReplicaError } = await supabaseAdmin
+            .from('notifications')
+            .select('*')
+            .eq('user_id', targetUserId)
+            .order('created_at', { ascending: false })
+            .range(0, 49);
+
         // 7. Fetch Recent Members (to help find the new ID)
         const { data: recentMembers } = await supabaseAdmin
             .from('member')
@@ -179,6 +187,11 @@ export async function GET(request: Request) {
                 count: queryResult?.length,
                 firstItem: queryResult?.[0],
                 error: queryError
+            },
+            mainApiReplica: {
+                count: mainApiReplica?.length,
+                firstItem: mainApiReplica?.[0],
+                error: mainApiReplicaError
             },
             simulation: {
                 processedNotifications,
