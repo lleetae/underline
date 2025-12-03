@@ -67,11 +67,15 @@ export async function GET(request: NextRequest) {
         }
 
         console.log(`Found ${notificationsData?.length || 0} raw notifications`);
+        if (notificationsData?.length > 0) {
+            console.log("First notification sample:", JSON.stringify(notificationsData[0], null, 2));
+        }
 
         // Manually fetch sender details
         let notifications = [];
         if (notificationsData && notificationsData.length > 0) {
             const senderIds = Array.from(new Set(notificationsData.map(n => n.sender_id).filter(id => id !== null)));
+            console.log(`Fetching details for sender IDs: ${senderIds.join(', ')}`);
 
             let sendersMap: Record<string, any> = {};
             if (senderIds.length > 0) {
@@ -80,7 +84,12 @@ export async function GET(request: NextRequest) {
                     .select('id, nickname, photo_urls_blurred')
                     .in('id', senderIds);
 
+                if (sendersError) {
+                    console.error("Error fetching senders:", sendersError);
+                }
+
                 if (!sendersError && senders) {
+                    console.log(`Fetched ${senders.length} senders`);
                     sendersMap = senders.reduce((acc, sender) => {
                         acc[sender.id] = sender;
                         return acc;
@@ -88,10 +97,16 @@ export async function GET(request: NextRequest) {
                 }
             }
 
-            notifications = notificationsData.map(n => ({
-                ...n,
-                sender: n.sender_id ? sendersMap[n.sender_id] : null
-            }));
+            notifications = notificationsData.map(n => {
+                const sender = n.sender_id ? sendersMap[n.sender_id] : null;
+                if (!sender && n.sender_id) {
+                    console.warn(`Sender details not found for sender_id: ${n.sender_id}`);
+                }
+                return {
+                    ...n,
+                    sender
+                };
+            });
         }
 
         // 4. Get unread count
