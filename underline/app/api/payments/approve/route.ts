@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
             if (payerMemberIdStr && parseInt(String(amount)) === 4950) {
                 const { data: payerMember } = await supabaseAdmin
                     .from('member')
-                    .select('has_welcome_coupon')
+                    .select('has_welcome_coupon, auth_id')
                     .eq('id', payerMemberIdStr)
                     .single();
 
@@ -159,12 +159,24 @@ export async function POST(request: NextRequest) {
                     console.log(`Found Match Request Sender ID: ${matchData?.sender_id}`);
                 }
 
+                // Fetch payer member again if needed, or reuse from above if valid
+                // We need auth_id for user_id column (uuid)
+                let payerAuthId = null;
                 if (payerMemberIdStr) {
-                    // Insert into payments table using member IDs
+                    const { data: pm } = await supabaseAdmin
+                        .from('member')
+                        .select('auth_id')
+                        .eq('id', payerMemberIdStr)
+                        .single();
+                    payerAuthId = pm?.auth_id;
+                }
+
+                if (payerAuthId) {
+                    // Insert into payments table using auth UUID
                     const { error: paymentError } = await supabaseAdmin
                         .from('payments')
                         .insert({
-                            user_id: payerMemberIdStr,
+                            user_id: payerAuthId,
                             match_id: matchRequestId,
                             amount: typeof amount === 'string' ? parseInt(amount) : amount,
                             status: 'completed',
