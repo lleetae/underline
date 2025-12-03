@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +17,7 @@ const supabaseAdmin = supabaseServiceKey
     })
     : null;
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         if (!supabaseAdmin) {
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
@@ -59,8 +61,36 @@ export async function GET() {
             .select('*')
             .eq('user_id', targetUserId);
 
+        // 5. Fetch Recent Members (to help find the new ID)
+        const { data: recentMembers } = await supabaseAdmin
+            .from('member')
+            .select('id, auth_id, nickname, created_at')
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+        // 0. Get Current User (Try Header first, then Cookies)
+        let currentUser = null;
+        const authHeader = request.headers.get('Authorization');
+
+        if (authHeader) {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+            currentUser = user;
+        } else {
+            // Try cookies
+            try {
+                const cookieStore = cookies();
+                const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+                const { data: { user } } = await supabase.auth.getUser();
+                currentUser = user;
+            } catch (e) {
+                console.error("Cookie auth failed:", e);
+            }
+        }
+
         return NextResponse.json({
             message: "ID Mismatch Analysis",
+            detectedUser: currentUser ? { id: currentUser.id, email: currentUser.email } : "None (Using Fallback)",
             targetUserId,
             foundInTypeQuery: !!targetRow,
             typeQueryError: typeError,
@@ -70,7 +100,8 @@ export async function GET() {
                 firstItem: queryResult?.[0],
                 error: queryError
             },
-            allByType: allByType || []
+            allByType: allByType || [],
+            recentMembers: recentMembers || []
         });
 
     } catch (error: any) {
