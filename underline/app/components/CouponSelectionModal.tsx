@@ -19,7 +19,7 @@ export function CouponSelectionModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-end sm:items-center justify-center animate-in fade-in duration-200">
             <div className="w-full max-w-md bg-[#FCFCFA] rounded-t-2xl sm:rounded-2xl p-6 shadow-xl animate-in slide-in-from-bottom duration-300">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="font-serif text-xl text-[var(--foreground)]">쿠폰 선택</h2>

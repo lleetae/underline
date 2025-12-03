@@ -374,10 +374,12 @@ export function ProfileDetailViewWithInteraction({
         return;
       }
 
+      console.log("Member data for coupon check:", member);
       setMemberInfo(member);
 
       // Check if user has ANY coupons
       if ((member.free_reveals_count || 0) > 0 || member.has_welcome_coupon) {
+        console.log("Opening coupon modal");
         setShowCouponModal(true);
       } else {
         // No coupons, proceed to full price payment
