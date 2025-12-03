@@ -4,6 +4,7 @@ import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { toast } from "sonner";
 import { DecryptedKakaoId } from "../DecryptedKakaoId";
 import { supabase } from "../../lib/supabase";
+import { CouponSelectionModal } from "../CouponSelectionModal";
 
 interface Match {
   id: string;
@@ -31,6 +32,9 @@ export function MatchList({
 }) {
   const [copyModalOpen, setCopyModalOpen] = useState(false);
   const [targetKakaoId, setTargetKakaoId] = useState<string | null>(null);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [memberInfo, setMemberInfo] = useState<{ id: string; free_reveals_count: number; has_welcome_coupon: boolean } | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   if (!matches || matches.length === 0) {
     return (
@@ -115,13 +119,7 @@ export function MatchList({
 
   const handlePayment = async (match: Match) => {
     try {
-      // @ts-ignore
-      if (typeof window.AUTHNICE === 'undefined') {
-        toast.error("결제 시스템을 불러오지 못했습니다. 새로고침 해주세요.");
-        return;
-      }
-
-      // 1. Get current user's member ID
+      // 1. Get current user's member ID and coupons
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("로그인이 필요합니다.");
@@ -130,7 +128,7 @@ export function MatchList({
 
       const { data: member, error } = await supabase
         .from('member')
-        .select('id')
+        .select('id, free_reveals_count, has_welcome_coupon')
         .eq('auth_id', session.user.id)
         .single();
 
@@ -140,31 +138,101 @@ export function MatchList({
         return;
       }
 
-      // 2. Construct Order ID: matchRequestId_payerMemberId
-      const orderId = `${match.id}_${member.id}`;
-      console.log("MatchList: Requesting payment with orderId:", orderId);
+      setMemberInfo(member);
+      setSelectedMatch(match);
 
-      // @ts-ignore
-      window.AUTHNICE.requestPay({
-        clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID || 'S2_ff3bfd3d0db14308b7375e9f74f8b695',
-        method: 'card',
-        orderId: orderId,
-        amount: 9900,
-        goodsName: '연락처 잠금해제',
-        returnUrl: `${window.location.origin}/api/payments/approve`,
-        fnError: function (result: any) {
-          console.error("NicePayments error:", result);
-          toast.error('결제 중 오류가 발생했습니다: ' + result.errorMsg);
-        }
-      });
+      // Check if user has ANY coupons
+      if ((member.free_reveals_count || 0) > 0 || member.has_welcome_coupon) {
+        setShowCouponModal(true);
+      } else {
+        // No coupons, proceed to full price payment
+        processPayment('none', member, match);
+      }
     } catch (e) {
       console.error("Payment handler error:", e);
       toast.error("결제 시작 중 오류가 발생했습니다.");
     }
   };
 
+  const handleCouponSelect = (type: 'free' | 'discount' | 'none') => {
+    setShowCouponModal(false);
+    if (!memberInfo || !selectedMatch) return;
+
+    if (type === 'free') {
+      useFreeReveal(memberInfo, selectedMatch);
+    } else {
+      processPayment(type, memberInfo, selectedMatch);
+    }
+  };
+
+  const useFreeReveal = async (member: { id: string; free_reveals_count: number }, match: Match) => {
+    if (confirm(`무료 열람권이 ${member.free_reveals_count}개 있습니다. 사용하시겠습니까?`)) {
+      try {
+        const response = await fetch('/api/payments/use-free-reveal', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ matchId: match.id }),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          toast.success(`무료 열람권을 사용했습니다. (남은 개수: ${result.remaining}개)`);
+          window.location.reload();
+        } else {
+          toast.error(result.error || "무료 열람권 사용 실패");
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error("오류가 발생했습니다.");
+      }
+    }
+  };
+
+  const processPayment = (type: 'discount' | 'none', member: { id: string; has_welcome_coupon: boolean }, match: Match) => {
+    // @ts-ignore
+    if (typeof window.AUTHNICE === 'undefined') {
+      toast.error("결제 시스템을 불러오지 못했습니다. 새로고침 해주세요.");
+      return;
+    }
+
+    let amount = 9900;
+    let goodsName = '연락처 잠금해제';
+
+    if (type === 'discount' && member.has_welcome_coupon) {
+      amount = 4950;
+      goodsName = '연락처 잠금해제 (첫 만남 50% 할인)';
+    }
+
+    // Construct Order ID: matchRequestId_payerMemberId
+    const orderId = `${match.id}_${member.id}`;
+    console.log("MatchList: Requesting payment with orderId:", orderId);
+
+    // @ts-ignore
+    window.AUTHNICE.requestPay({
+      clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID || 'S2_ff3bfd3d0db14308b7375e9f74f8b695',
+      method: 'card',
+      orderId: orderId,
+      amount: amount,
+      goodsName: goodsName,
+      returnUrl: `${window.location.origin}/api/payments/approve`,
+      fnError: function (result: any) {
+        console.error("NicePayments error:", result);
+        toast.error('결제 중 오류가 발생했습니다: ' + result.errorMsg);
+      }
+    });
+  };
+
   return (
     <div className="p-6 space-y-6 pb-24">
+      <CouponSelectionModal
+        isOpen={showCouponModal}
+        onClose={() => setShowCouponModal(false)}
+        freeRevealsCount={memberInfo?.free_reveals_count || 0}
+        hasWelcomeCoupon={memberInfo?.has_welcome_coupon || false}
+        onSelectCoupon={handleCouponSelect}
+      />
       {matches.map((match) => (
         <div
           key={match.id}
