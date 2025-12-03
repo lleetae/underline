@@ -165,6 +165,15 @@ export async function GET(request: NextRequest) {
                         .eq('user_id', 'de48de06-6b78-4ff6-af4d-b435ddd4af56');
                     return count;
                 })(),
+                memberCheck: await (async () => {
+                    const { data } = await supabaseAdmin.from('member').select('id').eq('auth_id', user.id).single();
+                    return !!data;
+                })(),
+                totalNotificationsCheck: await (async () => {
+                    const { count } = await supabaseAdmin.from('notifications').select('*', { count: 'exact', head: true });
+                    return count;
+                })(),
+                maskedUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
                 envCheck: !!supabaseServiceKey,
                 queryError: error,
                 params: { limit, offset, unreadOnly }

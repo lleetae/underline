@@ -269,6 +269,9 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                 <p>Raw Count: {debugInfo?.rawCount}</p>
                 <p>Fallback Count: {debugInfo?.fallbackCount}</p>
                 <p>Hardcoded Check: {debugInfo?.hardcodedCheck}</p>
+                <p>Member Check: {debugInfo?.memberCheck ? 'FOUND' : 'NOT FOUND'}</p>
+                <p>Total Notifs in DB: {debugInfo?.totalNotificationsCheck}</p>
+                <p>DB URL: {debugInfo?.maskedUrl}</p>
                 <p>Env Check: {debugInfo?.envCheck ? 'OK' : 'MISSING'}</p>
                 <p>Loading: {loading ? 'true' : 'false'}</p>
                 <p>Count: {notifications.length}</p>
