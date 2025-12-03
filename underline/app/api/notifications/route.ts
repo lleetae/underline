@@ -221,6 +221,15 @@ export async function GET(request: NextRequest) {
                 })(),
                 maskedUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
                 envCheck: !!supabaseServiceKey,
+                keyRole: (() => {
+                    try {
+                        if (!supabaseServiceKey) return 'MISSING';
+                        const payload = JSON.parse(Buffer.from(supabaseServiceKey.split('.')[1], 'base64').toString());
+                        return payload.role;
+                    } catch (e) {
+                        return 'ERROR_PARSING';
+                    }
+                })(),
                 queryError: error,
                 params: { limit, offset, unreadOnly }
             }
