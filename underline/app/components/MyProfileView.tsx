@@ -4,6 +4,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { MyBookDetailView } from "./MyBookDetailView";
 import { AddBookView } from "./AddBookView";
 import { ProfileEditView } from "./ProfileEditView";
+import { CouponBoxView } from "./CouponBoxView";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 
@@ -100,11 +101,14 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
     bio: "",
     kakaoId: "",
     profilePhotos: [] as { id: string; url: string }[],
+    freeRevealsCount: 0,
+    hasWelcomeCoupon: false,
   });
 
   // const [selectedBook, setSelectedBook] = useState<Book | null>(null); // Removed local state
   const [showAddBookView, setShowAddBookView] = useState(false);
   const [showProfileEditView, setShowProfileEditView] = useState(false);
+  const [showCouponBoxView, setShowCouponBoxView] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
@@ -156,7 +160,9 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
             url: url,
             originalPath: originalPhotos[index],
             blurredUrl: url
-          }))
+          })),
+          freeRevealsCount: member.free_reveals_count || 0,
+          hasWelcomeCoupon: member.has_welcome_coupon || false,
         });
 
         // 2. Parallel Operations: Fetch Books & Decrypt Kakao ID
@@ -453,7 +459,11 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
 
             if (error) throw error;
 
-            setProfileData(updatedData);
+            setProfileData({
+              ...updatedData,
+              freeRevealsCount: profileData.freeRevealsCount,
+              hasWelcomeCoupon: profileData.hasWelcomeCoupon
+            });
             setShowProfileEditView(false);
             toast.success("프로필이 저장되었습니다");
           } catch (error) {
@@ -461,6 +471,17 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
             toast.error("프로필 저장에 실패했습니다");
           }
         }}
+      />
+    );
+  }
+
+  // Show coupon box view if clicked
+  if (showCouponBoxView) {
+    return (
+      <CouponBoxView
+        freeRevealsCount={profileData.freeRevealsCount || 0}
+        hasWelcomeCoupon={profileData.hasWelcomeCoupon || false}
+        onBack={() => setShowCouponBoxView(false)}
       />
     );
   }
@@ -585,6 +606,27 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
               프로필 수정하기
             </button>
           </div>
+        </div>
+
+        {/* Coupon Box Summary Button - Reordered */}
+        <div className="px-6 pb-2">
+          <button
+            onClick={() => setShowCouponBoxView(true)}
+            className="w-full bg-white border border-[var(--foreground)]/10 rounded-xl p-5 shadow-sm flex items-center justify-between hover:bg-[var(--foreground)]/5 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <h3 className="font-serif text-lg text-[var(--foreground)]">내 쿠폰함</h3>
+              <span className="text-sm font-sans text-[var(--foreground)]/60">
+                {(profileData.freeRevealsCount || 0) + (profileData.hasWelcomeCoupon ? 1 : 0)}장
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-[var(--primary)] group-hover:translate-x-1 transition-transform">
+              <span className="text-xs font-sans">보러가기</span>
+              <svg width="6" height="10" viewBox="0 0 6 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 9L5 5L1 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </button>
         </div>
 
         {/* Total Pages Read Stats */}

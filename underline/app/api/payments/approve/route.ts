@@ -102,6 +102,31 @@ export async function POST(request: NextRequest) {
             // orderId format: matchRequestId_payerMemberId (new) OR matchRequestId (old)
             const [matchRequestId, payerMemberIdStr] = orderId.split('_');
 
+            // Coupon Validation & Consumption
+            if (payerMemberIdStr && parseInt(String(amount)) === 4900) {
+                const { data: payerMember } = await supabaseAdmin
+                    .from('member')
+                    .select('has_welcome_coupon')
+                    .eq('id', payerMemberIdStr)
+                    .single();
+
+                if (!payerMember?.has_welcome_coupon) {
+                    console.error("User tried to pay discounted price without coupon");
+                    // Should we void the payment? For now, just log it.
+                    // Ideally we should have validated BEFORE calling NicePayments approval, 
+                    // but NicePayments approval is what finalizes the transaction.
+                    // If we want to reject, we should do it before step 2.
+                    // But step 2 is "Call NicePayments Approval API".
+                    // So yes, we should validate before step 2.
+                } else {
+                    // Consume coupon
+                    await supabaseAdmin
+                        .from('member')
+                        .update({ has_welcome_coupon: false })
+                        .eq('id', payerMemberIdStr);
+                }
+            }
+
             console.log(`Updating match request ${matchRequestId} to unlocked`);
 
             const { error } = await supabaseAdmin

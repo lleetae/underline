@@ -1,21 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { TermsContent, PrivacyContent } from "../utils/PolicyComponents";
-import { Bell, BookOpen, User, Mail, Edit, X } from "lucide-react";
+import { Bell, BookOpen, User, Mail, Edit, X, MapPin, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCountdown } from "../hooks/useCountdown";
 import useEmblaCarousel from "embla-carousel-react";
+import { BatchUtils } from "../utils/BatchUtils";
 
 import { supabase } from "../lib/supabase";
-
-interface HomeRecruitingViewProps {
-  isSignedUp: boolean;
-  onShowLoginModal: () => void;
-  isRegistered: boolean;
-  onRegister: () => void;
-  onCancelRegister: () => void;
-  onShowNotifications?: () => void;
-}
 
 interface SuccessStory {
   id: string;
@@ -26,16 +18,27 @@ interface SuccessStory {
   detailAnswer: string;
 }
 
+interface HomeRecruitingViewProps {
+  onShowNotifications: () => void;
+  isSignedUp: boolean;
+  onShowLoginModal: () => void;
+  isRegistered: boolean;
+  onRegister: () => void;
+  onCancelRegister: () => void;
+}
+
 export function HomeRecruitingView({
+  onShowNotifications,
   isSignedUp,
   onShowLoginModal,
   isRegistered,
   onRegister,
   onCancelRegister,
-  onShowNotifications,
 }: HomeRecruitingViewProps) {
   // Countdown timer for next Friday 00:00:00 (Thursday 23:59 deadline)
   const timeLeft = useCountdown(5, 0);
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [emblaRef] = useEmblaCarousel({ align: "start", dragFree: true });
   const [activePolicyModal, setActivePolicyModal] = useState<'terms' | 'privacy' | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -43,6 +46,13 @@ export function HomeRecruitingView({
   const [selectedReview, setSelectedReview] = useState<SuccessStory | null>(null); // For Modal
   const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
+
+  // Check for Welcome Modal flag
+  useEffect(() => {
+    if (sessionStorage.getItem('showWelcomeModal') === 'true') {
+      setShowWelcomeModal(true);
+    }
+  }, []);
 
   // Check if user is admin
   useEffect(() => {
@@ -149,6 +159,8 @@ export function HomeRecruitingView({
 
       {/* 2. Hero Section */}
       <section className="px-6 pt-10 pb-12 text-center">
+
+
         {/* Timer */}
         <div className="mb-8">
           <p className={`text-sm font-sans mb-3 ${timeLeft.days === 0 ? "text-[#FF6B6B] font-bold animate-pulse" : "text-underline-text/60"}`}>
@@ -212,6 +224,15 @@ export function HomeRecruitingView({
               )
             }
           </button>
+
+          {/* Share Button */}
+          <button
+            onClick={() => setShowReferralModal(true)}
+            className="mt-3 w-full py-3 rounded-xl border border-underline-red/30 text-underline-red font-medium flex items-center justify-center gap-2 hover:bg-underline-red/5 transition-colors"
+          >
+            <span className="text-sm">친구 초대하고 무료 교환권 받기</span>
+          </button>
+
           <p className="text-[11px] text-underline-text/40 mt-3">
             {isRegistered
               ? "신청이 접수되었습니다. 다음 주 금요일을 기대해주세요!"
@@ -220,6 +241,107 @@ export function HomeRecruitingView({
           </p>
         </div>
       </section>
+
+      {/* Referral Modal */}
+      {showReferralModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setShowReferralModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <h3 className="font-serif text-xl font-bold mb-6 text-center text-underline-text">
+              친구 초대 혜택
+            </h3>
+
+            <div className="space-y-4 mb-8">
+              <div className="bg-[#F5F5F0] p-4 rounded-xl flex items-center gap-4">
+                <div className="w-10 h-10 bg-underline-red/10 rounded-full flex items-center justify-center text-xl">
+                  🎁
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-bold mb-0.5">나 (초대자)</p>
+                  <p className="text-sm font-medium text-underline-text">무료 연락처 교환권 1장</p>
+                </div>
+              </div>
+
+              <div className="bg-[#F5F5F0] p-4 rounded-xl flex items-center gap-4">
+                <div className="w-10 h-10 bg-underline-red/10 rounded-full flex items-center justify-center text-xl">
+                  🎟️
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-bold mb-0.5">친구 (초대받은 사람)</p>
+                  <p className="text-sm font-medium text-underline-text">연락처 교환 50% 할인 쿠폰</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-underline-red/80 font-medium text-center mb-3">
+              *복사한 링크를 통해 가입해야 쿠폰을 받으실 수 있습니다
+            </p>
+
+            <button
+              onClick={async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                const userId = session?.user?.id;
+                const shareUrl = `${window.location.origin}?ref=${userId || ''}`;
+
+                try {
+                  await navigator.clipboard.writeText(shareUrl);
+                  alert('초대 링크가 복사되었습니다!');
+                  setShowReferralModal(false);
+                } catch (err) {
+                  console.error('Failed to copy:', err);
+                  alert('링크 복사에 실패했습니다.');
+                }
+              }}
+              className="w-full py-3.5 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              <Copy className="w-4 h-4" />
+              초대 링크 복사하기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Welcome Coupon Modal */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-200 text-center">
+            <div className="w-16 h-16 bg-underline-red/10 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+              🎟️
+            </div>
+
+            <h3 className="font-serif text-xl font-bold mb-2 text-underline-text">
+              환영합니다!
+            </h3>
+
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              친구 초대로 가입하여<br />
+              <span className="text-underline-red font-bold">50% 할인 쿠폰</span>을 받으셨어요!
+            </p>
+
+            <div className="bg-[#F5F5F0] p-4 rounded-xl mb-6 text-left">
+              <p className="text-xs text-gray-500 font-bold mb-1">쿠폰 혜택</p>
+              <p className="text-sm font-medium text-underline-text">첫 연락처 교환 시 50% 할인</p>
+              <p className="text-[10px] text-gray-400 mt-1">마이페이지에서 확인하실 수 있습니다.</p>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowWelcomeModal(false);
+                sessionStorage.removeItem('showWelcomeModal');
+              }}
+              className="w-full py-3.5 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20 active:scale-[0.98] transition-transform"
+            >
+              확인했어요
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 3. Social Proof (Horizontal Scroll) */}
       <section className="py-10 bg-white border-y border-black/5">

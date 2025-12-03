@@ -20,14 +20,31 @@ interface UserProfile {
   isPenalized: boolean;
 }
 
-export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications }: {
+export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications, isSpectator = false, onRegister }: {
   onProfileClick?: (profileId: string, source?: "home" | "mailbox", metadata?: { isPenalized?: boolean }) => void;
   isSignedUp?: boolean;
   onShowNotifications?: () => void;
+  isSpectator?: boolean;
+  onRegister?: () => void;
 }) {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showSpectatorPopup, setShowSpectatorPopup] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  // Check for Welcome Modal flag
+  useEffect(() => {
+    if (sessionStorage.getItem('showWelcomeModal') === 'true') {
+      setShowWelcomeModal(true);
+    }
+  }, []);
+
+  // Show spectator popup on mount if isSpectator is true
+  useEffect(() => {
+    setShowSpectatorPopup(isSpectator);
+  }, [isSpectator]);
+
   // const supabase = createClient(); // Removed local client creation
 
   // Countdown timer for dating period end (Next Monday 00:00)
@@ -241,6 +258,26 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
 
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
+      {/* Spectator Popup */}
+      {showSpectatorPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95">
+            <h3 className="font-serif text-xl font-bold mb-2 text-center">이번 주 우리 동네는 쉬어가요</h3>
+            <p className="text-sm text-gray-600 text-center mb-6 leading-relaxed">
+              아쉽게도 인원이 조금 부족했어요.<br />
+              대신 <b>지금 활발하게 매칭 중인 다른 동네</b><br />
+              분위기를 구경해보세요! (신청은 불가능해요)
+            </p>
+            <button
+              onClick={() => setShowSpectatorPopup(false)}
+              className="w-full py-3 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20"
+            >
+              핫한 다른 지역 구경가기
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="sticky top-0 z-20 bg-[#FCFCFA]/95 backdrop-blur-md border-b border-[var(--foreground)]/5">
         <div className="flex items-center justify-between px-6 py-4">
@@ -259,15 +296,23 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
           </button>
         </div>
 
-        {/* Floating Badge - Dating Period Timer */}
+        {/* Floating Badge - Dating Period Timer OR Spectator Banner */}
         <div className="px-6 pb-3">
-          <div className="px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500 bg-[var(--foreground)] shadow-black/20">
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-xs font-sans font-medium tracking-wide text-white">
-              {totalHours < 24 ? "마감 임박! " : ""}
-              소개팅 기간 종료까지 {String(totalHours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
-            </span>
-          </div>
+          {isSpectator ? (
+            <div className="px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500 bg-gray-800 shadow-black/20">
+              <span className="text-xs font-sans font-medium tracking-wide text-white">
+                👀 다른 지역 구경 중 (매칭 신청 불가)
+              </span>
+            </div>
+          ) : (
+            <div className="px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500 bg-[var(--foreground)] shadow-black/20">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              <span className="text-xs font-sans font-medium tracking-wide text-white">
+                {totalHours < 24 ? "마감 임박! " : ""}
+                소개팅 기간 종료까지 {String(totalHours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -326,8 +371,6 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
                         {profile.bio}
                       </p>
                     </div>
-
-
                   </div>
                 </div>
               ))}
@@ -348,6 +391,58 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
           </div>
         )}
       </div>
+
+      {/* Sticky CTA for Spectators */}
+      {isSpectator && <div className="fixed bottom-[80px] left-0 right-0 px-6 z-30">
+        <button
+          onClick={() => {
+            if (onRegister) {
+              onRegister();
+            } else {
+              alert("신청 기능을 불러올 수 없습니다.");
+            }
+          }}
+          className="w-full py-3 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/30 animate-bounce"
+        >
+          다음 주 {profiles[0]?.location || '우리 동네'} 무료 신청 예약
+        </button>
+      </div>
+      }
+      {/* Welcome Coupon Modal */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-200 text-center">
+            <div className="w-16 h-16 bg-underline-red/10 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+              🎟️
+            </div>
+
+            <h3 className="font-serif text-xl font-bold mb-2 text-underline-text">
+              환영합니다!
+            </h3>
+
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              친구 초대로 가입하여<br />
+              <span className="text-underline-red font-bold">50% 할인 쿠폰</span>을 받으셨어요!
+            </p>
+
+            <div className="bg-[#F5F5F0] p-4 rounded-xl mb-6 text-left">
+              <p className="text-xs text-gray-500 font-bold mb-1">쿠폰 혜택</p>
+              <p className="text-sm font-medium text-underline-text">첫 연락처 교환 시 50% 할인</p>
+              <p className="text-[10px] text-gray-400 mt-1">마이페이지에서 확인하실 수 있습니다.</p>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowWelcomeModal(false);
+                sessionStorage.removeItem('showWelcomeModal');
+              }}
+              className="w-full py-3.5 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20 active:scale-[0.98] transition-transform"
+            >
+              확인했어요
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
