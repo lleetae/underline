@@ -188,10 +188,7 @@ export async function GET(request: NextRequest) {
                         user_id_codes: n.user_id?.split('').map((c: string) => c.charCodeAt(0)),
                         id_codes: n.id?.split('').map((c: string) => c.charCodeAt(0))
                     }));
-<<<<<<< HEAD
-=======
 
->>>>>>> main
                 })(),
                 specificRowInspection: await (async () => {
                     const targetId = '0457a739-cf2f-4c69-be6b-a9423c125561';
