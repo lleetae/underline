@@ -45,7 +45,8 @@ export function ProfileDetailViewWithInteraction({
   isWithdrawn = false,
   partnerKakaoId,
   isUnlocked,
-  matchId
+  matchId,
+  isSpectator = false
 }: {
   profileId: string;
   onBack: () => void;
@@ -84,6 +85,7 @@ export function ProfileDetailViewWithInteraction({
   partnerKakaoId?: string | null;
   isUnlocked?: boolean;
   matchId?: string | null;
+  isSpectator?: boolean;
 }) {
   // const [selectedBook, setSelectedBook] = useState<Book | null>(null); // Removed local state
   const [showLetterModal, setShowLetterModal] = useState(false);
@@ -200,7 +202,7 @@ export function ProfileDetailViewWithInteraction({
   const existingRequest = sentMatchRequests.find(req => req.profileId === profileId);
   const isRequestSent = !!existingRequest;
   const isRequestReceived = receivedMatchRequests.some(req => req.profileId === profileId);
-  const canRequest = !disableMatching && !isRequestSent && !isRequestReceived && !isMatched && !isWithdrawn;
+  const canRequest = !disableMatching && !isRequestSent && !isRequestReceived && !isMatched && !isWithdrawn && !isSpectator;
 
   // Helper function to display religion text
   const getReligionText = (religion: string) => {
@@ -369,10 +371,10 @@ export function ProfileDetailViewWithInteraction({
         return;
       }
 
-      // Get member id for the current user
+      // Get member id and rewards for the current user
       const { data: member } = await supabase
         .from('member')
-        .select('id')
+        .select('id, free_reveals_count, has_welcome_coupon')
         .eq('auth_id', user.id)
         .single();
 
@@ -382,6 +384,46 @@ export function ProfileDetailViewWithInteraction({
       }
 
       const matchRequestId = matchId || profileId;
+
+      // 1. Check for Free Reveal
+      if ((member.free_reveals_count || 0) > 0) {
+        if (confirm(`무료 열람권이 ${member.free_reveals_count}개 있습니다. 사용하시겠습니까?`)) {
+          try {
+            const response = await fetch('/api/payments/use-free-reveal', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ matchId: matchRequestId }),
+            });
+
+            const result = await response.json();
+            if (response.ok && result.success) {
+              toast.success(`무료 열람권을 사용했습니다. (남은 개수: ${result.remaining}개)`);
+              // Reload page or update UI to show unlocked
+              window.location.reload();
+              return;
+            } else {
+              toast.error(result.error || "무료 열람권 사용 실패");
+              return;
+            }
+          } catch (e) {
+            console.error(e);
+            toast.error("오류가 발생했습니다.");
+            return;
+          }
+        }
+      }
+
+      // 2. Check for Welcome Coupon
+      let amount = 9900;
+      let goodsName = '연락처 잠금해제';
+
+      if (member.has_welcome_coupon) {
+        amount = 4900;
+        goodsName = '연락처 잠금해제 (첫 만남 50% 할인)';
+      }
+
       // Format: matchRequestId_payerMemberId
       // We use this composite key to identify WHO paid in the callback
       const orderId = `${matchRequestId}_${member.id}`;
@@ -393,8 +435,8 @@ export function ProfileDetailViewWithInteraction({
         clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID || 'S2_ff3bfd3d0db14308b7375e9f74f8b695',
         method: 'card',
         orderId: orderId,
-        amount: 9900,
-        goodsName: '연락처 잠금해제',
+        amount: amount,
+        goodsName: goodsName,
         returnUrl: `${window.location.origin}/api/payments/approve`,
         fnError: function (result: any) {
           console.error("NicePayments error:", result);

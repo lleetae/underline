@@ -23,6 +23,7 @@ export default function App() {
   const [isSignedUp, setIsSignedUp] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isParticipant, setIsParticipant] = useState(false); // User is active in the CURRENT batch (for Dating View)
+  const [isSpectator, setIsSpectator] = useState(false); // User is in a FAILED region (Spectator Mode)
   const [isApplied, setIsApplied] = useState(false); // User has applied for the TARGET batch (for Button Status)
   const [showCancelModal, setShowCancelModal] = useState(false);
 
@@ -245,6 +246,19 @@ export default function App() {
     });
 
     return () => subscription.unsubscribe();
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Capture Referral Code
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const refCode = params.get('ref');
+      if (refCode) {
+        console.log("Referral code captured:", refCode);
+        localStorage.setItem('referrer_id', refCode);
+      }
+    }
   }, []);
 
   // Safety Timeout
@@ -431,13 +445,20 @@ export default function App() {
           .eq('member_id', data.id)
           .gte('created_at', currentStart.toISOString())
           .lte('created_at', currentEnd.toISOString())
-          .eq('status', 'active')
+          .in('status', ['active', 'failed']) // Check for both active and failed
           .maybeSingle();
 
         if (participantData) {
-          setIsParticipant(true);
+          if (participantData.status === 'active') {
+            setIsParticipant(true);
+            setIsSpectator(false);
+          } else if (participantData.status === 'failed') {
+            setIsParticipant(false);
+            setIsSpectator(true);
+          }
         } else {
           setIsParticipant(false);
+          setIsSpectator(false);
         }
 
 
@@ -974,11 +995,13 @@ export default function App() {
             
             DEBUG OVERRIDE: isDatingPhase toggle forces Dating View
           */}
-          {(BatchUtils.getCurrentSystemState() === 'MATCHING' || isDatingPhase) && (isParticipant || isDatingPhase) ? (
+          {(BatchUtils.getCurrentSystemState() === 'MATCHING' || isDatingPhase) && (isParticipant || isDatingPhase || isSpectator) ? (
             <HomeDatingView
               isSignedUp={isSignedUp}
               onProfileClick={handleProfileClick}
               onShowNotifications={handleShowNotifications}
+              isSpectator={isSpectator} // Pass isSpectator
+              onRegister={handleRegister}
             />
           ) : (
             <HomeRecruitingView
@@ -991,12 +1014,6 @@ export default function App() {
             />
           )}
           <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
-
-          <CancelRecruitmentModal
-            isOpen={showCancelModal}
-            onClose={() => setShowCancelModal(false)}
-            onConfirm={confirmCancelRegister}
-          />
 
           <CancelRecruitmentModal
             isOpen={showCancelModal}
@@ -1074,12 +1091,13 @@ export default function App() {
                 sentMatchRequests={sentMatchRequests}
                 receivedMatchRequests={receivedMatchRequests}
                 isMatched={profileSource === "mailbox" && mailboxActiveTab === "matched"}
-                disableMatching={profileSource === "mailbox" || selectedProfilePenalized || selectedProfileWithdrawn}
+                disableMatching={profileSource === "mailbox" || selectedProfilePenalized || selectedProfileWithdrawn || isSpectator} // Disable for spectators
+                isSpectator={isSpectator} // Pass isSpectator explicitly for Toast logic
                 isWithdrawn={selectedProfileWithdrawn}
                 partnerKakaoId={selectedProfileKakaoId} // Pass Kakao ID
                 isUnlocked={selectedProfileIsUnlocked}
                 // @ts-ignore
-                matchId={selectedMatchId} // We need to add this prop to ProfileDetailViewWithInteraction interface if we want to be strict, but I used orderId=profileId in previous step. Wait, I need to fix ProfileDetailViewWithInteraction to use matchId.
+                matchId={selectedMatchId}
               />
             </div>
           )}
