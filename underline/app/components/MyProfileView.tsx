@@ -4,7 +4,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { MyBookDetailView } from "./MyBookDetailView";
 import { AddBookView } from "./AddBookView";
 import { ProfileEditView } from "./ProfileEditView";
-import { CouponBoxView } from "./CouponBoxView";
+
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 
@@ -108,7 +108,6 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
   // const [selectedBook, setSelectedBook] = useState<Book | null>(null); // Removed local state
   const [showAddBookView, setShowAddBookView] = useState(false);
   const [showProfileEditView, setShowProfileEditView] = useState(false);
-  const [showCouponBoxView, setShowCouponBoxView] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
@@ -475,16 +474,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
     );
   }
 
-  // Show coupon box view if clicked
-  if (showCouponBoxView) {
-    return (
-      <CouponBoxView
-        freeRevealsCount={profileData.freeRevealsCount || 0}
-        hasWelcomeCoupon={profileData.hasWelcomeCoupon || false}
-        onBack={() => setShowCouponBoxView(false)}
-      />
-    );
-  }
+
 
   const handleLogout = () => {
     setShowLogoutModal(false);
@@ -611,7 +601,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
         {/* Coupon Box Summary Button - Reordered */}
         <div className="px-6 pb-2">
           <button
-            onClick={() => setShowCouponBoxView(true)}
+            onClick={() => onNavigate("couponBox")}
             className="w-full bg-white border border-[var(--foreground)]/10 rounded-xl p-5 shadow-sm flex items-center justify-between hover:bg-[var(--foreground)]/5 transition-colors group"
           >
             <div className="flex items-center gap-3">
