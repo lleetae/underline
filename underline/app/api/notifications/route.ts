@@ -188,26 +188,37 @@ export async function GET(request: NextRequest) {
                         user_id_codes: n.user_id?.split('').map((c: string) => c.charCodeAt(0)),
                         id_codes: n.id?.split('').map((c: string) => c.charCodeAt(0))
                     }));
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
                 })(),
                 specificRowInspection: await (async () => {
                     const targetId = '0457a739-cf2f-4c69-be6b-a9423c125561';
 
-                    // Try standard EQ
-                    const { data: dataEq, error: errorEq } = await supabaseAdmin
+                    // Test 1: Select ONLY id with EQ filter
+                    const { data: dataIdOnly, error: errorIdOnly } = await supabaseAdmin
+                        .from('notifications')
+                        .select('id')
+                        .eq('id', targetId);
+
+                    // Test 2: Select ALL with LIMIT 1 (No filter)
+                    const { data: dataAllNoFilter, error: errorAllNoFilter } = await supabaseAdmin
+                        .from('notifications')
+                        .select('*')
+                        .limit(1);
+
+                    // Test 3: Select ALL with EQ filter (The original failing query)
+                    const { data: dataAllEq, error: errorAllEq } = await supabaseAdmin
                         .from('notifications')
                         .select('*')
                         .eq('id', targetId);
 
-                    // Try LIKE (in case of whitespace)
-                    const { data: dataLike, error: errorLike } = await supabaseAdmin
-                        .from('notifications')
-                        .select('*')
-                        .like('id', `%${targetId}%`);
-
                     return {
                         targetId,
-                        eqResult: { count: dataEq?.length, first: dataEq?.[0], error: errorEq },
-                        likeResult: { count: dataLike?.length, first: dataLike?.[0], error: errorLike }
+                        test1_IdOnly_Eq: { count: dataIdOnly?.length, first: dataIdOnly?.[0], error: errorIdOnly },
+                        test2_All_NoFilter: { count: dataAllNoFilter?.length, first: dataAllNoFilter?.[0], error: errorAllNoFilter },
+                        test3_All_Eq: { count: dataAllEq?.length, first: dataAllEq?.[0], error: errorAllEq }
                     };
                 })(),
                 maskedUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
