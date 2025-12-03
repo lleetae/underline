@@ -224,6 +224,18 @@ export async function GET(request: NextRequest) {
                                 .select('*')
                                 .eq('created_at', targetTime);
                             return { count: data?.length, first: data?.[0], error };
+                        })(),
+                        test5_RPC_Id: await (async () => {
+                            const { data, error } = await supabaseAdmin
+                                .rpc('debug_get_notification', { lookup_id: targetId });
+                            return { count: data?.length, first: data?.[0], error };
+                        })(),
+                        test6_RPC_User: await (async () => {
+                            // Using the hardcoded user ID from the issue
+                            const targetUserId = 'de48de06-6b78-4ff6-af4d-b435ddd4af56';
+                            const { data, error } = await supabaseAdmin
+                                .rpc('debug_get_notifications_by_user', { lookup_user_id: targetUserId });
+                            return { count: data?.length, first: data?.[0], error };
                         })()
                     };
                 })(),
