@@ -104,7 +104,8 @@ export async function POST(request: NextRequest) {
                     photo_urls_original: [],
                     photo_urls_blurred: [],
                     photos: [],
-                    auth_id: null // Unlink from Auth User
+                    referrer_auth_id: null, // Clear referrer
+                    // auth_id: null // KEEP auth_id to preserve history! (Migration 20251203000008 drops FK)
                 })
                 .eq('id', member.id);
 
