@@ -253,8 +253,8 @@ export async function GET(request: NextRequest) {
                         })()
                     };
                 })(),
-                maskedUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
-                envCheck: !!supabaseServiceKey,
+                maskedUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? `${process.env.NEXT_PUBLIC_SUPABASE_URL.substring(0, 20)}...` : 'MISSING',
+                envCheck: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
                 keyRole: (() => {
                     try {
                         if (!supabaseServiceKey) return 'MISSING';
