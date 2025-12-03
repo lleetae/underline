@@ -7,7 +7,6 @@ import { supabase } from "../lib/supabase";
 interface Notification {
     id: string;
     type: 'match_request' | 'match_accepted' | 'contact_revealed';
-    match_id: string;
     sender_id: string;
     is_read: boolean;
     created_at: string;
@@ -26,11 +25,8 @@ interface NotificationsViewProps {
 
 export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsViewProps) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [userId, setUserId] = useState<string>('');
-    const [debugInfo, setDebugInfo] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
-
 
     useEffect(() => {
         fetchNotifications();
@@ -41,7 +37,6 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
             setLoading(true);
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
-            setUserId(session?.user?.id || 'No Session');
 
             const response = await fetch(`/api/notifications?t=${new Date().getTime()}`, {
                 cache: 'no-store',
@@ -52,10 +47,8 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
 
             if (response.ok) {
                 const data = await response.json();
-                console.log("NotificationsView fetched:", data);
                 setNotifications(data.notifications || []);
                 setUnreadCount(data.unreadCount || 0);
-                setDebugInfo(data.debugInfo);
             }
         } catch (error: any) {
             console.error("Error fetching notifications:", error);
@@ -119,8 +112,8 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
         if (!notification.is_read) {
             await markAsRead(notification.id);
         }
-        if (onNavigateToMatch) {
-            onNavigateToMatch(notification.match_id, notification.type);
+        if (onNavigateToMatch && notification.metadata?.match_id) {
+            onNavigateToMatch(notification.metadata.match_id, notification.type);
         }
     };
 
@@ -260,33 +253,6 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                         ))}
                     </div>
                 )}
-            </div>
-
-            {/* Temporary Debug Info */}
-            <div className="p-4 bg-black text-white text-xs overflow-auto max-h-40">
-                <p>Debug Info:</p>
-                <p>My User ID: {userId}</p>
-                <p>Server User ID: {debugInfo?.queriedUserId} (Len: {debugInfo?.userIdLength})</p>
-                <p>Raw Count: {debugInfo?.rawCount}</p>
-                <p>Fallback Count: {debugInfo?.fallbackCount}</p>
-                <p>Hardcoded Check: {debugInfo?.hardcodedCheck}</p>
-                <p>Member Check: {debugInfo?.memberCheck ? 'FOUND' : 'NOT FOUND'}</p>
-                <p>Total Notifs in DB: {debugInfo?.totalNotificationsCheck}</p>
-                <p>DB URL: {debugInfo?.maskedUrl}</p>
-                <p>Env Check: {debugInfo?.envCheck ? 'OK' : 'MISSING'}</p>
-                <p>Key Role: {debugInfo?.keyRole}</p>
-                <div className="mt-2 border-t border-gray-700 pt-2">
-                    <p className="font-bold">Specific Row Inspection:</p>
-                    <pre className="text-[10px]">{JSON.stringify(debugInfo?.specificRowInspection, null, 2)}</pre>
-                </div>
-                <div className="mt-2 border-t border-gray-700 pt-2">
-                    <p className="font-bold">Latest DB Dump:</p>
-                    <pre className="text-[10px]">{JSON.stringify(debugInfo?.latestNotificationsDump, null, 2)}</pre>
-                </div>
-                <p>Loading: {loading ? 'true' : 'false'}</p>
-                <p>Count: {notifications.length}</p>
-                <pre>{JSON.stringify(notifications, null, 2)}</pre>
-                <pre>Params: {JSON.stringify(debugInfo?.params)}</pre>
             </div>
         </div>
     );
