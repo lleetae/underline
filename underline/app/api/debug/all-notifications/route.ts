@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
@@ -15,57 +15,65 @@ const supabaseAdmin = supabaseServiceKey
     })
     : null;
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
         if (!supabaseAdmin) {
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        // Fetch last 10 contact_revealed notifications
-        const { data: allNotifications, error } = await supabaseAdmin
+        // Hardcoded target for debugging based on user logs
+        const targetUserId = '6831764f-40ab-4e67-ad41-43f717f526df';
+        const targetNotifId = '1dc1d2c8-6cda-4ac8-9166-5dc59665358f';
+
+        // 1. Check Table Schema (Skipping RPC as it might be complex, just fetching one row)
+        const { data: sampleRow, error: schemaError } = await supabaseAdmin
             .from('notifications')
             .select('*')
-            .eq('type', 'contact_revealed')
-            .order('created_at', { ascending: false })
-            .limit(10);
+            .limit(1);
 
-        if (error) {
-            return NextResponse.json({ error }, { status: 500 });
-        }
+        // 2. Fetch specific notification by ID
+        const { data: specificNotif, error: specificError } = await supabaseAdmin
+            .from('notifications')
+            .select('*')
+            .eq('id', targetNotifId)
+            .single();
 
-        // Also fetch the current user to compare
-        const authHeader = request.headers.get('Authorization');
-        let currentUser = null;
-        let userSpecificNotifications = [];
-        let userSpecificError = null;
+        // 3. Test Query with Hardcoded ID
+        const { data: queryResult, error: queryError } = await supabaseAdmin
+            .from('notifications')
+            .select('*')
+            .eq('user_id', targetUserId);
 
-        if (authHeader) {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-            currentUser = user;
+        // 4. Strict Comparison
+        let comparison = "Not performed";
+        if (specificNotif) {
+            const dbUserId = specificNotif.user_id;
+            const isMatch = dbUserId === targetUserId;
+            comparison = `DB UserID: '${dbUserId}' vs Target: '${targetUserId}'. Match: ${isMatch}. Lengths: ${dbUserId?.length} vs ${targetUserId.length}`;
 
-            if (user) {
-                // Test the EXACT query used in the main API
-                const { data, error } = await supabaseAdmin
-                    .from('notifications')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .eq('type', 'contact_revealed'); // Narrow down to the missing type
-
-                userSpecificNotifications = data || [];
-                userSpecificError = error;
+            // Check for hidden characters
+            if (!isMatch && dbUserId) {
+                const dbCodes = dbUserId.split('').map((c: string) => c.charCodeAt(0));
+                const targetCodes = targetUserId.split('').map((c: string) => c.charCodeAt(0));
+                comparison += `\nCodes: DB=[${dbCodes.join(',')}], Target=[${targetCodes.join(',')}]`;
             }
         }
 
         return NextResponse.json({
-            message: "Debug Results",
-            currentUser: currentUser ? { id: currentUser.id, email: currentUser.email } : "No Auth Token Provided",
-            allContactRevealed: allNotifications,
-            userSpecificQuery: {
-                count: userSpecificNotifications.length,
-                notifications: userSpecificNotifications,
-                error: userSpecificError
-            }
+            message: "Deep Inspection Results",
+            targetUserId,
+            targetNotifId,
+            specificNotification: {
+                found: !!specificNotif,
+                data: specificNotif,
+                error: specificError
+            },
+            queryTest: {
+                count: queryResult?.length,
+                firstItem: queryResult?.[0],
+                error: queryError
+            },
+            comparison
         });
 
     } catch (error: any) {
