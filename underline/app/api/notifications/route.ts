@@ -48,18 +48,27 @@ export async function GET(request: NextRequest) {
         const unreadOnly = searchParams.get('unread_only') === 'true';
 
         // 3. Build query
+        // 3. Build query (Fetch ALL and paginate in memory to bypass potential DB range issues)
         let query = supabaseAdmin
             .from('notifications')
             .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .range(offset, offset + limit - 1);
+            .eq('user_id', user.id);
 
         if (unreadOnly) {
             query = query.eq('is_read', false);
         }
 
-        const { data: notificationsData, error } = await query;
+        const { data: allData, error } = await query;
+
+        let notificationsData = allData || [];
+
+        // In-memory Sort
+        notificationsData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        // In-memory Pagination
+        const start = offset;
+        const end = offset + limit;
+        notificationsData = notificationsData.slice(start, end);
 
         if (error) {
             console.error('Error fetching notifications:', error);
