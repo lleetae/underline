@@ -179,7 +179,7 @@ export function ProfileDetailViewWithInteraction({
               }
               return age;
             })() : 0),
-            location: memberData.location || "알 수 없음",
+            location: (memberData.sido && memberData.sigungu) ? `${memberData.sido} ${memberData.sigungu}` : (memberData.location || "알 수 없음"),
             religion: memberData.religion || "none",
             height: memberData.height || "",
             smoking: memberData.smoking || "non-smoker",

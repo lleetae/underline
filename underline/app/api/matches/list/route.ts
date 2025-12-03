@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
         if (partnerIds.length > 0) {
             const { data: partnersData, error: partnersError } = await supabaseAdmin
                 .from('member')
-                .select('id, nickname, age, birth_date, location, photo_url, photos, auth_id')
+                .select('id, nickname, age, birth_date, location, sido, sigungu, photo_url, photos, auth_id')
                 .in('id', partnerIds);
 
             if (partnersError) {
@@ -146,12 +146,15 @@ export async function GET(request: NextRequest) {
                 : 0);
 
             // Helper for location
-            const getLocationText = (location: string) => {
+            const getLocationText = (p: any) => {
+                if (p.sido && p.sigungu) {
+                    return `${p.sido} ${p.sigungu}`;
+                }
                 const locationMap: { [key: string]: string } = {
                     seoul: "서울", busan: "부산", incheon: "인천", daegu: "대구",
                     daejeon: "대전", gwangju: "광주", other: "기타"
                 };
-                return locationMap[location] || location;
+                return locationMap[p.location] || p.location;
             };
 
             return {
@@ -160,7 +163,7 @@ export async function GET(request: NextRequest) {
                 userImage: photos[0] || "",
                 nickname: isWithdrawn ? "알수없음 (탈퇴)" : partner.nickname,
                 age: age,
-                location: getLocationText(partner.location),
+                location: getLocationText(partner),
                 bookTitle: match.letter ? (match.letter.length > 20 ? match.letter.substring(0, 20) + "..." : match.letter) : "매칭된 책",
                 isUnlocked: match.is_unlocked || false,
                 contactId: "kakao_id_placeholder",
