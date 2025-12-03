@@ -274,6 +274,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                 <p>Total Notifs in DB: {debugInfo?.totalNotificationsCheck}</p>
                 <p>DB URL: {debugInfo?.maskedUrl}</p>
                 <p>Env Check: {debugInfo?.envCheck ? 'OK' : 'MISSING'}</p>
+                <p>Key Role: {debugInfo?.keyRole}</p>
                 <div className="mt-2 border-t border-gray-700 pt-2">
                     <p className="font-bold">Specific Row Inspection:</p>
                     <pre className="text-[10px]">{JSON.stringify(debugInfo?.specificRowInspection, null, 2)}</pre>
