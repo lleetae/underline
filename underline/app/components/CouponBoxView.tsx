@@ -1,7 +1,7 @@
 import React from "react";
 import { ArrowLeft, Copy, Ticket } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { toast } from "sonner";
+
 import { handleCopy } from "../utils/clipboard";
 
 
