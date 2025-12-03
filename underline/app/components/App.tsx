@@ -11,6 +11,7 @@ import { NotificationsView } from "./NotificationsView";
 import { BottomNav } from "./mailbox/BottomNav";
 import { LoginModal } from "./LoginModal";
 import { CouponBoxView } from "./CouponBoxView";
+import { RegionStatsView } from "./RegionStatsView";
 import { Toaster, toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { Session } from "@supabase/supabase-js";
@@ -29,7 +30,7 @@ export default function App() {
   const [showCancelModal, setShowCancelModal] = useState(false);
 
 
-  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications" | "couponBox">("home");
+  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications" | "couponBox" | "regionStats">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [selectedProfilePenalized, setSelectedProfilePenalized] = useState(false);
@@ -113,7 +114,7 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const viewParam = params.get("view") as typeof currentView;
 
-      if (viewParam && ["signup", "home", "mailbox", "profile", "profileDetail", "notifications", "couponBox"].includes(viewParam)) {
+      if (viewParam && ["signup", "home", "mailbox", "profile", "profileDetail", "notifications", "couponBox", "regionStats"].includes(viewParam)) {
         setCurrentView(viewParam);
 
         // Restore other params
@@ -1012,6 +1013,7 @@ export default function App() {
               onRegister={handleRegister}
               onCancelRegister={handleCancelRegister}
               onShowNotifications={handleShowNotifications}
+              onNavigate={navigateTo}
             />
           )}
           <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
@@ -1109,6 +1111,15 @@ export default function App() {
             </div>
           )}
         </>
+      )}
+
+      {currentView === "regionStats" && (
+        <RegionStatsView
+          onBack={() => navigateTo("home")}
+          isSignedUp={isSignedUp}
+          onShowLoginModal={() => setShowLoginModal(true)}
+          userId={session?.user?.id}
+        />
       )}
 
       <Toaster position="top-center" />

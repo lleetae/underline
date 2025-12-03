@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Plus, X, Shield, Save, Check } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
+import { koreaDistrict } from "../data/koreaDistrict";
 
 interface Photo {
   id: string;
@@ -39,6 +40,29 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
   const [isNicknameChecked, setIsNicknameChecked] = useState(true);
   const [isCheckingNickname, setIsCheckingNickname] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize city and district from location string "City District"
+  const initialLocation = profileData.location || "";
+  const [initialCity, ...initialDistrictParts] = initialLocation.split(" ");
+  const initialDistrict = initialDistrictParts.join(" ");
+
+  const [city, setCity] = useState(initialCity || "");
+  const [district, setDistrict] = useState(initialDistrict || "");
+
+  // Update formData.location whenever city or district changes
+  useEffect(() => {
+    if (city && district) {
+      setFormData(prev => ({ ...prev, location: `${city} ${district}` }));
+    } else if (city && !district) {
+      // If district is not selected yet (and not auto-selected), we might want to clear location or keep partial?
+      // But the validation checks for location presence.
+      // Let's keep it as is, validation will fail if empty.
+      // Actually, let's update it to just city if district is empty (though invalid for our logic)
+      // or just wait until both are present.
+      // Better to update it so isDirty detection works.
+      setFormData(prev => ({ ...prev, location: `${city}` }));
+    }
+  }, [city, district]);
 
   // Fetch signed URLs for original photos on mount
   useEffect(() => {
@@ -562,27 +586,61 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
                 <label className="block text-xs text-[var(--foreground)]/70 font-sans mb-2">
                   지역 *
                 </label>
-                <select
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors bg-white appearance-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231A3C34' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 12px center",
-                  }}
-                >
-                  <option value="seoul">서울</option>
-                  <option value="busan">부산</option>
-                  <option value="incheon">인천</option>
-                  <option value="daegu">대구</option>
-                  <option value="daejeon">대전</option>
-                  <option value="gwangju">광주</option>
-                  <option value="ulsan">울산</option>
-                  <option value="sejong">세종</option>
-                  <option value="gyeonggi">경기</option>
-                  <option value="other">기타</option>
-                </select>
+                <div className="flex gap-2">
+                  {/* City Selector */}
+                  <div className="flex-1">
+                    <select
+                      value={city}
+                      onChange={(e) => {
+                        const newCity = e.target.value;
+                        setCity(newCity);
+
+                        // Auto-select if only one district exists (e.g. Sejong)
+                        const districts = koreaDistrict[newCity] || [];
+                        if (districts.length === 1) {
+                          setDistrict(districts[0]);
+                        } else {
+                          setDistrict("");
+                        }
+                      }}
+                      className="w-full px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors bg-white appearance-none"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231A3C34' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "right 12px center",
+                      }}
+                    >
+                      <option value="">시/도 선택</option>
+                      {Object.keys(koreaDistrict).map((cityKey) => (
+                        <option key={cityKey} value={cityKey}>
+                          {cityKey}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* District Selector */}
+                  <div className="flex-1">
+                    <select
+                      value={district}
+                      onChange={(e) => setDistrict(e.target.value)}
+                      disabled={!city}
+                      className="w-full px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors bg-white appearance-none disabled:bg-gray-100 disabled:text-gray-400"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231A3C34' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "right 12px center",
+                      }}
+                    >
+                      <option value="">시/군/구 선택</option>
+                      {city && koreaDistrict[city]?.map((districtName) => (
+                        <option key={districtName} value={districtName}>
+                          {districtName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
 
               {/* Religion */}
@@ -730,8 +788,8 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
         <div className="w-full max-w-md">
           <button
             onClick={handleSave}
-            disabled={isSaving || !isDirty}
-            className={`w-full font-sans font-medium py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${isDirty
+            disabled={isSaving || !isDirty || !city || !district}
+            className={`w-full font-sans font-medium py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${isDirty && city && district
               ? "bg-[var(--foreground)] text-white shadow-[var(--foreground)]/20 hover:bg-[var(--foreground)]/90"
               : "bg-[var(--foreground)]/20 text-[var(--foreground)]/40 shadow-none cursor-not-allowed"
               }`}
