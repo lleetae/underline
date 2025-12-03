@@ -147,53 +147,53 @@ export function HomeRecruitingView({
   }, []);
 
   // Fetch Region Stats
-  useEffect(() => {
-    const fetchRegionStats = async () => {
-      try {
-        // Get current batch range
-        const { start, end } = BatchUtils.getBatchApplicationRange(BatchUtils.getTargetBatchStartDate());
+  const fetchRegionStats = React.useCallback(async () => {
+    try {
+      // Get current batch range
+      const { start, end } = BatchUtils.getBatchApplicationRange(BatchUtils.getTargetBatchStartDate());
 
-        const { data, error } = await supabase
-          .from('dating_applications')
-          .select(`
+      const { data, error } = await supabase
+        .from('dating_applications')
+        .select(`
             member_id,
             member!inner (
               sido,
               gender
             )
           `)
-          .gte('created_at', start.toISOString())
-          .lte('created_at', end.toISOString())
-          .neq('status', 'cancelled');
+        .gte('created_at', start.toISOString())
+        .lte('created_at', end.toISOString())
+        .neq('status', 'cancelled');
 
-        if (error) throw error;
+      if (error) throw error;
 
-        if (data) {
-          const stats: Record<string, { male: number; female: number; total: number }> = {};
-          data.forEach((app: any) => {
-            const sido = app.member?.sido || '기타';
-            const groupKey = getRegionGroupKey(sido);
-            const gender = app.member?.gender;
+      if (data) {
+        const stats: Record<string, { male: number; female: number; total: number }> = {};
+        data.forEach((app: any) => {
+          const sido = app.member?.sido || '기타';
+          const groupKey = getRegionGroupKey(sido);
+          const gender = app.member?.gender;
 
-            if (!stats[groupKey]) {
-              stats[groupKey] = { male: 0, female: 0, total: 0 };
-            }
+          if (!stats[groupKey]) {
+            stats[groupKey] = { male: 0, female: 0, total: 0 };
+          }
 
-            if (gender === 'male') stats[groupKey].male++;
-            else if (gender === 'female') stats[groupKey].female++;
+          if (gender === 'male') stats[groupKey].male++;
+          else if (gender === 'female') stats[groupKey].female++;
 
-            stats[groupKey].total++;
-          });
-          setRegionStats(stats);
-        }
-      } catch (error) {
-        console.error("Error fetching region stats:", error);
+          stats[groupKey].total++;
+        });
+        setRegionStats(stats);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching region stats:", error);
+    }
+  }, []);
 
+  useEffect(() => {
     fetchRegionStats();
     // Optional: Realtime subscription for stats could go here
-  }, []);
+  }, [fetchRegionStats]);
 
   const getRegionName = (key: string) => {
     return getRegionDisplayName(key as any);
@@ -408,7 +408,12 @@ export function HomeRecruitingView({
       {/* 4. Region Status */}
       <section className="px-6 pt-3 pb-5 bg-[#F5F5F0] border-y border-black/5">
         <button
-          onClick={() => setIsRegionStatsOpen(!isRegionStatsOpen)}
+          onClick={() => {
+            if (!isRegionStatsOpen) {
+              fetchRegionStats();
+            }
+            setIsRegionStatsOpen(!isRegionStatsOpen);
+          }}
           className="w-full flex items-center justify-between group"
         >
           <div className="text-left">
@@ -424,7 +429,7 @@ export function HomeRecruitingView({
         {isRegionStatsOpen && (
           <div className="mt-6 animate-in slide-in-from-top-2 duration-200">
             <p className="text-sm text-underline-text/60 mb-6">
-              각 지역별로 <span className="font-bold text-underline-text">남녀 각 5명 이상</span>이 모여야<br />
+              각 지역별로 <span className="font-bold text-underline-text">남녀 각 1명 이상</span>이 모여야<br />
               해당 지역의 매칭이 시작됩니다.
             </p>
             <div className="grid grid-cols-2 gap-3 mb-4">
@@ -433,7 +438,7 @@ export function HomeRecruitingView({
                 .sort((a, b) => b[1].total - a[1].total)
                 .slice(0, 6)
                 .map(([region, data]) => {
-                  const isOpen = data.male >= 5 && data.female >= 5;
+                  const isOpen = data.male >= 1 && data.female >= 1;
 
                   return (
                     <div key={region} className={`p-4 rounded-xl border ${isOpen ? 'bg-white border-underline-red/20 shadow-sm' : 'bg-gray-50 border-gray-200'}`}>

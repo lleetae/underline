@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabase";
 import { useCountdown } from "../hooks/useCountdown";
 import { BatchUtils } from "../utils/BatchUtils";
 import { subDays } from "date-fns";
-import { getSidosInSameGroup } from "../utils/RegionUtils";
+import { getSidosInSameGroup, getRegionGroupKey } from "../utils/RegionUtils";
 
 interface UserProfile {
   id: number;
@@ -23,7 +23,7 @@ interface UserProfile {
   isPenalized: boolean;
 }
 
-export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications, isSpectator = false, onRegister }: {
+export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications, isSpectator: initialIsSpectator = false, onRegister }: {
   onProfileClick?: (profileId: string, source?: "home" | "mailbox", metadata?: { isPenalized?: boolean }) => void;
   isSignedUp?: boolean;
   onShowNotifications?: () => void;
@@ -35,6 +35,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
   const [unreadCount, setUnreadCount] = useState(0);
   const [showSpectatorPopup, setShowSpectatorPopup] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [isSpectator, setIsSpectator] = useState(initialIsSpectator);
 
   // Check for Welcome Modal flag
   useEffect(() => {
@@ -75,11 +76,11 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
 
   const fetchUnreadCount = async () => {
     try {
-      // Refresh session to prevent stale session issues
-      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+      // Use getSession instead of refreshSession to avoid error if session is missing
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
       if (sessionError || !session) {
-        console.error("Session refresh failed:", sessionError);
+        // console.error("Session check failed:", sessionError); // Suppress log to avoid noise if just logged out
         return;
       }
 
@@ -104,9 +105,15 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
   useEffect(() => {
     const fetchCandidates = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        if (!isSignedUp) {
+          setIsLoading(false);
+          return;
+        }
 
-        if (!user) {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          console.error("Debug: Failed to get user", userError);
           setIsLoading(false);
           return;
         }
@@ -114,17 +121,23 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
         // Fetch current user's gender using auth_id
         const { data: currentUserData } = await supabase
           .from('member')
-          .select('id, gender, location, sido, sigungu')
+          .select('id, gender, sido, sigungu')
           .eq('auth_id', user.id)
           .single();
 
         const myGender = currentUserData?.gender;
         const myMemberId = currentUserData?.id;
+        const mySido = currentUserData?.sido;
+        const mySigungu = currentUserData?.sigungu;
+
+        console.log("Debug: Current User", { myMemberId, myGender, mySido, mySigungu });
 
         // 1. Determine Current Batch Range
         // We only want candidates who applied for THIS batch.
         const currentBatchDate = BatchUtils.getCurrentBatchStartDate();
         const { start, end } = BatchUtils.getBatchApplicationRange(currentBatchDate);
+
+        console.log("Debug: Batch Range", { currentBatchDate, start, end });
 
         // 2. Fetch candidates (excluding myself) and filter by dating_applications existence in range
         let query = supabase
@@ -134,7 +147,6 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
             nickname,
             age,
             birth_date,
-            location,
             sido,
             sigungu,
             photo_url,
@@ -158,9 +170,6 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
         if (myMemberId) {
           query = query.neq('id', myMemberId);
         }
-
-        const mySido = currentUserData?.sido;
-        const mySigungu = currentUserData?.sigungu;
 
         if (isSpectator) {
           // If Spectator (Failed Region), show users from OTHER regions
@@ -191,6 +200,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
           // If Participant (Active Region), show users from MY region GROUP
           if (mySido) {
             const sidosInGroup = getSidosInSameGroup(mySido);
+            console.log("Debug: Sidos in Group", sidosInGroup);
             if (sidosInGroup.length > 0) {
               query = query.in('sido', sidosInGroup);
             } else {
@@ -208,6 +218,48 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
         const { data, error } = await query.limit(50); // Fetch more to handle sorting
 
         if (error) throw error;
+
+        console.log("Debug: Fetched Candidates Count", data?.length);
+        if (data && data.length === 0) {
+          console.log("Debug: No candidates found. Check DB for matching records.");
+        }
+        // Check if my region is "Open" (>= 1 males AND >= 1 females)
+        // For MVP, we use a simple check.
+        // We need to count users in my group.
+        if (mySido) {
+          const groupKey = getRegionGroupKey(mySido);
+          const { data: statsData } = await supabase
+            .from('dating_applications')
+            .select(`
+              member!inner (
+                sido,
+                gender
+              )
+            `)
+            .gte('created_at', start.toISOString())
+            .lte('created_at', end.toISOString())
+            .neq('status', 'cancelled');
+
+          let maleCount = 0;
+          let femaleCount = 0;
+
+          if (statsData) {
+            statsData.forEach((app: any) => {
+              const appGroupKey = getRegionGroupKey(app.member?.sido || '');
+              if (appGroupKey === groupKey) {
+                if (app.member?.gender === 'male') maleCount++;
+                else if (app.member?.gender === 'female') femaleCount++;
+              }
+            });
+          }
+
+          console.log("Debug: Region Stats", { groupKey, maleCount, femaleCount });
+
+          if (maleCount < 1 || femaleCount < 1) {
+            setIsSpectator(true);
+            console.log("Debug: Region Closed -> Spectator Mode");
+          }
+        }
 
         if (data) {
           // 3. Penalty Logic: Check for previous matches
@@ -295,7 +347,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
     };
 
     fetchCandidates();
-  }, []);
+  }, [isSignedUp, isSpectator]);
 
   // Helper function to display location text
   const getLocationText = (location: string) => {
