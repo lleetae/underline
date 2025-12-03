@@ -9,6 +9,8 @@ import useEmblaCarousel from "embla-carousel-react";
 
 import { supabase } from "../lib/supabase";
 
+import { handleCopy } from "../utils/clipboard";
+
 interface SuccessStory {
   id: string;
   imageUrl: string;
@@ -45,6 +47,7 @@ export function HomeRecruitingView({
   const [reviews, setReviews] = useState<SuccessStory[]>([]);
   const [selectedReview, setSelectedReview] = useState<SuccessStory | null>(null); // For Modal
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
 
   // Check for Welcome Modal flag
@@ -54,19 +57,22 @@ export function HomeRecruitingView({
     }
   }, []);
 
-  // Check if user is admin
+  // Check if user is admin and fetch user ID
   useEffect(() => {
-    const checkAdmin = async () => {
+    const checkUser = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.id === '79a3d062-ea87-4363-92da-016c9b7489da') {
-          setIsAdmin(true);
+        if (session?.user) {
+          setUserId(session.user.id);
+          if (session.user.id === '79a3d062-ea87-4363-92da-016c9b7489da') {
+            setIsAdmin(true);
+          }
         }
       } catch (error) {
-        console.error('Error checking admin:', error);
+        console.error('Error checking user:', error);
       }
     };
-    checkAdmin();
+    checkUser();
   }, []);
 
   // Fetch unread notification count
@@ -290,19 +296,10 @@ export function HomeRecruitingView({
             </p>
 
             <button
-              onClick={async () => {
-                const { data: { session } } = await supabase.auth.getSession();
-                const userId = session?.user?.id;
+              onClick={() => {
                 const shareUrl = `${window.location.origin}?ref=${userId || ''}`;
-
-                try {
-                  await navigator.clipboard.writeText(shareUrl);
-                  alert('초대 링크가 복사되었습니다!');
-                  setShowReferralModal(false);
-                } catch (err) {
-                  console.error('Failed to copy:', err);
-                  alert('링크 복사에 실패했습니다.');
-                }
+                handleCopy(shareUrl, '초대 링크가 복사되었습니다!');
+                setShowReferralModal(false);
               }}
               className="w-full py-3.5 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             >
