@@ -34,6 +34,13 @@ export function CouponBoxView({ onBack }: { onBack: () => void }) {
             }
         };
         fetchData();
+
+        // Safety timeout
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 3000);
+
+        return () => clearTimeout(timer);
     }, []);
 
     const handleCopyLink = async () => {
