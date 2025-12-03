@@ -1,5 +1,5 @@
 -- Add referrer_user_id to member table
-ALTER TABLE member ADD COLUMN IF NOT EXISTS referrer_user_id UUID REFERENCES member(id);
+ALTER TABLE member ADD COLUMN IF NOT EXISTS referrer_auth_id UUID;
 
 -- Create region_match_status table
 CREATE TABLE IF NOT EXISTS region_match_status (
