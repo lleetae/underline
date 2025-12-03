@@ -84,7 +84,6 @@ export async function POST(request: NextRequest) {
                 .update({
                     nickname: '알수없음',
                     bio: '',
-                    location: 'unknown',
                     birth_date: '1900-01-01',
                     kakao_id: `deleted_${member.id}_${randomSuffix}`, // Ensure uniqueness
                     photo_urls_original: [],
