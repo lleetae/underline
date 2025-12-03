@@ -1,28 +1,63 @@
 import React from "react";
 import { ArrowLeft, Copy, Ticket } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { toast } from "sonner";
 
-interface CouponBoxViewProps {
-    freeRevealsCount: number;
-    hasWelcomeCoupon: boolean;
-    onBack: () => void;
-}
+import { handleCopy } from "../utils/clipboard";
 
-export function CouponBoxView({ freeRevealsCount, hasWelcomeCoupon, onBack }: CouponBoxViewProps) {
+
+
+export function CouponBoxView({ onBack }: { onBack: () => void }) {
+    const [freeRevealsCount, setFreeRevealsCount] = React.useState(0);
+    const [hasWelcomeCoupon, setHasWelcomeCoupon] = React.useState(false);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: member } = await supabase
+                        .from('member')
+                        .select('free_reveals_count, has_welcome_coupon')
+                        .eq('auth_id', user.id)
+                        .single();
+
+                    if (member) {
+                        setFreeRevealsCount(member.free_reveals_count || 0);
+                        setHasWelcomeCoupon(member.has_welcome_coupon || false);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching coupon data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+
+        // Safety timeout
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, []);
+
     const handleCopyLink = async () => {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
         const shareUrl = `${window.location.origin}?ref=${userId || ''}`;
 
-        try {
-            await navigator.clipboard.writeText(shareUrl);
-            toast.success('초대 링크가 복사되었습니다!');
-        } catch (err) {
-            console.error('Failed to copy:', err);
-            toast.error('링크 복사에 실패했습니다.');
-        }
+        await handleCopy(shareUrl, '초대 링크가 복사되었습니다!');
     };
+
+    if (loading) {
+        return (
+            <div className="w-full max-w-md min-h-screen bg-[#FCFCFA] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col animate-in slide-in-from-right duration-300">
@@ -67,9 +102,6 @@ export function CouponBoxView({ freeRevealsCount, hasWelcomeCoupon, onBack }: Co
                     {/* Welcome Coupon */}
                     {hasWelcomeCoupon && (
                         <div className="bg-white border border-red-100 rounded-xl p-5 shadow-sm relative overflow-hidden">
-                            <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg">
-                                사용 가능
-                            </div>
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-xl">
@@ -80,9 +112,13 @@ export function CouponBoxView({ freeRevealsCount, hasWelcomeCoupon, onBack }: Co
                                         <p className="text-xs text-[var(--foreground)]/60">첫 만남 응원 쿠폰</p>
                                     </div>
                                 </div>
+                                <div className="text-right">
+                                    <span className="text-2xl font-bold text-red-500">1</span>
+                                    <span className="text-sm text-[var(--foreground)]/60 ml-1">장</span>
+                                </div>
                             </div>
                             <p className="text-xs text-red-400 bg-red-50 p-3 rounded-lg">
-                                첫 연락처 교환 시 4,900원으로 할인됩니다.
+                                첫 연락처 교환 시 4,950원으로 할인됩니다.
                             </p>
                         </div>
                     )}

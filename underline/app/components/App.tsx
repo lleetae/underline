@@ -10,6 +10,7 @@ import { HomeDatingView } from "./HomeDatingView";
 import { NotificationsView } from "./NotificationsView";
 import { BottomNav } from "./mailbox/BottomNav";
 import { LoginModal } from "./LoginModal";
+import { CouponBoxView } from "./CouponBoxView";
 import { Toaster, toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { Session } from "@supabase/supabase-js";
@@ -28,7 +29,7 @@ export default function App() {
   const [showCancelModal, setShowCancelModal] = useState(false);
 
 
-  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications">("home");
+  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications" | "couponBox">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [selectedProfilePenalized, setSelectedProfilePenalized] = useState(false);
@@ -112,7 +113,7 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const viewParam = params.get("view") as typeof currentView;
 
-      if (viewParam && ["signup", "home", "mailbox", "profile", "profileDetail", "notifications"].includes(viewParam)) {
+      if (viewParam && ["signup", "home", "mailbox", "profile", "profileDetail", "notifications", "couponBox"].includes(viewParam)) {
         setCurrentView(viewParam);
 
         // Restore other params
@@ -659,7 +660,7 @@ export default function App() {
     ]);
   };
 
-  const handleTabChange = (tab: "signup" | "home" | "mailbox" | "profile" | "profileDetail") => {
+  const handleTabChange = (tab: "signup" | "home" | "mailbox" | "profile" | "profileDetail" | "couponBox") => {
     if (!isSignedUp && tab !== "home") {
       setShowLoginModal(true);
       return;
@@ -1078,6 +1079,12 @@ export default function App() {
               />
               <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
             </>
+          )}
+
+          {currentView === "couponBox" && (
+            <CouponBoxView
+              onBack={() => navigateTo("profile")}
+            />
           )}
 
           {currentView === "profileDetail" && selectedProfileId && (

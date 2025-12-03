@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
             const [matchRequestId, payerMemberIdStr] = orderId.split('_');
 
             // Coupon Validation & Consumption
-            if (payerMemberIdStr && parseInt(String(amount)) === 4900) {
+            if (payerMemberIdStr && parseInt(String(amount)) === 4950) {
                 const { data: payerMember } = await supabaseAdmin
                     .from('member')
                     .select('has_welcome_coupon')
