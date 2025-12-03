@@ -181,32 +181,33 @@ export async function GET(request: NextRequest) {
                         .select('id, user_id, type, created_at')
                         .order('created_at', { ascending: false })
                         .limit(5);
-                    return data;
+
+                    // Add char code inspection to the dump
+                    return data?.map((n: any) => ({
+                        ...n,
+                        user_id_codes: n.user_id?.split('').map((c: string) => c.charCodeAt(0)),
+                        id_codes: n.id?.split('').map((c: string) => c.charCodeAt(0))
+                    }));
                 })(),
                 specificRowInspection: await (async () => {
                     const targetId = '0457a739-cf2f-4c69-be6b-a9423c125561';
-                    const { data } = await supabaseAdmin
+
+                    // Try standard EQ
+                    const { data: dataEq, error: errorEq } = await supabaseAdmin
                         .from('notifications')
                         .select('*')
-                        .eq('id', targetId)
-                        .single();
+                        .eq('id', targetId);
 
-                    if (!data) return 'Not Found by ID';
-
-                    const dbUserId = data.user_id;
-                    const isMatch = dbUserId === user.id;
+                    // Try LIKE (in case of whitespace)
+                    const { data: dataLike, error: errorLike } = await supabaseAdmin
+                        .from('notifications')
+                        .select('*')
+                        .like('id', `%${targetId}%`);
 
                     return {
-                        found: true,
-                        dbUserId: dbUserId,
-                        dbUserIdLength: dbUserId?.length,
-                        targetUserId: user.id,
-                        targetUserIdLength: user.id.length,
-                        isStrictMatch: isMatch,
-                        charCodeDiff: !isMatch ? {
-                            db: dbUserId?.split('').map((c: string) => c.charCodeAt(0)),
-                            target: user.id.split('').map((c: string) => c.charCodeAt(0))
-                        } : null
+                        targetId,
+                        eqResult: { count: dataEq?.length, first: dataEq?.[0], error: errorEq },
+                        likeResult: { count: dataLike?.length, first: dataLike?.[0], error: errorLike }
                     };
                 })(),
                 maskedUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
