@@ -290,7 +290,7 @@ export function ProfileDetailViewWithInteraction({
       if (senderError || !senderData) throw new Error("Sender profile not found");
 
       // Insert into match_requests table
-      const { data: matchRequest, error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from('match_requests')
         .insert({
           sender_id: senderData.id,

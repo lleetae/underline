@@ -198,7 +198,7 @@ export function useMatches(userId: string | undefined, profileId: string | null)
                 throw new Error('Failed to accept match');
             }
 
-            const { match: updatedMatch } = await response.json();
+            await response.json();
 
             // Notification is handled by database trigger
 
