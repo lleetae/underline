@@ -12,7 +12,7 @@ BEGIN
             event_manipulation, 
             action_statement
         FROM information_schema.triggers
-        WHERE event_object_schema = 'public'
+        WHERE event_object_schema IN ('public', 'storage')
     LOOP
         INSERT INTO public.debug_logs (message, details) 
         VALUES ('Public Trigger Found', jsonb_build_object(
