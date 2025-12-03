@@ -16,7 +16,10 @@ BEGIN
     WHERE id = NEW.receiver_id;
 
     -- Insert notification
-    IF sender_auth_id IS NOT NULL AND receiver_auth_id IS NOT NULL THEN
+    -- Check if both users exist in auth.users to avoid FK violation
+    IF sender_auth_id IS NOT NULL AND receiver_auth_id IS NOT NULL AND
+       EXISTS (SELECT 1 FROM auth.users WHERE id = sender_auth_id) AND
+       EXISTS (SELECT 1 FROM auth.users WHERE id = receiver_auth_id) THEN
         INSERT INTO notifications (user_id, type, sender_id, metadata)
         VALUES (receiver_auth_id, 'match_request', sender_auth_id, jsonb_build_object('match_id', NEW.id));
     END IF;
@@ -44,7 +47,10 @@ BEGIN
         WHERE id = NEW.receiver_id;
 
         -- Notify the sender that their request was accepted
-        IF sender_auth_id IS NOT NULL AND receiver_auth_id IS NOT NULL THEN
+        -- Check if both users exist in auth.users to avoid FK violation
+        IF sender_auth_id IS NOT NULL AND receiver_auth_id IS NOT NULL AND
+           EXISTS (SELECT 1 FROM auth.users WHERE id = sender_auth_id) AND
+           EXISTS (SELECT 1 FROM auth.users WHERE id = receiver_auth_id) THEN
             INSERT INTO notifications (user_id, type, sender_id, metadata)
             VALUES (sender_auth_id, 'match_accepted', receiver_auth_id, jsonb_build_object('match_id', NEW.id));
         END IF;
@@ -93,7 +99,10 @@ BEGIN
             END IF;
 
             -- Insert notification
-            IF target_user_id IS NOT NULL AND notification_sender_id IS NOT NULL THEN
+            -- Check if both users exist in auth.users to avoid FK violation
+            IF target_user_id IS NOT NULL AND notification_sender_id IS NOT NULL AND
+               EXISTS (SELECT 1 FROM auth.users WHERE id = target_user_id) AND
+               EXISTS (SELECT 1 FROM auth.users WHERE id = notification_sender_id) THEN
                 INSERT INTO notifications (user_id, type, sender_id, metadata)
                 VALUES (target_user_id, 'contact_revealed', notification_sender_id, jsonb_build_object('match_id', NEW.match_id));
             END IF;
