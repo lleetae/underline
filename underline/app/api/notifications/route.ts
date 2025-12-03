@@ -29,7 +29,10 @@ export async function GET(request: Request) {
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
+        console.log(`[API] Fetching notifications for user: ${user.id}`);
+        console.log(`[API] Raw notifications found: ${notifications?.length || 0}`);
         if (error) {
+            console.error('[API] Error fetching notifications:', error);
             console.error('Error fetching notifications:', error);
             return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
         }
