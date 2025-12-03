@@ -1,12 +1,16 @@
 -- Nuclear Fix for match_requests
 -- Drops ALL triggers and policies to ensure no lingering bad configurations exist.
 
--- 1. Drop ALL Triggers on match_requests
+-- 1. Drop ALL User Triggers on match_requests
 DO $$
 DECLARE
     r RECORD;
 BEGIN
-    FOR r IN SELECT tgname FROM pg_trigger WHERE tgrelid = 'match_requests'::regclass
+    FOR r IN 
+        SELECT tgname 
+        FROM pg_trigger 
+        WHERE tgrelid = 'match_requests'::regclass 
+        AND tgisinternal = false -- ONLY drop user triggers
     LOOP
         EXECUTE 'DROP TRIGGER IF EXISTS "' || r.tgname || '" ON match_requests';
     END LOOP;
