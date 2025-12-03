@@ -63,6 +63,10 @@ export async function GET() {
             message: "Deep Inspection Results",
             targetUserId,
             targetNotifId,
+            schemaCheck: {
+                sampleRow,
+                error: schemaError
+            },
             specificNotification: {
                 found: !!specificNotif,
                 data: specificNotif,
