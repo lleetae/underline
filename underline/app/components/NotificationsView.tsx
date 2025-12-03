@@ -261,6 +261,14 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                     </div>
                 )}
             </div>
+
+            {/* Temporary Debug Info */}
+            <div className="p-4 bg-black text-white text-xs overflow-auto max-h-40">
+                <p>Debug Info:</p>
+                <p>Loading: {loading ? 'true' : 'false'}</p>
+                <p>Count: {notifications.length}</p>
+                <pre>{JSON.stringify(notifications, null, 2)}</pre>
+            </div>
         </div>
     );
 }
