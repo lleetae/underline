@@ -74,47 +74,53 @@ export async function GET(request: NextRequest) {
         // Manually fetch sender details
         let notifications = [];
         if (notificationsData && notificationsData.length > 0) {
-            const senderIds = Array.from(new Set(notificationsData.map(n => n.sender_id).filter(id => id !== null)));
-            console.log(`Fetching details for sender IDs: ${senderIds.join(', ')}`);
+            try {
+                // Filter out null AND undefined
+                const senderIds = Array.from(new Set(notificationsData.map(n => n.sender_id).filter(id => id != null)));
+                console.log(`Fetching details for sender IDs: ${senderIds.join(', ')}`);
 
-            let sendersMap: Record<string, any> = {};
-            if (senderIds.length > 0) {
-                const { data: senders, error: sendersError } = await supabaseAdmin
-                    .from('member')
-                    .select('id, nickname, photo_urls_blurred')
-                    .in('id', senderIds);
+                let sendersMap: Record<string, any> = {};
+                if (senderIds.length > 0) {
+                    const { data: senders, error: sendersError } = await supabaseAdmin
+                        .from('member')
+                        .select('id, nickname, photo_urls_blurred')
+                        .in('id', senderIds);
 
-                if (sendersError) {
-                    console.error("Error fetching senders:", sendersError);
+                    if (sendersError) {
+                        console.error("Error fetching senders:", sendersError);
+                    }
+
+                    if (!sendersError && senders) {
+                        console.log(`Fetched ${senders.length} senders`);
+                        sendersMap = senders.reduce((acc, sender) => {
+                            acc[sender.id] = sender;
+                            return acc;
+                        }, {} as Record<string, any>);
+                    }
                 }
 
-                if (!sendersError && senders) {
-                    console.log(`Fetched ${senders.length} senders`);
-                    sendersMap = senders.reduce((acc, sender) => {
-                        acc[sender.id] = sender;
-                        return acc;
-                    }, {} as Record<string, any>);
-                }
+                notifications = notificationsData.map(n => {
+                    // Robust lookup: try both raw value and string value
+                    const senderId = n.sender_id;
+                    let sender = senderId ? sendersMap[senderId] : null;
+
+                    if (!sender && senderId) {
+                        sender = sendersMap[String(senderId)];
+                    }
+
+                    if (!sender && senderId) {
+                        console.warn(`Sender details not found for sender_id: ${senderId} (Type: ${typeof senderId})`);
+                    }
+                    return {
+                        ...n,
+                        sender
+                    };
+                });
+            } catch (err) {
+                console.error("Critical error processing sender details:", err);
+                // Fallback: return notifications without sender details rather than failing
+                notifications = notificationsData.map(n => ({ ...n, sender: null }));
             }
-
-            notifications = notificationsData.map(n => {
-                // Robust lookup: try both raw value and string value
-                const senderId = n.sender_id;
-                let sender = senderId ? sendersMap[senderId] : null;
-
-                if (!sender && senderId) {
-                    sender = sendersMap[String(senderId)];
-                }
-
-                if (!sender && senderId) {
-                    console.warn(`Sender details not found for sender_id: ${senderId} (Type: ${typeof senderId})`);
-                    console.log(`Available keys in sendersMap: ${Object.keys(sendersMap).join(', ')}`);
-                }
-                return {
-                    ...n,
-                    sender
-                };
-            });
         }
 
         // 4. Get unread count
