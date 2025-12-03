@@ -130,6 +130,16 @@ export async function GET(request: NextRequest) {
             .eq('user_id', user.id)
             .eq('is_read', false);
 
+        // Fallback Debug Query (No range, no order)
+        let fallbackCount = 0;
+        if ((notificationsData?.length || 0) === 0) {
+            const { count } = await supabaseAdmin
+                .from('notifications')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', user.id);
+            fallbackCount = count || 0;
+        }
+
         return NextResponse.json({
             notifications: notifications || [],
             unreadCount: unreadCount || 0,
@@ -137,6 +147,7 @@ export async function GET(request: NextRequest) {
             debugInfo: {
                 queriedUserId: user.id,
                 rawCount: notificationsData?.length || 0,
+                fallbackCount,
                 queryError: error,
                 params: { limit, offset, unreadOnly }
             }

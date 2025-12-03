@@ -267,6 +267,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                 <p>My User ID: {userId}</p>
                 <p>Server User ID: {debugInfo?.queriedUserId}</p>
                 <p>Raw Count: {debugInfo?.rawCount}</p>
+                <p>Fallback Count: {debugInfo?.fallbackCount}</p>
                 <p>Loading: {loading ? 'true' : 'false'}</p>
                 <p>Count: {notifications.length}</p>
                 <pre>{JSON.stringify(notifications, null, 2)}</pre>
