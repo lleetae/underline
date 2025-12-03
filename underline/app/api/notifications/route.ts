@@ -19,6 +19,7 @@ const supabaseAdmin = supabaseServiceKey
     : null;
 
 export async function GET(request: NextRequest) {
+    // Force Vercel Deploy Trigger
     try {
         if (!supabaseAdmin) {
             console.error('Supabase Admin client not initialized');
