@@ -30,6 +30,9 @@ export type Database = {
                     photos: string[] | null
                     religion: string
                     smoking: string
+                    referrer_user_id: string | null
+                    free_reveals_count: number
+                    has_welcome_coupon: boolean
                 }
                 Insert: {
                     bio: string
@@ -46,6 +49,9 @@ export type Database = {
                     photos?: string[] | null
                     religion: string
                     smoking: string
+                    referrer_user_id?: string | null
+                    free_reveals_count?: number
+                    has_welcome_coupon?: boolean
                 }
                 Update: {
                     bio?: string
@@ -62,6 +68,9 @@ export type Database = {
                     photos?: string[] | null
                     religion?: string
                     smoking?: string
+                    referrer_user_id?: string | null
+                    free_reveals_count?: number
+                    has_welcome_coupon?: boolean
                 }
                 Relationships: []
             }
@@ -108,6 +117,95 @@ export type Database = {
                         referencedColumns: ["id"]
                     }
                 ]
+            }
+            dating_applications: {
+                Row: {
+                    id: string
+                    member_id: string
+                    status: string
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    member_id: string
+                    status?: string
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    member_id?: string
+                    status?: string
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "dating_applications_member_id_fkey"
+                        columns: ["member_id"]
+                        isOneToOne: false
+                        referencedRelation: "member"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            match_requests: {
+                Row: {
+                    id: string
+                    sender_id: string
+                    receiver_id: string
+                    letter: string
+                    status: string
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    sender_id: string
+                    receiver_id: string
+                    letter: string
+                    status?: string
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    sender_id?: string
+                    receiver_id?: string
+                    letter?: string
+                    status?: string
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "match_requests_sender_id_fkey"
+                        columns: ["sender_id"]
+                        isOneToOne: false
+                        referencedRelation: "member"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "match_requests_receiver_id_fkey"
+                        columns: ["receiver_id"]
+                        isOneToOne: false
+                        referencedRelation: "member"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            region_match_status: {
+                Row: {
+                    region_id: string
+                    is_open: boolean
+                    created_at: string
+                }
+                Insert: {
+                    region_id: string
+                    is_open?: boolean
+                    created_at?: string
+                }
+                Update: {
+                    region_id?: string
+                    is_open?: boolean
+                    created_at?: string
+                }
+                Relationships: []
             }
         }
         Views: {

@@ -130,7 +130,8 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
           // Photos
           photos: fullUserData.photos.filter(p => p.blurredUrl).map(p => p.blurredUrl), // Default to blurred for public
           photo_urls_original: fullUserData.photos.filter(p => p.originalPath).map(p => p.originalPath),
-          photo_urls_blurred: fullUserData.photos.filter(p => p.blurredUrl).map(p => p.blurredUrl)
+          photo_urls_blurred: fullUserData.photos.filter(p => p.blurredUrl).map(p => p.blurredUrl),
+          referrer_user_id: localStorage.getItem('referrer_id') || null // Add referrer ID
         })
         .select()
         .single();
@@ -157,6 +158,13 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
 
       // Clear progress on success
       localStorage.removeItem(STORAGE_KEY);
+
+      // If signed up with referral, set flag for Welcome Modal
+      if (localStorage.getItem('referrer_id')) {
+        sessionStorage.setItem('showWelcomeModal', 'true');
+        localStorage.removeItem('referrer_id'); // Clean up
+      }
+
       toast.success("회원가입이 완료되었습니다!");
       onComplete?.();
     } catch (error) {
