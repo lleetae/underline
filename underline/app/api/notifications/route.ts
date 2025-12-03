@@ -1,4 +1,4 @@
-```typescript
+
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -37,11 +37,9 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        console.log(`Fetching notifications for Auth User ID: ${ user.id } `);
+        console.log(`Fetching notifications for Auth User ID: ${user.id}`);
 
-        // 2. Parse query parameters
         const searchParams = request.nextUrl.searchParams;
-
         const limit = parseInt(searchParams.get('limit') || '50');
         const offset = parseInt(searchParams.get('offset') || '0');
         const unreadOnly = searchParams.get('unread_only') === 'true';
@@ -74,7 +72,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
         }
 
-        console.log(`Found ${ notificationsData?.length || 0 } raw notifications`);
+        console.log(`Found ${notificationsData?.length || 0} raw notifications`);
         if (notificationsData?.length > 0) {
             console.log("First notification sample:", JSON.stringify(notificationsData[0], null, 2));
         }
@@ -85,7 +83,7 @@ export async function GET(request: NextRequest) {
             try {
                 // Filter out null AND undefined
                 const senderIds = Array.from(new Set(notificationsData.map(n => n.sender_id).filter(id => id != null)));
-                console.log(`Fetching details for sender IDs: ${ senderIds.join(', ') } `);
+                console.log(`Fetching details for sender IDs: ${senderIds.join(', ')} `);
 
 
 
@@ -101,7 +99,7 @@ export async function GET(request: NextRequest) {
                     }
 
                     if (!sendersError && senders) {
-                        console.log(`Fetched ${ senders.length } senders`);
+                        console.log(`Fetched ${senders.length} senders`);
                         sendersMap = senders.reduce((acc, sender) => {
                             acc[sender.id] = sender;
                             return acc;
@@ -119,7 +117,7 @@ export async function GET(request: NextRequest) {
                     }
 
                     if (!sender && senderId) {
-                        console.warn(`Sender details not found for sender_id: ${ senderId } (Type: ${ typeof senderId })`);
+                        console.warn(`Sender details not found for sender_id: ${senderId} (Type: ${typeof senderId})`);
                     }
                     return {
                         ...n,
@@ -255,7 +253,7 @@ export async function GET(request: NextRequest) {
                         })()
                     };
                 })(),
-                maskedUrl: supabaseUrl ? `${ supabaseUrl.substring(0, 20) }...` : 'MISSING',
+                maskedUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
                 envCheck: !!supabaseServiceKey,
                 keyRole: (() => {
                     try {
