@@ -129,6 +129,42 @@ export async function GET(request: Request) {
             .order('created_at', { ascending: false })
             .limit(5);
 
+        // 8. Simulate Main API Logic (Sender Lookup)
+        let processedNotifications = [];
+        let senderLookupLog = [];
+        if (queryResult && queryResult.length > 0) {
+            const senderIds = Array.from(new Set(queryResult.map((n: any) => n.sender_id).filter((id: any) => id != null)));
+            senderLookupLog.push(`Sender IDs: ${senderIds.join(', ')}`);
+
+            let sendersMap: Record<string, any> = {};
+            if (senderIds.length > 0) {
+                const { data: senders, error: sendersError } = await supabaseAdmin
+                    .from('member')
+                    .select('id, nickname, photo_urls_blurred')
+                    .in('id', senderIds);
+
+                if (senders) {
+                    sendersMap = senders.reduce((acc, sender) => {
+                        acc[sender.id] = sender;
+                        return acc;
+                    }, {} as Record<string, any>);
+                    senderLookupLog.push(`Fetched ${senders.length} senders. Keys: ${Object.keys(sendersMap).join(', ')}`);
+                }
+                if (sendersError) {
+                    senderLookupLog.push(`Error fetching senders: ${sendersError.message}`);
+                }
+            }
+
+            processedNotifications = queryResult.map((n: any) => {
+                const senderId = n.sender_id;
+                let sender = senderId ? sendersMap[senderId] : null;
+                if (!sender && senderId) {
+                    sender = sendersMap[String(senderId)];
+                }
+                return { ...n, sender, senderIdType: typeof senderId };
+            });
+        }
+
         return NextResponse.json({
             message: "ID Mismatch Analysis",
             detectedUser: currentUser ? { id: currentUser.id, email: currentUser.email } : "None (Using Fallback)",
@@ -143,6 +179,10 @@ export async function GET(request: Request) {
                 count: queryResult?.length,
                 firstItem: queryResult?.[0],
                 error: queryError
+            },
+            simulation: {
+                processedNotifications,
+                senderLookupLog
             },
             allByType: allByType || [],
             recentMembers: recentMembers || []
