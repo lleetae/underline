@@ -265,9 +265,11 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
             <div className="p-4 bg-black text-white text-xs overflow-auto max-h-40">
                 <p>Debug Info:</p>
                 <p>My User ID: {userId}</p>
-                <p>Server User ID: {debugInfo?.queriedUserId}</p>
+                <p>Server User ID: {debugInfo?.queriedUserId} (Len: {debugInfo?.userIdLength})</p>
                 <p>Raw Count: {debugInfo?.rawCount}</p>
                 <p>Fallback Count: {debugInfo?.fallbackCount}</p>
+                <p>Hardcoded Check: {debugInfo?.hardcodedCheck}</p>
+                <p>Env Check: {debugInfo?.envCheck ? 'OK' : 'MISSING'}</p>
                 <p>Loading: {loading ? 'true' : 'false'}</p>
                 <p>Count: {notifications.length}</p>
                 <pre>{JSON.stringify(notifications, null, 2)}</pre>

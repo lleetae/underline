@@ -155,8 +155,17 @@ export async function GET(request: NextRequest) {
             hasMore: (notifications?.length || 0) === limit,
             debugInfo: {
                 queriedUserId: user.id,
+                userIdLength: user.id.length,
                 rawCount: notificationsData?.length || 0,
                 fallbackCount,
+                hardcodedCheck: await (async () => {
+                    const { count } = await supabaseAdmin
+                        .from('notifications')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('user_id', 'de48de06-6b78-4ff6-af4d-b435ddd4af56');
+                    return count;
+                })(),
+                envCheck: !!supabaseServiceKey,
                 queryError: error,
                 params: { limit, offset, unreadOnly }
             }
