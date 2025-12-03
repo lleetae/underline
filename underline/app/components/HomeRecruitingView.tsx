@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { TermsContent, PrivacyContent } from "../utils/PolicyComponents";
-import { Bell, BookOpen, User, Mail, Edit, X, MapPin, Copy } from "lucide-react";
+import { Bell, BookOpen, User, Mail, Edit, X, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCountdown } from "../hooks/useCountdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { BatchUtils } from "../utils/BatchUtils";
+
 
 import { supabase } from "../lib/supabase";
 
