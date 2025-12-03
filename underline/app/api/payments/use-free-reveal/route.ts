@@ -1,22 +1,48 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+
+// Server-side Supabase client with service role
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabaseAdmin = supabaseServiceKey
+    ? createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    })
+    : null;
 
 export async function POST(request: Request) {
     try {
-        const supabase = createRouteHandlerClient({ cookies });
+        if (!supabaseAdmin) {
+            console.error('Supabase Admin client not initialized');
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
         const { matchId } = await request.json();
 
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        // 1. Verify Authentication
+        const authHeader = request.headers.get('Authorization');
+        if (!authHeader) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const supabase = supabaseAdmin; // Use admin client for operations
 
         // 1. Get current user's member info
         const { data: member, error: memberError } = await supabase
             .from('member')
             .select('id, free_reveals_count')
-            .eq('auth_id', session.user.id)
+            .eq('auth_id', user.id)
             .single();
 
         if (memberError || !member) {
@@ -65,8 +91,7 @@ export async function POST(request: Request) {
         const { error: paymentError } = await supabase
             .from('payments')
             .insert({
-                send_user_id: matchData.sender_id,
-                receive_user_id: matchData.receiver_id,
+                user_id: member.id,
                 match_id: matchId,
                 amount: 0,
                 status: 'completed',
