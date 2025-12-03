@@ -15,6 +15,7 @@ async function fetchLogs() {
     const { data, error } = await supabase
         .from('debug_logs')
         .select('*')
+        .in('message', ['Global FK Reference', 'Trigger on auth.users'])
         .order('created_at', { ascending: false });
 
     if (error) {
