@@ -67,9 +67,6 @@ export function CouponBoxView({ freeRevealsCount, hasWelcomeCoupon, onBack }: Co
                     {/* Welcome Coupon */}
                     {hasWelcomeCoupon && (
                         <div className="bg-white border border-red-100 rounded-xl p-5 shadow-sm relative overflow-hidden">
-                            <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg">
-                                사용 가능
-                            </div>
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-xl">
@@ -80,9 +77,13 @@ export function CouponBoxView({ freeRevealsCount, hasWelcomeCoupon, onBack }: Co
                                         <p className="text-xs text-[var(--foreground)]/60">첫 만남 응원 쿠폰</p>
                                     </div>
                                 </div>
+                                <div className="text-right">
+                                    <span className="text-2xl font-bold text-red-500">1</span>
+                                    <span className="text-sm text-[var(--foreground)]/60 ml-1">장</span>
+                                </div>
                             </div>
                             <p className="text-xs text-red-400 bg-red-50 p-3 rounded-lg">
-                                첫 연락처 교환 시 4,900원으로 할인됩니다.
+                                첫 연락처 교환 시 4,950원으로 할인됩니다.
                             </p>
                         </div>
                     )}
