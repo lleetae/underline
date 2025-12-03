@@ -501,7 +501,8 @@ export default function App() {
               nickname,
               age,
               birth_date,
-              location,
+              sido,
+              sigungu,
               photo_url,
               photos,
               auth_id
@@ -554,7 +555,8 @@ export default function App() {
               nickname,
               age,
               birth_date,
-              location,
+              sido,
+              sigungu,
               photo_url,
               photos,
               auth_id
