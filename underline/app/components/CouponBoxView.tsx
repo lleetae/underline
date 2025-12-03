@@ -7,6 +7,7 @@ import { handleCopy } from "../utils/clipboard";
 
 
 export function CouponBoxView({ onBack }: { onBack: () => void }) {
+    const [userId, setUserId] = React.useState<string | null>(null);
     const [freeRevealsCount, setFreeRevealsCount] = React.useState(0);
     const [hasWelcomeCoupon, setHasWelcomeCoupon] = React.useState(false);
     const [loading, setLoading] = React.useState(true);
@@ -16,6 +17,7 @@ export function CouponBoxView({ onBack }: { onBack: () => void }) {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
+                    setUserId(user.id);
                     const { data: member } = await supabase
                         .from('member')
                         .select('free_reveals_count, has_welcome_coupon')
@@ -43,12 +45,9 @@ export function CouponBoxView({ onBack }: { onBack: () => void }) {
         return () => clearTimeout(timer);
     }, []);
 
-    const handleCopyLink = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id;
+    const handleCopyLink = () => {
         const shareUrl = `${window.location.origin}?ref=${userId || ''}`;
-
-        await handleCopy(shareUrl, '초대 링크가 복사되었습니다!');
+        handleCopy(shareUrl, '초대 링크가 복사되었습니다!');
     };
 
     if (loading) {
