@@ -50,13 +50,16 @@ export async function GET(request: Request) {
 
         let targetUserId = currentUser ? currentUser.id : '6831764f-40ab-4e67-ad41-43f717f526df';
         let memberLookup = null;
+        let memberLookupError = null;
 
         if (memberIdParam) {
-            const { data: memberData, error: memberError } = await supabaseAdmin
+            const { data: memberData, error } = await supabaseAdmin
                 .from('member')
                 .select('auth_id, id, nickname')
                 .eq('id', memberIdParam)
                 .single();
+
+            memberLookupError = error;
 
             if (memberData) {
                 targetUserId = memberData.auth_id;
@@ -111,6 +114,7 @@ export async function GET(request: Request) {
             message: "ID Mismatch Analysis",
             detectedUser: currentUser ? { id: currentUser.id, email: currentUser.email } : "None (Using Fallback)",
             memberLookup,
+            memberLookupError,
             targetUserId,
             foundInTypeQuery: !!targetRow,
             typeQueryError: typeError,
