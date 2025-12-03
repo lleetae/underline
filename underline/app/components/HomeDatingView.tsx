@@ -73,6 +73,8 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
       if (response.ok) {
         const data = await response.json();
         setUnreadCount(data.unreadCount || 0);
+      } else {
+        console.error("Failed to fetch unread count:", response.status, response.statusText);
       }
     } catch (error) {
       console.error("Error fetching unread count:", error);

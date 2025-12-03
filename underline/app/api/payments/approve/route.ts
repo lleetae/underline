@@ -189,63 +189,75 @@ export async function POST(request: NextRequest) {
                     if (matchError || !matchRequest) {
                         console.error("Error fetching match request for notification:", matchError);
                     } else {
-                        console.log(`Match Request found: sender=${matchRequest.sender_id} (Type: ${typeof matchRequest.sender_id}), receiver=${matchRequest.receiver_id} (Type: ${typeof matchRequest.receiver_id})`);
+                        console.log(`Match Request found: sender=${matchRequest.sender_id}, receiver=${matchRequest.receiver_id}`);
 
                         // Determine target user (the one who did NOT pay)
-                        const senderId = String(matchRequest.sender_id).trim();
-                        const receiverId = String(matchRequest.receiver_id).trim();
-                        const payerId = String(payerMemberId).trim();
+                        // Explicitly convert to strings for comparison to avoid type mismatches
+                        const senderIdStr = String(matchRequest.sender_id).trim();
+                        const receiverIdStr = String(matchRequest.receiver_id).trim();
+                        const payerIdStr = String(payerMemberId).trim();
 
-                        console.log(`Comparing IDs: Sender=${senderId}, Payer=${payerId}`);
+                        console.log(`Comparing IDs: Sender=${senderIdStr}, Receiver=${receiverIdStr}, Payer=${payerIdStr}`);
 
-                        const targetMemberId = senderId === payerId
-                            ? receiverId
-                            : senderId;
+                        let targetMemberId: string | null = null;
 
-                        console.log(`Target Member ID (Calculated): ${targetMemberId}`);
-
-                        console.log(`Target Member ID (Receiver of notification): ${targetMemberId} (Sender: ${senderId}, Payer: ${payerId}) - v2 fix`);
-
-                        // Get target user's auth_id
-                        const { data: targetMember, error: targetError } = await supabaseAdmin
-                            .from('member')
-                            .select('auth_id')
-                            .eq('id', targetMemberId)
-                            .single();
-
-                        if (targetError || !targetMember) {
-                            console.error("Error fetching target member auth_id:", targetError);
+                        if (senderIdStr === payerIdStr) {
+                            targetMemberId = receiverIdStr;
+                        } else if (receiverIdStr === payerIdStr) {
+                            targetMemberId = senderIdStr;
                         } else {
-                            console.log(`Target Member Auth ID: ${targetMember.auth_id}`);
+                            console.warn(`Payer ID ${payerIdStr} does not match sender ${senderIdStr} or receiver ${receiverIdStr}. Notification might be sent to wrong person or skipped.`);
+                            // Fallback: If payer is neither, maybe we shouldn't send? Or default to receiver?
+                            // Let's assume sender is the one who initiated if unclear, so send to receiver.
+                            // But safer to log error.
+                        }
 
-                            // Get payer's auth_id (sender of notification)
-                            const { data: payerMember } = await supabaseAdmin
+                        if (targetMemberId) {
+                            console.log(`Target Member ID (Receiver of notification): ${targetMemberId}`);
+
+                            // Get target user's auth_id
+                            const { data: targetMember, error: targetError } = await supabaseAdmin
                                 .from('member')
                                 .select('auth_id')
-                                .eq('id', payerMemberId)
+                                .eq('id', targetMemberId)
                                 .single();
 
-                            if (payerMember) {
-                                console.log(`Inserting notification: user_id=${targetMember.auth_id}, sender_id=${payerMemberId}`);
-                                const { error: insertError } = await supabaseAdmin
-                                    .from('notifications')
-                                    .insert({
-                                        user_id: targetMember.auth_id, // Receiver of notification
-                                        type: 'contact_revealed',
-                                        match_id: matchRequestId,
-                                        sender_id: payerMemberId, // Sender of notification (Payer Member ID - BigInt)
-                                        is_read: false,
-                                        metadata: {}
-                                    });
-
-                                if (insertError) {
-                                    console.error("Error inserting payment notification:", insertError);
-                                } else {
-                                    console.log(`Notification sent successfully to member ${targetMemberId}`);
-                                }
+                            if (targetError || !targetMember) {
+                                console.error("Error fetching target member auth_id:", targetError);
                             } else {
-                                console.error("Payer member not found");
+                                console.log(`Target Member Auth ID: ${targetMember.auth_id}`);
+
+                                // Get payer's auth_id (sender of notification) - purely for logging/verification, we use payerMemberId for sender_id
+                                const { data: payerMember } = await supabaseAdmin
+                                    .from('member')
+                                    .select('auth_id')
+                                    .eq('id', payerMemberId)
+                                    .single();
+
+                                if (payerMember) {
+                                    console.log(`Inserting notification: user_id=${targetMember.auth_id}, sender_id=${payerMemberId}`);
+                                    const { error: insertError } = await supabaseAdmin
+                                        .from('notifications')
+                                        .insert({
+                                            user_id: targetMember.auth_id, // Receiver of notification
+                                            type: 'contact_revealed',
+                                            match_id: matchRequestId,
+                                            sender_id: payerMemberId, // Sender of notification (Payer Member ID)
+                                            is_read: false,
+                                            metadata: {}
+                                        });
+
+                                    if (insertError) {
+                                        console.error("Error inserting payment notification:", insertError);
+                                    } else {
+                                        console.log(`Notification sent successfully to member ${targetMemberId}`);
+                                    }
+                                } else {
+                                    console.error("Payer member not found in DB, but proceeding with ID from orderId");
+                                }
                             }
+                        } else {
+                            console.error("Could not determine target member for notification.");
                         }
                     }
                 } catch (notifyError) {

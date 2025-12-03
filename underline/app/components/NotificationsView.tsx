@@ -45,15 +45,18 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                 }
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                console.log("NotificationsView fetched:", data);
-                setNotifications(data.notifications || []);
-                setUnreadCount(data.unreadCount || 0);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Server error: ${response.status}`);
             }
-        } catch (error) {
+
+            const data = await response.json();
+            console.log("NotificationsView fetched:", data);
+            setNotifications(data.notifications || []);
+            setUnreadCount(data.unreadCount || 0);
+        } catch (error: any) {
             console.error("Error fetching notifications:", error);
-            toast.error("알림을 불러오는데 실패했습니다");
+            toast.error(error.message || "알림을 불러오는데 실패했습니다");
         } finally {
             setLoading(false);
         }
