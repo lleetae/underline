@@ -227,7 +227,13 @@ export function HomeRecruitingView({
 
           {/* Share Button */}
           <button
-            onClick={() => setShowReferralModal(true)}
+            onClick={() => {
+              if (isSignedUp) {
+                setShowReferralModal(true);
+              } else {
+                onShowLoginModal();
+              }
+            }}
             className="mt-3 w-full py-3 rounded-xl border border-underline-red/30 text-underline-red font-medium flex items-center justify-center gap-2 hover:bg-underline-red/5 transition-colors"
           >
             <span className="text-sm">친구 초대하고 무료 교환권 받기</span>
