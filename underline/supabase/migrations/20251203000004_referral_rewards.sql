@@ -8,14 +8,14 @@ CREATE OR REPLACE FUNCTION handle_new_member_referral()
 RETURNS TRIGGER AS $$
 BEGIN
   -- If the new member has a referrer
-  IF NEW.referrer_user_id IS NOT NULL THEN
+  IF NEW.referrer_auth_id IS NOT NULL THEN
     -- 1. Grant 50% discount coupon to the new member (invitee)
     NEW.has_welcome_coupon := TRUE;
 
     -- 2. Grant 1 free reveal to the referrer (inviter)
     UPDATE member
     SET free_reveals_count = free_reveals_count + 1
-    WHERE id = NEW.referrer_user_id;
+    WHERE auth_id = NEW.referrer_auth_id;
   END IF;
 
   RETURN NEW;

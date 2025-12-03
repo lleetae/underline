@@ -68,7 +68,7 @@ export type Database = {
                     photos?: string[] | null
                     religion?: string
                     smoking?: string
-                    referrer_user_id?: string | null
+                    referrer_auth_id: string | null
                     free_reveals_count?: number
                     has_welcome_coupon?: boolean
                 }
