@@ -406,10 +406,19 @@ export function ProfileDetailViewWithInteraction({
     const matchRequestId = matchId || profileId;
     if (confirm(`무료 열람권이 ${member.free_reveals_count}개 있습니다. 사용하시겠습니까?`)) {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        if (!token) {
+          toast.error("로그인이 필요합니다.");
+          return;
+        }
+
         const response = await fetch('/api/payments/use-free-reveal', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ matchId: matchRequestId }),
         });
