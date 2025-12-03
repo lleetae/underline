@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { TermsContent, PrivacyContent } from "../utils/PolicyComponents";
-import { Bell, BookOpen, User, Mail, Edit, X, Copy } from "lucide-react";
+import { Bell, BookOpen, User, Mail, Edit, X, Copy, ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCountdown } from "../hooks/useCountdown";
@@ -8,8 +8,10 @@ import useEmblaCarousel from "embla-carousel-react";
 
 
 import { supabase } from "../lib/supabase";
+import { BatchUtils } from "../utils/BatchUtils";
 
 import { handleCopy } from "../utils/clipboard";
+import { getRegionGroupKey, getRegionDisplayName } from "../utils/RegionUtils";
 
 interface SuccessStory {
   id: string;
@@ -27,6 +29,7 @@ interface HomeRecruitingViewProps {
   isRegistered: boolean;
   onRegister: () => void;
   onCancelRegister: () => void;
+  onNavigate: (view: any) => void;
 }
 
 export function HomeRecruitingView({
@@ -36,6 +39,7 @@ export function HomeRecruitingView({
   isRegistered,
   onRegister,
   onCancelRegister,
+  onNavigate
 }: HomeRecruitingViewProps) {
   // Countdown timer for next Friday 00:00:00 (Thursday 23:59 deadline)
   const timeLeft = useCountdown(5, 0);
@@ -48,6 +52,8 @@ export function HomeRecruitingView({
   const [selectedReview, setSelectedReview] = useState<SuccessStory | null>(null); // For Modal
   const [isAdmin, setIsAdmin] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [regionStats, setRegionStats] = useState<Record<string, { male: number; female: number; total: number }>>({});
+  const [isRegionStatsOpen, setIsRegionStatsOpen] = useState(false);
   const router = useRouter();
 
   // Check for Welcome Modal flag
@@ -140,6 +146,59 @@ export function HomeRecruitingView({
     fetchReviews();
   }, []);
 
+  // Fetch Region Stats
+  useEffect(() => {
+    const fetchRegionStats = async () => {
+      try {
+        // Get current batch range
+        const { start, end } = BatchUtils.getBatchApplicationRange(BatchUtils.getTargetBatchStartDate());
+
+        const { data, error } = await supabase
+          .from('dating_applications')
+          .select(`
+            member_id,
+            member!inner (
+              sido,
+              gender
+            )
+          `)
+          .gte('created_at', start.toISOString())
+          .lte('created_at', end.toISOString())
+          .neq('status', 'cancelled');
+
+        if (error) throw error;
+
+        if (data) {
+          const stats: Record<string, { male: number; female: number; total: number }> = {};
+          data.forEach((app: any) => {
+            const sido = app.member?.sido || '기타';
+            const groupKey = getRegionGroupKey(sido);
+            const gender = app.member?.gender;
+
+            if (!stats[groupKey]) {
+              stats[groupKey] = { male: 0, female: 0, total: 0 };
+            }
+
+            if (gender === 'male') stats[groupKey].male++;
+            else if (gender === 'female') stats[groupKey].female++;
+
+            stats[groupKey].total++;
+          });
+          setRegionStats(stats);
+        }
+      } catch (error) {
+        console.error("Error fetching region stats:", error);
+      }
+    };
+
+    fetchRegionStats();
+    // Optional: Realtime subscription for stats could go here
+  }, []);
+
+  const getRegionName = (key: string) => {
+    return getRegionDisplayName(key as any);
+  };
+
   return (
     <div className="min-h-screen bg-underline-cream text-underline-text font-sans pb-20 max-w-md mx-auto shadow-2xl shadow-black/5 relative">
       {/* 1. GNB (Header) */}
@@ -164,7 +223,7 @@ export function HomeRecruitingView({
       </header>
 
       {/* 2. Hero Section */}
-      <section className="px-6 pt-10 pb-12 text-center">
+      <section className="px-6 pt-10 pb-6 text-center">
 
 
         {/* Timer */}
@@ -224,7 +283,7 @@ export function HomeRecruitingView({
           >
             {isRegistered
               ? "소개팅 대기중"
-              : (timeLeft.days === 0 && timeLeft.hours < 24 // If it's Friday/Saturday (Matching Period)
+              : (BatchUtils.getCurrentSystemState() === 'MATCHING' // If it's Friday/Saturday (Matching Period)
                 ? "다음 주 소개팅 미리 신청하기"
                 : "이번 주 소개팅 무료 신청하기"
               )
@@ -346,6 +405,75 @@ export function HomeRecruitingView({
         </div>
       )}
 
+      {/* 4. Region Status */}
+      <section className="px-6 pt-3 pb-5 bg-[#F5F5F0] border-y border-black/5">
+        <button
+          onClick={() => setIsRegionStatsOpen(!isRegionStatsOpen)}
+          className="w-full flex items-center justify-between group"
+        >
+          <div className="text-left">
+            <h3 className="font-serif text-xl font-bold text-underline-text group-hover:text-underline-red transition-colors">
+              지역별 신청 현황
+            </h3>
+          </div>
+          <div className={`p-2 rounded-full bg-white shadow-sm text-underline-text/50 group-hover:text-underline-red transition-all ${isRegionStatsOpen ? 'rotate-180' : ''}`}>
+            <ChevronDown className="w-5 h-5" />
+          </div>
+        </button>
+
+        {isRegionStatsOpen && (
+          <div className="mt-6 animate-in slide-in-from-top-2 duration-200">
+            <p className="text-sm text-underline-text/60 mb-6">
+              각 지역별로 <span className="font-bold text-underline-text">남녀 각 5명 이상</span>이 모여야<br />
+              해당 지역의 매칭이 시작됩니다.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {Object.entries(regionStats)
+                .filter(([_, data]) => data.total > 0)
+                .sort((a, b) => b[1].total - a[1].total)
+                .slice(0, 6)
+                .map(([region, data]) => {
+                  const isOpen = data.male >= 5 && data.female >= 5;
+
+                  return (
+                    <div key={region} className={`p-4 rounded-xl border ${isOpen ? 'bg-white border-underline-red/20 shadow-sm' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-underline-text">{getRegionName(region)}</span>
+                        {isOpen ? (
+                          <span className="text-[10px] font-bold text-white bg-underline-red px-2 py-0.5 rounded-full shadow-sm">오픈 확정</span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">모집중</span>
+                        )}
+                      </div>
+                      <div className="flex items-end gap-1">
+                        <span className={`text-2xl font-serif font-bold ${isOpen ? 'text-underline-red' : 'text-blue-600'}`}>
+                          {data.total}
+                        </span>
+                        <span className="text-xs text-blue-600 mb-1">명</span>
+                      </div>
+
+                      <div className="w-full h-1.5 bg-gray-100 rounded-full mt-3 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-1000 ${isOpen ? 'bg-underline-red' : 'bg-blue-400'}`}
+                          style={{ width: `${Math.min((data.total / 10) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+
+            <button
+              onClick={() => onNavigate('regionStats')}
+              className="w-full py-3 rounded-xl border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+            >
+              전체 지역 보기
+              <ChevronDown className="w-4 h-4 -rotate-90" />
+            </button>
+          </div>
+        )}
+      </section>
+
       {/* 3. Social Proof (Horizontal Scroll) */}
       <section className="py-10 bg-white border-y border-black/5">
         <div className="px-6 mb-6 flex items-center justify-between">
@@ -445,30 +573,11 @@ export function HomeRecruitingView({
         </div>
       )}
 
-      {/* 4. Live Stats */}
-      <section className="px-6 py-12">
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="font-serif text-2xl font-bold text-underline-text mb-1">
-              1,247
-            </div>
-            <div className="text-xs text-underline-text/50">누적 매칭</div>
-          </div>
-          <div className="text-center">
-            <div className="font-serif text-2xl font-bold text-underline-text mb-1">
-              89%
-            </div>
-            <div className="text-xs text-underline-text/50">만족도</div>
-          </div>
-          <div className="text-center relative">
-            <div className="font-serif text-2xl font-bold text-underline-text mb-1 flex items-center justify-center gap-1">
-              342
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse mb-3" />
-            </div>
-            <div className="text-xs text-underline-text/50">이번 주 신청</div>
-          </div>
-        </div>
-      </section>
+
+
+
+
+
 
       {/* 5. Process */}
       <section className="px-6 py-10 bg-white border-t border-black/5">

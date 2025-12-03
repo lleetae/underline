@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Check, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { SignUpHeader } from "./SignUpHeader";
+import { koreaDistrict } from "../../data/koreaDistrict";
 
 export interface Step2Data {
     nickname: string;
@@ -24,7 +25,15 @@ export function SignUpStep2Basics({
     const [isNicknameChecked, setIsNicknameChecked] = useState(false);
     const [gender, setGender] = useState<"male" | "female" | null>(initialData?.gender || null);
     const [birthDate, setBirthDate] = useState(initialData?.birthDate || "");
-    const [location, setLocation] = useState(initialData?.location || "");
+
+    // Initialize city and district from location string "City District"
+    const initialLocation = initialData?.location || "";
+    const [initialCity, ...initialDistrictParts] = initialLocation.split(" ");
+    const initialDistrict = initialDistrictParts.join(" ");
+
+    const [city, setCity] = useState(initialCity || "");
+    const [district, setDistrict] = useState(initialDistrict || "");
+
     const [height, setHeight] = useState<string>(initialData?.height?.toString() || "");
     const [isCheckingNickname, setIsCheckingNickname] = useState(false);
 
@@ -76,7 +85,7 @@ export function SignUpStep2Basics({
             return;
         }
 
-        if (!location) {
+        if (!city || !district) {
             toast.error("지역을 선택해주세요");
             return;
         }
@@ -89,12 +98,12 @@ export function SignUpStep2Basics({
             nickname,
             gender,
             birthDate,
-            location,
+            location: `${city} ${district}`,
             height: parseInt(height)
         });
     };
 
-    const isValid = nickname && isNicknameChecked && gender && birthDate && location && height;
+    const isValid = nickname && isNicknameChecked && gender && birthDate && city && district && height;
 
     return (
         <div className="w-full max-w-md mx-auto relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
@@ -199,25 +208,61 @@ export function SignUpStep2Basics({
                         <label className="block text-sm text-[var(--foreground)]/70 font-sans mb-2">
                             지역
                         </label>
-                        <select
-                            value={location}
-                            onChange={(e) => setLocation(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors bg-white appearance-none"
-                            style={{
-                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231A3C34' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
-                                backgroundRepeat: "no-repeat",
-                                backgroundPosition: "right 12px center",
-                            }}
-                        >
-                            <option value="">지역을 선택하세요</option>
-                            <option value="seoul">서울</option>
-                            <option value="busan">부산</option>
-                            <option value="incheon">인천</option>
-                            <option value="daegu">대구</option>
-                            <option value="daejeon">대전</option>
-                            <option value="gwangju">광주</option>
-                            <option value="other">기타</option>
-                        </select>
+                        <div className="flex gap-2">
+                            {/* City Selector */}
+                            <div className="flex-1">
+                                <select
+                                    value={city}
+                                    onChange={(e) => {
+                                        const newCity = e.target.value;
+                                        setCity(newCity);
+
+                                        // Auto-select if only one district exists (e.g. Sejong)
+                                        const districts = koreaDistrict[newCity] || [];
+                                        if (districts.length === 1) {
+                                            setDistrict(districts[0]);
+                                        } else {
+                                            setDistrict("");
+                                        }
+                                    }}
+                                    className="w-full px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors bg-white appearance-none"
+                                    style={{
+                                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231A3C34' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
+                                        backgroundRepeat: "no-repeat",
+                                        backgroundPosition: "right 12px center",
+                                    }}
+                                >
+                                    <option value="">시/도 선택</option>
+                                    {Object.keys(koreaDistrict).map((cityKey) => (
+                                        <option key={cityKey} value={cityKey}>
+                                            {cityKey}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* District Selector */}
+                            <div className="flex-1">
+                                <select
+                                    value={district}
+                                    onChange={(e) => setDistrict(e.target.value)}
+                                    disabled={!city}
+                                    className="w-full px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors bg-white appearance-none disabled:bg-gray-100 disabled:text-gray-400"
+                                    style={{
+                                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231A3C34' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
+                                        backgroundRepeat: "no-repeat",
+                                        backgroundPosition: "right 12px center",
+                                    }}
+                                >
+                                    <option value="">시/군/구 선택</option>
+                                    {city && koreaDistrict[city]?.map((districtName) => (
+                                        <option key={districtName} value={districtName}>
+                                            {districtName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Height */}

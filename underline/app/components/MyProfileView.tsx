@@ -147,7 +147,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
           nickname: member.nickname,
           gender: member.gender,
           birthDate: member.birth_date,
-          location: member.location,
+          location: (member.sido && member.sigungu) ? `${member.sido} ${member.sigungu}` : member.location,
           religion: member.religion,
           height: member.height?.toString() || "",
           smoking: member.smoking,
@@ -448,7 +448,8 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
                 photo_urls_original: originalUrls,
                 photo_urls_blurred: blurredUrls,
                 photos: blurredUrls, // Update legacy column for compatibility
-                location: updatedData.location,
+                sido: updatedData.location.split(' ')[0] || '',
+                sigungu: updatedData.location.split(' ')[1] || '',
                 height: updatedData.height,
                 religion: updatedData.religion,
                 smoking: updatedData.smoking,
@@ -574,7 +575,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
                 <div className="flex items-center gap-1 mt-1.5">
                   <MapPin className="w-3.5 h-3.5 text-[var(--primary)]" />
                   <span className="text-xs text-[var(--foreground)]/70 font-sans">
-                    {locationMap[profileData.location]}
+                    {locationMap[profileData.location] || profileData.location}
                   </span>
                 </div>
               </div>

@@ -6,12 +6,15 @@ import { supabase } from "../lib/supabase";
 import { useCountdown } from "../hooks/useCountdown";
 import { BatchUtils } from "../utils/BatchUtils";
 import { subDays } from "date-fns";
+import { getSidosInSameGroup } from "../utils/RegionUtils";
 
 interface UserProfile {
-  id: number; // Changed from string to number
+  id: number;
   nickname: string;
   age: number;
-  location: string;
+  location: string; // Keep for backward compatibility or display
+  sido: string;
+  sigungu: string;
   photos: string[];
   bio: string;
   bookTitle: string;
@@ -111,7 +114,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
         // Fetch current user's gender using auth_id
         const { data: currentUserData } = await supabase
           .from('member')
-          .select('id, gender')
+          .select('id, gender, location, sido, sigungu')
           .eq('auth_id', user.id)
           .single();
 
@@ -132,6 +135,8 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
             age,
             birth_date,
             location,
+            sido,
+            sigungu,
             photo_url,
             photos,
             bio,
@@ -154,6 +159,47 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
           query = query.neq('id', myMemberId);
         }
 
+        const mySido = currentUserData?.sido;
+        const mySigungu = currentUserData?.sigungu;
+
+        if (isSpectator) {
+          // If Spectator (Failed Region), show users from OTHER regions
+          // Exclude my own region (sido + sigungu)
+          if (mySido && mySigungu) {
+            // Note: Supabase doesn't support complex NEQ on multiple columns easily in one go for "NOT (A AND B)"
+            // But we can approximate or use a filter.
+            // For now, let's just filter by Sido if possible, or maybe just show everyone else?
+            // "Other regions" usually implies "Not my exact location".
+            // Let's filter out anyone with SAME sido AND sigungu.
+            // Since ORM limitations, we might filter in memory if dataset is small, or use a raw filter.
+            // But `neq` on `location` string was easy.
+            // Let's try to use `not.and` if available, or just filter out by `location` string for now if it's still populated?
+            // User wants FULL migration.
+            // We can use `not` with a filter string: `not.and(sido.eq.${mySido},sigungu.eq.${mySigungu})` - syntax might be tricky.
+            // Simpler approach: Filter out by Sido OR Sigungu? No.
+            // Let's assume strict matching:
+            // query = query.not('sido', 'eq', mySido).not('sigungu', 'eq', mySigungu) -> This excludes anyone with same sido OR same sigungu. Too strict.
+            // We want to exclude (sido == mySido && sigungu == mySigungu).
+            // Let's fetch all and filter in memory for spectator mode, or use the `location` string if we trust it's synced.
+            // Since we are syncing, let's use `location` for the NEQ query for simplicity, OR construct the filter.
+            // Actually, let's try to filter by `sido` first?
+            // If I am in Seoul Gangnam, I want to see people NOT in Seoul Gangnam.
+            // Maybe just `neq('sido', mySido)`? No, I might want to see Seoul Mapo.
+            // Let's do in-memory filtering for Spectator mode to be safe and correct with new columns.
+          }
+        } else {
+          // If Participant (Active Region), show users from MY region GROUP
+          if (mySido) {
+            const sidosInGroup = getSidosInSameGroup(mySido);
+            if (sidosInGroup.length > 0) {
+              query = query.in('sido', sidosInGroup);
+            } else {
+              // Fallback if no group found (shouldn't happen for valid sidos)
+              query = query.eq('sido', mySido);
+            }
+          }
+        }
+
         if (myGender) {
           // Filter for opposite gender
           query = query.neq('gender', myGender);
@@ -165,13 +211,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
 
         if (data) {
           // 3. Penalty Logic: Check for previous matches
-          // Fetch matches for the PREVIOUS batch to penalize users who were matched last week.
-          // Previous Batch: Current Batch - 7 days
-          // We check 'match_requests' where status is 'accepted' and created_at is in previous batch range?
-          // Actually, match requests are created during the Matching Period (Fri-Sat).
-          // So we should check match_requests created between Previous Friday and Previous Sunday?
-          // Or just check if they had ANY accepted match in the last 7 days.
-          // Let's check for accepted matches in the last 7 days.
+          // ... (same as before)
           const oneWeekAgo = subDays(new Date(), 7);
 
           const { data: recentMatches } = await supabase
@@ -189,7 +229,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
             });
           }
 
-          const formattedProfiles: UserProfile[] = (data as any)
+          let formattedProfiles: UserProfile[] = (data as any)
             .filter((member: any) => member.member_books && member.member_books.length > 0) // Only show members with books
             .map((member: any) => {
               // Sort books by created_at desc to get the latest one
@@ -202,7 +242,11 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
               // Handle potential missing fields
               const nickname = member.nickname || "익명";
               const age = member.age || (member.birth_date ? new Date().getFullYear() - parseInt(member.birth_date.substring(0, 4)) : 0);
-              const location = member.location || "알 수 없음";
+              // Construct location from sido/sigungu
+              const locationDisplay = (member.sido && member.sigungu)
+                ? `${member.sido} ${member.sigungu}`
+                : (member.location || "알 수 없음");
+
               const photos = member.photos && member.photos.length > 0 ? member.photos : (member.photo_url ? [member.photo_url] : []);
               const bio = member.bio || "";
 
@@ -212,7 +256,9 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
                 id: member.id,
                 nickname,
                 age,
-                location,
+                location: locationDisplay,
+                sido: member.sido,
+                sigungu: member.sigungu,
                 photos,
                 bio,
                 bookTitle: latestBook.book_title,
@@ -223,14 +269,21 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
                 isPenalized: matchedUserIds.has(member.id) // Add flag for sorting
               };
             })
-            .filter((p: any): p is UserProfile => p !== null)
-            // Sort: Non-penalized first, then Penalized. Within groups, random or by ID.
-            // Let's just put penalized at the bottom.
-            .sort((a: UserProfile, b: UserProfile) => {
-              // We filtered out nulls, so a and b are UserProfile
-              if (a.isPenalized === b.isPenalized) return 0;
-              return a.isPenalized ? 1 : -1;
-            }) as UserProfile[];
+            .filter((p: any): p is UserProfile => p !== null);
+
+          // In-memory filtering for Spectator mode (exclude my region GROUP)
+          if (isSpectator && mySido) {
+            const sidosInGroup = getSidosInSameGroup(mySido);
+            formattedProfiles = formattedProfiles.filter(p =>
+              !sidosInGroup.includes(p.sido)
+            );
+          }
+
+          // Sort: Non-penalized first, then Penalized.
+          formattedProfiles.sort((a: UserProfile, b: UserProfile) => {
+            if (a.isPenalized === b.isPenalized) return 0;
+            return a.isPenalized ? 1 : -1;
+          });
 
           setProfiles(formattedProfiles);
         }

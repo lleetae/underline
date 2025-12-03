@@ -33,6 +33,8 @@ export function useMatches(userId: string | undefined, profileId: string | null)
               age,
               birth_date,
               location,
+              sido,
+              sigungu,
               photo_url,
               photos,
               auth_id
@@ -56,7 +58,10 @@ export function useMatches(userId: string | undefined, profileId: string | null)
               nickname,
               age,
               birth_date,
+              birth_date,
               location,
+              sido,
+              sigungu,
               photo_url,
               photos,
               auth_id
@@ -98,12 +103,16 @@ export function useMatches(userId: string | undefined, profileId: string | null)
                             ? new Date().getFullYear() - parseInt(req.sender.birth_date.substring(0, 4))
                             : 0);
 
+                        const location = (req.sender.sido && req.sender.sigungu)
+                            ? `${req.sender.sido} ${req.sender.sigungu}`
+                            : (req.sender.location || "알 수 없음");
+
                         return {
                             id: req.id,
                             profileId: req.sender.id.toString(),
                             nickname: req.sender.nickname,
                             age: age,
-                            location: req.sender.location,
+                            location: location,
                             photo: photos[0] || "",
                             letter: req.letter,
                             timestamp: new Date(req.created_at),
@@ -126,11 +135,15 @@ export function useMatches(userId: string | undefined, profileId: string | null)
                             ? new Date().getFullYear() - parseInt(req.receiver.birth_date.substring(0, 4))
                             : 0);
 
+                        const location = (req.receiver.sido && req.receiver.sigungu)
+                            ? `${req.receiver.sido} ${req.receiver.sigungu}`
+                            : (req.receiver.location || "알 수 없음");
+
                         return {
                             profileId: req.receiver.id.toString(),
                             nickname: req.receiver.nickname,
                             age: age,
-                            location: req.receiver.location,
+                            location: location,
                             photo: photos[0] || "",
                             letter: req.letter,
                             timestamp: new Date(req.created_at),
