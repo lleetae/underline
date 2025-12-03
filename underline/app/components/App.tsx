@@ -28,7 +28,7 @@ export default function App() {
   const [showCancelModal, setShowCancelModal] = useState(false);
 
 
-  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications">("home");
+  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications" | "couponBox">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [selectedProfilePenalized, setSelectedProfilePenalized] = useState(false);
@@ -112,7 +112,7 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const viewParam = params.get("view") as typeof currentView;
 
-      if (viewParam && ["signup", "home", "mailbox", "profile", "profileDetail", "notifications"].includes(viewParam)) {
+      if (viewParam && ["signup", "home", "mailbox", "profile", "profileDetail", "notifications", "couponBox"].includes(viewParam)) {
         setCurrentView(viewParam);
 
         // Restore other params
@@ -659,7 +659,7 @@ export default function App() {
     ]);
   };
 
-  const handleTabChange = (tab: "signup" | "home" | "mailbox" | "profile" | "profileDetail") => {
+  const handleTabChange = (tab: "signup" | "home" | "mailbox" | "profile" | "profileDetail" | "couponBox") => {
     if (!isSignedUp && tab !== "home") {
       setShowLoginModal(true);
       return;
