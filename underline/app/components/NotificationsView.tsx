@@ -28,6 +28,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [userId, setUserId] = useState<string>('');
 
     useEffect(() => {
         fetchNotifications();
@@ -38,6 +39,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
             setLoading(true);
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
+            setUserId(session?.user?.id || 'No Session');
 
             const response = await fetch(`/api/notifications?t=${new Date().getTime()}`, {
                 cache: 'no-store',
@@ -260,6 +262,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
             {/* Temporary Debug Info */}
             <div className="p-4 bg-black text-white text-xs overflow-auto max-h-40">
                 <p>Debug Info:</p>
+                <p>My User ID: {userId}</p>
                 <p>Loading: {loading ? 'true' : 'false'}</p>
                 <p>Count: {notifications.length}</p>
                 <pre>{JSON.stringify(notifications, null, 2)}</pre>
