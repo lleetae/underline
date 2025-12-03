@@ -147,6 +147,10 @@ export function AddBookView({
       toast.error("감상문을 작성해주세요");
       return;
     }
+    if (bookReview.trim().length < 5) {
+      toast.error("감상문은 최소 5자 이상 작성해주세요");
+      return;
+    }
 
     onComplete({
       title: selectedBook.title,
