@@ -236,6 +236,23 @@ export async function GET(request: NextRequest) {
                             const { data, error } = await supabaseAdmin
                                 .rpc('debug_get_notifications_by_user', { lookup_user_id: targetUserId });
                             return { count: data?.length, first: data?.[0], error };
+                        })(),
+                        test7_Other_Id: await (async () => {
+                            // The ID found in test2 (f1e5...)
+                            const otherId = 'f1e54067-c0f0-4f7a-b586-174ddc0f82bf';
+                            const { data, error } = await supabaseAdmin
+                                .from('notifications')
+                                .select('*')
+                                .eq('id', otherId);
+                            return { count: data?.length, first: data?.[0], error };
+                        })(),
+                        test8_Sender: await (async () => {
+                            // Sender ID 87 from the cursed row
+                            const { data, error } = await supabaseAdmin
+                                .from('notifications')
+                                .select('*')
+                                .eq('sender_id', 87);
+                            return { count: data?.length, first: data?.[0], error };
                         })()
                     };
                 })(),
