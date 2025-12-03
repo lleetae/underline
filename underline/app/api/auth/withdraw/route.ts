@@ -119,7 +119,8 @@ export async function POST(request: NextRequest) {
         const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(userId);
         if (deleteUserError) {
             console.error("Error deleting auth user:", deleteUserError);
-            return NextResponse.json({ error: 'Failed to delete auth user' }, { status: 500 });
+            console.error("Error details:", JSON.stringify(deleteUserError, null, 2));
+            return NextResponse.json({ error: `Failed to delete auth user: ${deleteUserError.message}` }, { status: 500 });
         }
 
         return NextResponse.json({ success: true });
