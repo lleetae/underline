@@ -173,6 +173,14 @@ export async function GET(request: NextRequest) {
                     const { count } = await supabaseAdmin.from('notifications').select('*', { count: 'exact', head: true });
                     return count;
                 })(),
+                latestNotificationsDump: await (async () => {
+                    const { data } = await supabaseAdmin
+                        .from('notifications')
+                        .select('id, user_id, type, created_at')
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+                    return data;
+                })(),
                 maskedUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
                 envCheck: !!supabaseServiceKey,
                 queryError: error,

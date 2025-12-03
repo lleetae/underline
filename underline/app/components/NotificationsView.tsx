@@ -273,6 +273,10 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                 <p>Total Notifs in DB: {debugInfo?.totalNotificationsCheck}</p>
                 <p>DB URL: {debugInfo?.maskedUrl}</p>
                 <p>Env Check: {debugInfo?.envCheck ? 'OK' : 'MISSING'}</p>
+                <div className="mt-2 border-t border-gray-700 pt-2">
+                    <p className="font-bold">Latest DB Dump:</p>
+                    <pre className="text-[10px]">{JSON.stringify(debugInfo?.latestNotificationsDump, null, 2)}</pre>
+                </div>
                 <p>Loading: {loading ? 'true' : 'false'}</p>
                 <p>Count: {notifications.length}</p>
                 <pre>{JSON.stringify(notifications, null, 2)}</pre>
