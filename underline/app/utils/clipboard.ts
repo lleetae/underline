@@ -9,19 +9,32 @@ export const copyToClipboard = async (text: string): Promise<boolean> => {
         }
         throw new Error('Clipboard API not available');
     } catch (err) {
-        // 2. Fallback to execCommand
+        // 2. Fallback to execCommand with iOS support
         try {
             const textArea = document.createElement("textarea");
             textArea.value = text;
 
-            // Ensure it's not visible but part of the DOM
+            // iOS-safe styling
             textArea.style.position = "fixed";
-            textArea.style.left = "-9999px";
+            textArea.style.left = "0";
             textArea.style.top = "0";
+            textArea.style.opacity = "0";
+            textArea.style.pointerEvents = "none";
+            textArea.setAttribute('readonly', '');
+            textArea.contentEditable = 'true'; // iOS requires this for some reason
+
             document.body.appendChild(textArea);
 
-            textArea.focus();
-            textArea.select();
+            // iOS-specific selection
+            const range = document.createRange();
+            range.selectNodeContents(textArea);
+            const selection = window.getSelection();
+            if (selection) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+
+            textArea.setSelectionRange(0, 999999); // For mobile devices
 
             const successful = document.execCommand('copy');
             document.body.removeChild(textArea);

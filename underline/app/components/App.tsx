@@ -10,6 +10,7 @@ import { HomeDatingView } from "./HomeDatingView";
 import { NotificationsView } from "./NotificationsView";
 import { BottomNav } from "./mailbox/BottomNav";
 import { LoginModal } from "./LoginModal";
+import { CouponBoxView } from "./CouponBoxView";
 import { Toaster, toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { Session } from "@supabase/supabase-js";
@@ -1078,6 +1079,12 @@ export default function App() {
               />
               <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
             </>
+          )}
+
+          {currentView === "couponBox" && (
+            <CouponBoxView
+              onBack={() => navigateTo("profile")}
+            />
           )}
 
           {currentView === "profileDetail" && selectedProfileId && (
