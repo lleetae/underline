@@ -22,17 +22,10 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Fetch notifications with sender details
+        // 1. Fetch notifications (without join first)
         const { data: notifications, error } = await supabase
             .from('notifications')
-            .select(`
-                *,
-                sender:member!notifications_sender_id_fkey (
-                    id,
-                    nickname,
-                    photo_urls_blurred
-                )
-            `)
+            .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
@@ -41,11 +34,42 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
         }
 
+        if (!notifications || notifications.length === 0) {
+            return NextResponse.json({ notifications: [], unreadCount: 0 });
+        }
+
+        // 2. Collect unique sender_ids (which are auth_ids)
+        const senderAuthIds = [...new Set(notifications
+            .map(n => n.sender_id)
+            .filter(id => id) // filter out nulls
+        )];
+
+        // 3. Fetch member details for these senders
+        let senderMap = new Map();
+        if (senderAuthIds.length > 0) {
+            const { data: members, error: membersError } = await supabase
+                .from('member')
+                .select('id, nickname, photo_urls_blurred, auth_id')
+                .in('auth_id', senderAuthIds);
+
+            if (!membersError && members) {
+                members.forEach(m => {
+                    senderMap.set(m.auth_id, m);
+                });
+            }
+        }
+
+        // 4. Attach sender details to notifications
+        const enrichedNotifications = notifications.map(n => ({
+            ...n,
+            sender: n.sender_id ? senderMap.get(n.sender_id) || null : null
+        }));
+
         // Count unread
-        const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
+        const unreadCount = notifications.filter(n => !n.is_read).length;
 
         return NextResponse.json({
-            notifications,
+            notifications: enrichedNotifications,
             unreadCount
         });
 
