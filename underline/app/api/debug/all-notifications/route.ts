@@ -23,52 +23,7 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        // Hardcoded target for debugging based on user logs
-        const targetUserId = '6831764f-40ab-4e67-ad41-43f717f526df';
-        const targetNotifId = '1dc1d2c8-6cda-4ac8-9166-5dc59665358f';
-
-        // 1. Fetch by TYPE (Known to work based on previous logs)
-        const { data: allByType, error: typeError } = await supabaseAdmin
-            .from('notifications')
-            .select('*')
-            .eq('type', 'contact_revealed')
-            .order('created_at', { ascending: false })
-            .limit(20);
-
-        // 2. Find the target row in-memory
-        const targetRow = allByType?.find((n: any) => n.id === targetNotifId) ||
-            allByType?.find((n: any) => n.user_id === targetUserId);
-
-        // 3. Analyze the mismatch
-        let analysis = "Target row not found in 'allByType' list.";
-        if (targetRow) {
-            const dbId = targetRow.user_id;
-            const match = dbId === targetUserId;
-            analysis = `Found Row! DB UserID: '${dbId}' vs Target: '${targetUserId}'. Strict Match: ${match}.`;
-
-            if (!match) {
-                analysis += `\nLengths: DB=${dbId.length}, Target=${targetUserId.length}`;
-                const dbCodes = dbId.split('').map((c: string) => c.charCodeAt(0));
-                const targetCodes = targetUserId.split('').map((c: string) => c.charCodeAt(0));
-                analysis += `\nDB Codes: [${dbCodes.join(',')}]`;
-                analysis += `\nTarget Codes: [${targetCodes.join(',')}]`;
-            }
-        }
-
-        // 4. Test Query with Hardcoded ID (Again, to confirm failure)
-        const { data: queryResult, error: queryError } = await supabaseAdmin
-            .from('notifications')
-            .select('*')
-            .eq('user_id', targetUserId);
-
-        // 5. Fetch Recent Members (to help find the new ID)
-        const { data: recentMembers } = await supabaseAdmin
-            .from('member')
-            .select('id, auth_id, nickname, created_at')
-            .order('created_at', { ascending: false })
-            .limit(5);
-
-        // 0. Get Current User (Try Header first, then Cookies)
+        // 1. Get Current User (Try Header first, then Cookies)
         let currentUser = null;
         const authHeader = request.headers.get('Authorization');
 
@@ -88,9 +43,78 @@ export async function GET(request: Request) {
             }
         }
 
+        // 2. Determine Target User ID
+        // Priority: memberId param > currentUser > Hardcoded Fallback
+        const url = new URL(request.url);
+        const memberIdParam = url.searchParams.get('memberId');
+
+        let targetUserId = currentUser ? currentUser.id : '6831764f-40ab-4e67-ad41-43f717f526df';
+        let memberLookup = null;
+        let memberLookupError = null;
+
+        if (memberIdParam) {
+            const { data: memberData, error } = await supabaseAdmin
+                .from('member')
+                .select('auth_id, id, nickname')
+                .eq('id', memberIdParam)
+                .single();
+
+            memberLookupError = error;
+
+            if (memberData) {
+                targetUserId = memberData.auth_id;
+                memberLookup = memberData;
+            }
+        }
+
+        const targetNotifId = '1dc1d2c8-6cda-4ac8-9166-5dc59665358f';
+
+        // 3. Fetch by TYPE (Known to work based on previous logs)
+        const { data: allByType, error: typeError } = await supabaseAdmin
+            .from('notifications')
+            .select('*')
+            .eq('type', 'contact_revealed')
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        // 4. Find the target row in-memory
+        const targetRow = allByType?.find((n: any) => n.id === targetNotifId) ||
+            allByType?.find((n: any) => n.user_id === targetUserId);
+
+        // 5. Analyze the mismatch
+        let analysis = "Target row not found in 'allByType' list.";
+        if (targetRow) {
+            const dbId = targetRow.user_id;
+            const match = dbId === targetUserId;
+            analysis = `Found Row! DB UserID: '${dbId}' vs Target: '${targetUserId}'. Strict Match: ${match}.`;
+
+            if (!match) {
+                analysis += `\nLengths: DB=${dbId.length}, Target=${targetUserId.length}`;
+                const dbCodes = dbId.split('').map((c: string) => c.charCodeAt(0));
+                const targetCodes = targetUserId.split('').map((c: string) => c.charCodeAt(0));
+                analysis += `\nDB Codes: [${dbCodes.join(',')}]`;
+                analysis += `\nTarget Codes: [${targetCodes.join(',')}]`;
+            }
+        }
+
+        // 6. Test Query with Hardcoded ID (Again, to confirm failure)
+        const { data: queryResult, error: queryError } = await supabaseAdmin
+            .from('notifications')
+            .select('*')
+            .eq('user_id', targetUserId);
+
+        // 7. Fetch Recent Members (to help find the new ID)
+        const { data: recentMembers } = await supabaseAdmin
+            .from('member')
+            .select('id, auth_id, nickname, created_at')
+            .order('created_at', { ascending: false })
+            .limit(5);
+
         return NextResponse.json({
             message: "ID Mismatch Analysis",
             detectedUser: currentUser ? { id: currentUser.id, email: currentUser.email } : "None (Using Fallback)",
+            memberLookup,
+            memberLookupError,
             targetUserId,
             foundInTypeQuery: !!targetRow,
             typeQueryError: typeError,
