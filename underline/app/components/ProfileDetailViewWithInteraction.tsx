@@ -374,17 +374,12 @@ export function ProfileDetailViewWithInteraction({
         return;
       }
 
-      console.log("DEBUG: handlePayment member data:", member);
-      toast.info(`DEBUG: Coupons: Free=${member.free_reveals_count}, Welcome=${member.has_welcome_coupon}`);
-
       setMemberInfo(member);
 
       // Check if user has ANY coupons
       if ((member.free_reveals_count || 0) > 0 || member.has_welcome_coupon) {
-        console.log("DEBUG: Showing coupon modal");
         setShowCouponModal(true);
       } else {
-        console.log("DEBUG: No coupons, processing payment directly");
         // No coupons, proceed to full price payment
         processPayment('none', member);
       }
