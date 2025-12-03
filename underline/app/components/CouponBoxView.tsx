@@ -2,27 +2,55 @@ import React from "react";
 import { ArrowLeft, Copy, Ticket } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
+import { handleCopy } from "../utils/clipboard";
 
-interface CouponBoxViewProps {
-    freeRevealsCount: number;
-    hasWelcomeCoupon: boolean;
-    onBack: () => void;
-}
 
-export function CouponBoxView({ freeRevealsCount, hasWelcomeCoupon, onBack }: CouponBoxViewProps) {
+
+export function CouponBoxView({ onBack }: { onBack: () => void }) {
+    const [freeRevealsCount, setFreeRevealsCount] = React.useState(0);
+    const [hasWelcomeCoupon, setHasWelcomeCoupon] = React.useState(false);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: member } = await supabase
+                        .from('member')
+                        .select('free_reveals_count, has_welcome_coupon')
+                        .eq('auth_id', user.id)
+                        .single();
+
+                    if (member) {
+                        setFreeRevealsCount(member.free_reveals_count || 0);
+                        setHasWelcomeCoupon(member.has_welcome_coupon || false);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching coupon data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
     const handleCopyLink = async () => {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
         const shareUrl = `${window.location.origin}?ref=${userId || ''}`;
 
-        try {
-            await navigator.clipboard.writeText(shareUrl);
-            toast.success('초대 링크가 복사되었습니다!');
-        } catch (err) {
-            console.error('Failed to copy:', err);
-            toast.error('링크 복사에 실패했습니다.');
-        }
+        await handleCopy(shareUrl, '초대 링크가 복사되었습니다!');
     };
+
+    if (loading) {
+        return (
+            <div className="w-full max-w-md min-h-screen bg-[#FCFCFA] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col animate-in slide-in-from-right duration-300">
