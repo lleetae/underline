@@ -188,6 +188,7 @@ export async function GET(request: NextRequest) {
                         user_id_codes: n.user_id?.split('').map((c: string) => c.charCodeAt(0)),
                         id_codes: n.id?.split('').map((c: string) => c.charCodeAt(0))
                     }));
+
                 })(),
                 specificRowInspection: await (async () => {
                     const targetId = '0457a739-cf2f-4c69-be6b-a9423c125561';
@@ -208,32 +209,6 @@ export async function GET(request: NextRequest) {
                         targetId,
                         eqResult: { count: dataEq?.length, first: dataEq?.[0], error: errorEq },
                         likeResult: { count: dataLike?.length, first: dataLike?.[0], error: errorLike }
-                    };
-                })(),
-                specificRowInspection: await (async () => {
-                    const targetId = '0457a739-cf2f-4c69-be6b-a9423c125561';
-                    const { data } = await supabaseAdmin
-                        .from('notifications')
-                        .select('*')
-                        .eq('id', targetId)
-                        .single();
-
-                    if (!data) return 'Not Found by ID';
-
-                    const dbUserId = data.user_id;
-                    const isMatch = dbUserId === user.id;
-
-                    return {
-                        found: true,
-                        dbUserId: dbUserId,
-                        dbUserIdLength: dbUserId?.length,
-                        targetUserId: user.id,
-                        targetUserIdLength: user.id.length,
-                        isStrictMatch: isMatch,
-                        charCodeDiff: !isMatch ? {
-                            db: dbUserId?.split('').map((c: string) => c.charCodeAt(0)),
-                            target: user.id.split('').map((c: string) => c.charCodeAt(0))
-                        } : null
                     };
                 })(),
                 maskedUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
