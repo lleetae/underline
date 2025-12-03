@@ -88,25 +88,7 @@ export async function GET(request: Request) {
             .order('created_at', { ascending: false })
             .limit(5);
 
-        // 0. Get Current User (Try Header first, then Cookies)
-        let currentUser = null;
-        const authHeader = request.headers.get('Authorization');
 
-        if (authHeader) {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-            currentUser = user;
-        } else {
-            // Try cookies
-            try {
-                const cookieStore = cookies();
-                const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-                const { data: { user } } = await supabase.auth.getUser();
-                currentUser = user;
-            } catch (e) {
-                console.error("Cookie auth failed:", e);
-            }
-        }
 
         return NextResponse.json({
             message: "ID Mismatch Analysis",
