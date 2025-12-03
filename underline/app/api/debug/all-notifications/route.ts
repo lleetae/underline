@@ -53,18 +53,37 @@ export async function GET(request: Request) {
         let memberLookupError = null;
 
         if (memberIdParam) {
-            const { data: memberData, error } = await supabaseAdmin
+            const { data: memberData, error: memberError } = await supabaseAdmin
                 .from('member')
                 .select('auth_id, id, nickname')
                 .eq('id', memberIdParam)
                 .single();
 
-            memberLookupError = error;
+            memberLookupError = memberError;
 
             if (memberData) {
                 targetUserId = memberData.auth_id;
                 memberLookup = memberData;
             }
+        }
+
+        const action = url.searchParams.get('action');
+        let creationResult = null;
+
+        if (action === 'create_test' && targetUserId) {
+            const { data: newNotif, error: createError } = await supabaseAdmin
+                .from('notifications')
+                .insert([{
+                    user_id: targetUserId,
+                    type: 'contact_revealed',
+                    sender_id: 120, // Member 120
+                    match_id: 'b69e98d9-0a6e-4aed-aea8-415ce7e8e6ce', // Existing match ID
+                    is_read: false
+                }])
+                .select()
+                .single();
+
+            creationResult = { success: !createError, data: newNotif, error: createError };
         }
 
         const targetNotifId = '1dc1d2c8-6cda-4ac8-9166-5dc59665358f';
@@ -115,6 +134,7 @@ export async function GET(request: Request) {
             detectedUser: currentUser ? { id: currentUser.id, email: currentUser.email } : "None (Using Fallback)",
             memberLookup,
             memberLookupError,
+            creationResult,
             targetUserId,
             foundInTypeQuery: !!targetRow,
             typeQueryError: typeError,
