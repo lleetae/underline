@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,69 +17,82 @@ const supabaseAdmin = supabaseServiceKey
     })
     : null;
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         if (!supabaseAdmin) {
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        // Hardcoded target for debugging based on user logs
-        const targetUserId = '6831764f-40ab-4e67-ad41-43f717f526df';
+        // 0. Get Current User (Try Header first, then Cookies)
+        let currentUser = null;
+        const authHeader = request.headers.get('Authorization');
+
+        if (authHeader) {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+            currentUser = user;
+        } else {
+            // Try cookies
+            try {
+                const cookieStore = cookies();
+                const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+                const { data: { user } } = await supabase.auth.getUser();
+                currentUser = user;
+            } catch (e) {
+                console.error("Cookie auth failed:", e);
+            }
+        }
+
+        // Use the DETECTED user ID if available, otherwise fallback to the hardcoded one (which is likely wrong now)
+        const targetUserId = currentUser ? currentUser.id : '6831764f-40ab-4e67-ad41-43f717f526df';
         const targetNotifId = '1dc1d2c8-6cda-4ac8-9166-5dc59665358f';
 
-        // 1. Check Table Schema (Skipping RPC as it might be complex, just fetching one row)
-        const { data: sampleRow, error: schemaError } = await supabaseAdmin
+        // 1. Fetch by TYPE (Known to work based on previous logs)
+        const { data: allByType, error: typeError } = await supabaseAdmin
             .from('notifications')
             .select('*')
-            .limit(1);
+            .eq('type', 'contact_revealed')
+            .order('created_at', { ascending: false })
+            .limit(20);
 
-        // 2. Fetch specific notification by ID
-        const { data: specificNotif, error: specificError } = await supabaseAdmin
-            .from('notifications')
-            .select('*')
-            .eq('id', targetNotifId)
-            .single();
+        // 2. Find the target row in-memory
+        const targetRow = allByType?.find((n: any) => n.id === targetNotifId) ||
+            allByType?.find((n: any) => n.user_id === targetUserId);
 
-        // 3. Test Query with Hardcoded ID
+        // 3. Analyze the mismatch
+        let analysis = "Target row not found in 'allByType' list.";
+        if (targetRow) {
+            const dbId = targetRow.user_id;
+            const match = dbId === targetUserId;
+            analysis = `Found Row! DB UserID: '${dbId}' vs Target: '${targetUserId}'. Strict Match: ${match}.`;
+
+            if (!match) {
+                analysis += `\nLengths: DB=${dbId.length}, Target=${targetUserId.length}`;
+                const dbCodes = dbId.split('').map((c: string) => c.charCodeAt(0));
+                const targetCodes = targetUserId.split('').map((c: string) => c.charCodeAt(0));
+                analysis += `\nDB Codes: [${dbCodes.join(',')}]`;
+                analysis += `\nTarget Codes: [${targetCodes.join(',')}]`;
+            }
+        }
+
+        // 4. Test Query with Hardcoded ID (Again, to confirm failure)
         const { data: queryResult, error: queryError } = await supabaseAdmin
             .from('notifications')
             .select('*')
             .eq('user_id', targetUserId);
 
-        // 4. Strict Comparison
-        let comparison = "Not performed";
-        if (specificNotif) {
-            const dbUserId = specificNotif.user_id;
-            const isMatch = dbUserId === targetUserId;
-            comparison = `DB UserID: '${dbUserId}' vs Target: '${targetUserId}'. Match: ${isMatch}. Lengths: ${dbUserId?.length} vs ${targetUserId.length}`;
-
-            // Check for hidden characters
-            if (!isMatch && dbUserId) {
-                const dbCodes = dbUserId.split('').map((c: string) => c.charCodeAt(0));
-                const targetCodes = targetUserId.split('').map((c: string) => c.charCodeAt(0));
-                comparison += `\nCodes: DB=[${dbCodes.join(',')}], Target=[${targetCodes.join(',')}]`;
-            }
-        }
-
         return NextResponse.json({
-            message: "Deep Inspection Results",
+            message: "ID Mismatch Analysis",
             targetUserId,
-            targetNotifId,
-            schemaCheck: {
-                sampleRow,
-                error: schemaError
-            },
-            specificNotification: {
-                found: !!specificNotif,
-                data: specificNotif,
-                error: specificError
-            },
+            foundInTypeQuery: !!targetRow,
+            typeQueryError: typeError,
+            analysis,
             queryTest: {
                 count: queryResult?.length,
                 firstItem: queryResult?.[0],
                 error: queryError
             },
-            comparison
+            allByType: allByType || []
         });
 
     } catch (error: any) {
