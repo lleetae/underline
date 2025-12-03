@@ -304,7 +304,7 @@ export async function POST(request: NextRequest) {
             }
 
             console.log("Payment flow completed successfully");
-            return NextResponse.redirect(new URL(`/?payment_success=true`, request.url), { status: 303 });
+            return NextResponse.redirect(new URL(`/?view=mailbox&payment_success=true`, request.url), { status: 303 });
         } else {
             console.log(`Payment Approval Failed: ${paymentResult.resultMsg}`);
             return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(paymentResult.resultMsg)}`, request.url), { status: 303 });
