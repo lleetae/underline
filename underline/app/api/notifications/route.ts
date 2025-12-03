@@ -216,7 +216,15 @@ export async function GET(request: NextRequest) {
                         targetId,
                         test1_IdOnly_Eq: { count: dataIdOnly?.length, first: dataIdOnly?.[0], error: errorIdOnly },
                         test2_All_NoFilter: { count: dataAllNoFilter?.length, first: dataAllNoFilter?.[0], error: errorAllNoFilter },
-                        test3_All_Eq: { count: dataAllEq?.length, first: dataAllEq?.[0], error: errorAllEq }
+                        test3_All_Eq: { count: dataAllEq?.length, first: dataAllEq?.[0], error: errorAllEq },
+                        test4_Time_Eq: await (async () => {
+                            const targetTime = '2025-12-03T11:14:54.031613+00:00';
+                            const { data, error } = await supabaseAdmin
+                                .from('notifications')
+                                .select('*')
+                                .eq('created_at', targetTime);
+                            return { count: data?.length, first: data?.[0], error };
+                        })()
                     };
                 })(),
                 maskedUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
