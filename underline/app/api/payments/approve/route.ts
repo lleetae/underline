@@ -159,13 +159,12 @@ export async function POST(request: NextRequest) {
                     console.log(`Found Match Request Sender ID: ${matchData?.sender_id}`);
                 }
 
-                if (matchData?.sender_id) {
+                if (payerMemberIdStr) {
                     // Insert into payments table using member IDs
                     const { error: paymentError } = await supabaseAdmin
                         .from('payments')
                         .insert({
-                            send_user_id: matchData.sender_id,
-                            receive_user_id: matchData.receiver_id,
+                            user_id: payerMemberIdStr,
                             match_id: matchRequestId,
                             amount: typeof amount === 'string' ? parseInt(amount) : amount,
                             status: 'completed',
@@ -177,8 +176,7 @@ export async function POST(request: NextRequest) {
                     if (paymentError) {
                         console.error("Error inserting payment record:", paymentError);
                         console.error("Payment Insert Payload:", {
-                            send_user_id: matchData.sender_id,
-                            receive_user_id: matchData.receiver_id,
+                            user_id: payerMemberIdStr,
                             match_id: matchRequestId,
                             amount: typeof amount === 'string' ? parseInt(amount) : amount,
                             status: 'completed',

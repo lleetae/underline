@@ -91,8 +91,7 @@ export async function POST(request: Request) {
         const { error: paymentError } = await supabase
             .from('payments')
             .insert({
-                send_user_id: matchData.sender_id,
-                receive_user_id: matchData.receiver_id,
+                user_id: member.id,
                 match_id: matchId,
                 amount: 0,
                 status: 'completed',
