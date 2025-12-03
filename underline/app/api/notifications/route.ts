@@ -88,6 +88,71 @@ export async function GET(request: NextRequest) {
                 const senderIds = Array.from(new Set(notificationsData.map(n => n.sender_id).filter(id => id != null)));
                 console.log(`Fetching details for sender IDs: ${senderIds.join(', ')}`);
 
+                // --- Start of inserted debug block ---
+                const fallbackCount = 0; // Define fallbackCount as it's used in the inserted code
+                const debugInfo = {
+                    queriedUserId: user.id,
+                    userIdLength: user.id.length,
+                    rawCount: notificationsData?.length || 0,
+                    fallbackCount,
+                    hardcodedCheck: await (async () => {
+                        const { count } = await supabaseAdmin
+                            .from('notifications')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('user_id', 'de48de06-6b78-4ff6-af4d-b435ddd4af56');
+                        return count;
+                    })(),
+                    memberCheck: await (async () => {
+                        const { data } = await supabaseAdmin.from('member').select('id').eq('auth_id', user.id).single();
+                        return !!data;
+                    })(),
+                    totalNotificationsCheck: await (async () => {
+                        const { count } = await supabaseAdmin.from('notifications').select('*', { count: 'exact', head: true });
+                        return count;
+                    })(),
+                    latestNotificationsDump: await (async () => {
+                        const { data } = await supabaseAdmin
+                            .from('notifications')
+                            .select('id, user_id, type, created_at')
+                            .order('created_at', { ascending: false })
+                            .limit(5);
+                        return data;
+                    })(),
+                    specificRowInspection: await (async () => {
+                        // Fetch the specific notification seen in the dump
+                        const targetId = '0457a739-cf2f-4c69-be6b-a9423c125561';
+                        const { data } = await supabaseAdmin
+                            .from('notifications')
+                            .select('*')
+                            .eq('id', targetId)
+                            .single();
+
+                        if (!data) return 'Not Found by ID';
+
+                        const dbUserId = data.user_id;
+                        const isMatch = dbUserId === user.id;
+
+                        return {
+                            found: true,
+                            dbUserId: dbUserId,
+                            dbUserIdLength: dbUserId?.length,
+                            targetUserId: user.id,
+                            targetUserIdLength: user.id.length,
+                            isStrictMatch: isMatch,
+                            charCodeDiff: !isMatch ? {
+                                db: dbUserId?.split('').map((c: string) => c.charCodeAt(0)),
+                                target: user.id.split('').map((c: string) => c.charCodeAt(0))
+                            } : null
+                        };
+                    })(),
+                    maskedUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
+                    envCheck: !!supabaseServiceKey,
+                    queryError: error,
+                    params: { limit, offset, unreadOnly }
+                };
+                console.log("Debug Info:", JSON.stringify(debugInfo, null, 2));
+                // --- End of inserted debug block ---
+
                 let sendersMap: Record<string, any> = {};
                 if (senderIds.length > 0) {
                     const { data: senders, error: sendersError } = await supabaseAdmin

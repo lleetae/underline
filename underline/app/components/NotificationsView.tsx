@@ -26,10 +26,11 @@ interface NotificationsViewProps {
 
 export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsViewProps) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [unreadCount, setUnreadCount] = useState(0);
     const [userId, setUserId] = useState<string>('');
     const [debugInfo, setDebugInfo] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [unreadCount, setUnreadCount] = useState(0);
+
 
     useEffect(() => {
         fetchNotifications();
@@ -56,7 +57,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                 setUnreadCount(data.unreadCount || 0);
                 setDebugInfo(data.debugInfo);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching notifications:", error);
             toast.error("알림을 불러오는데 실패했습니다");
         } finally {
@@ -273,6 +274,10 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                 <p>Total Notifs in DB: {debugInfo?.totalNotificationsCheck}</p>
                 <p>DB URL: {debugInfo?.maskedUrl}</p>
                 <p>Env Check: {debugInfo?.envCheck ? 'OK' : 'MISSING'}</p>
+                <div className="mt-2 border-t border-gray-700 pt-2">
+                    <p className="font-bold">Specific Row Inspection:</p>
+                    <pre className="text-[10px]">{JSON.stringify(debugInfo?.specificRowInspection, null, 2)}</pre>
+                </div>
                 <div className="mt-2 border-t border-gray-700 pt-2">
                     <p className="font-bold">Latest DB Dump:</p>
                     <pre className="text-[10px]">{JSON.stringify(debugInfo?.latestNotificationsDump, null, 2)}</pre>
