@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         // 2. Fetch Member Data (to get photos)
         const { data: member, error: memberError } = await supabaseAdmin
             .from('member')
-            .select('id, auth_id, photo_urls_original, photo_urls_blurred, photos')
+            .select('id, photo_urls_original, photo_urls_blurred, photos')
             .eq('auth_id', userId)
             .single();
 
@@ -76,43 +76,22 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 4. Delete Data from Tables
-        // Note: If you have ON DELETE CASCADE set up in your DB, deleting the member might suffice.
-        // But to be safe and explicit, we delete related data first or rely on member deletion if cascaded.
-        // Assuming 'member' table deletion cascades to 'member_books', 'dating_applications'.
-        // 'match_requests' might need manual handling if not cascaded or if referenced by others.
-
-        // Let's try deleting the member record directly. 
-        // If there are foreign key constraints without cascade, this will fail, so we might need to delete children first.
-        // Based on typical setups, let's attempt explicit deletion for safety.
-
+        // 4. Delete Member Record (Explicitly)
+        // We delete the member record first. Since payments table has ON DELETE SET NULL (from migration 007),
+        // payment records will be preserved but send_user_id/receive_user_id will become NULL.
+        // This is the "pre-soft-delete" behavior the user requested to rollback to.
         if (member) {
-            // 4. Anonymize Member Data (Soft Delete)
-            // We retain member_books, dating_applications, match_requests for behavioral data.
-            // We anonymize PII in the member table.
-
-            const randomSuffix = crypto.randomUUID().split('-')[0]; // Short random string
-
-            const { error: updateError } = await supabaseAdmin
+            const { error: deleteMemberError } = await supabaseAdmin
                 .from('member')
-                .update({
-                    nickname: '알수없음',
-                    bio: '',
-                    location: 'unknown',
-                    birth_date: '1900-01-01',
-                    kakao_id: `deleted_${member.id}_${randomSuffix}`, // Ensure uniqueness
-                    photo_urls_original: [],
-                    photo_urls_blurred: [],
-                    photos: [],
-                    referrer_auth_id: null,
-                    legacy_auth_id: member.auth_id, // Save the original UUID
-                    auth_id: null // Unlink to allow deletion (FK safe)
-                })
+                .delete()
                 .eq('id', member.id);
 
-            if (updateError) {
-                console.error("Error anonymizing member record:", updateError);
-                return NextResponse.json({ error: 'Failed to anonymize member record' }, { status: 500 });
+            if (deleteMemberError) {
+                console.error("Error deleting member record:", deleteMemberError);
+                // Continue to try deleting auth user, or return error?
+                // If member deletion fails (e.g. other FKs), auth deletion might also fail or leave orphan data.
+                // But let's log and proceed or return.
+                return NextResponse.json({ error: `Failed to delete member record: ${deleteMemberError.message}` }, { status: 500 });
             }
         }
 
@@ -120,7 +99,6 @@ export async function POST(request: NextRequest) {
         const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(userId);
         if (deleteUserError) {
             console.error("Error deleting auth user:", deleteUserError);
-            console.error("Error details:", JSON.stringify(deleteUserError, null, 2));
             return NextResponse.json({ error: `Failed to delete auth user: ${deleteUserError.message}` }, { status: 500 });
         }
 
