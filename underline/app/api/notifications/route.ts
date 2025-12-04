@@ -7,7 +7,22 @@ export async function GET(request: Request) {
     try {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+        // Client for Auth verification
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+        // Client for Admin operations (Bypass RLS)
+        // Client for Admin operations (Bypass RLS)
+        // Inject custom fetch to disable Next.js caching
+        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            },
+            global: {
+                fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }),
+            },
+        });
 
         // Get user from auth header
         const authHeader = request.headers.get('Authorization');
@@ -22,18 +37,16 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 1. Fetch notifications (without join first)
+        // 1. Fetch notifications (using Admin client to ensure no RLS blocking)
         console.log(`[API] Fetching notifications for user: ${user.id}`);
-        const { data: notifications, error } = await supabase
+
+        const { data: notifications, error } = await supabaseAdmin
             .from('notifications')
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
         console.log(`[API] Raw notifications found: ${notifications?.length || 0}`);
-        if (notifications && notifications.length > 0) {
-            console.log('[API] First notification:', JSON.stringify(notifications[0], null, 2));
-        }
 
         if (error) {
             console.error('[API] Error fetching notifications:', error);
@@ -41,7 +54,10 @@ export async function GET(request: Request) {
         }
 
         if (!notifications || notifications.length === 0) {
-            return NextResponse.json({ notifications: [], unreadCount: 0 });
+            return NextResponse.json({
+                notifications: [],
+                unreadCount: 0
+            });
         }
 
         // 2. Collect unique sender_ids (which are auth_ids)
@@ -53,7 +69,7 @@ export async function GET(request: Request) {
         // 3. Fetch member details for these senders
         let senderMap = new Map();
         if (senderAuthIds.length > 0) {
-            const { data: members, error: membersError } = await supabase
+            const { data: members, error: membersError } = await supabaseAdmin
                 .from('member')
                 .select('id, nickname, photo_urls_blurred, auth_id')
                 .in('auth_id', senderAuthIds);
@@ -79,8 +95,11 @@ export async function GET(request: Request) {
             unreadCount
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Unexpected error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Internal Server Error',
+            details: error.message
+        }, { status: 500 });
     }
 }
