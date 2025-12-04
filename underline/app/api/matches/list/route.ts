@@ -150,11 +150,7 @@ export async function GET(request: NextRequest) {
                 if (p.sido && p.sigungu) {
                     return `${p.sido} ${p.sigungu}`;
                 }
-                const locationMap: { [key: string]: string } = {
-                    seoul: "서울", busan: "부산", incheon: "인천", daegu: "대구",
-                    daejeon: "대전", gwangju: "광주", other: "기타"
-                };
-                return locationMap[p.location] || p.location;
+                return p.sido || "지역 정보 없음";
             };
 
             return {
