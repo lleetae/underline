@@ -280,30 +280,28 @@ export function ProfileDetailViewWithInteraction({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get sender's member id
-      const { data: senderData, error: senderError } = await supabase
-        .from('member')
-        .select('id')
-        .eq('auth_id', user.id)
-        .single();
+      // Call API to create match request and send notification
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
 
-      if (senderError || !senderData) throw new Error("Sender profile not found");
-
-      // Insert into match_requests table
-      const { error: insertError } = await supabase
-        .from('match_requests')
-        .insert({
-          sender_id: senderData.id,
-          receiver_id: profile.id,
-          letter: letter,
-          status: 'pending'
+      const response = await fetch('/api/match/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          receiverId: profile.id,
+          letter: letter
         })
-        .select()
-        .single();
+      });
 
-      if (insertError) throw insertError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send match request");
+      }
 
-      // Notification is handled by database trigger
+      // Notification is handled by API
 
       onMatchRequest({
         profileId: profile.id.toString(),

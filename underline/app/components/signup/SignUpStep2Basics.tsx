@@ -9,6 +9,8 @@ export interface Step2Data {
     gender: "male" | "female" | null;
     birthDate: string;
     location: string;
+    sido?: string;
+    sigungu?: string;
     height: number;
 }
 
@@ -99,6 +101,8 @@ export function SignUpStep2Basics({
             gender,
             birthDate,
             location: `${city} ${district}`,
+            sido: city,
+            sigungu: district,
             height: parseInt(height)
         });
     };
