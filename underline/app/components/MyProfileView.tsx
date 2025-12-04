@@ -588,7 +588,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
 
             {/* Bio Preview */}
             <div className="mb-4">
-              <p className="text-sm text-[var(--foreground)]/80 font-sans leading-relaxed line-clamp-2">
+              <p className="text-sm text-[var(--foreground)]/80 font-sans leading-relaxed line-clamp-2 break-all">
                 {profileData.bio}
               </p>
             </div>
