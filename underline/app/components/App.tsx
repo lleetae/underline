@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { ProfileDetailViewWithInteraction } from "./ProfileDetailViewWithInteraction";
 import { MailboxView } from "./MailboxView";
 import { MyProfileView } from "./MyProfileView";
@@ -15,6 +15,7 @@ import { RegionStatsView } from "./RegionStatsView";
 import { Toaster, toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { Session } from "@supabase/supabase-js";
+import { addDays } from 'date-fns';
 import { CancelRecruitmentModal } from "./CancelRecruitmentModal";
 import { BatchUtils } from "../utils/BatchUtils";
 
@@ -27,6 +28,11 @@ export default function App() {
   const [isParticipant, setIsParticipant] = useState(false); // User is active in the CURRENT batch (for Dating View)
   const [isSpectator, setIsSpectator] = useState(false); // User is in a FAILED region (Spectator Mode)
   const [isRegionClosed, setIsRegionClosed] = useState(false); // Region has insufficient users
+  const isRegionClosedRef = useRef(isRegionClosed);
+
+  useEffect(() => {
+    isRegionClosedRef.current = isRegionClosed;
+  }, [isRegionClosed]);
   const [isApplied, setIsApplied] = useState(false); // User has applied for the TARGET batch (for Button Status)
   const [showCancelModal, setShowCancelModal] = useState(false);
 
@@ -249,7 +255,6 @@ export default function App() {
     });
 
     return () => subscription.unsubscribe();
-    return () => subscription.unsubscribe();
   }, []);
 
   // Capture Referral Code
@@ -419,7 +424,46 @@ export default function App() {
     };
   }, [session, fetchMatches]);
 
-  const checkProfile = async (userId: string) => {
+  // Re-check application status when isRegionClosed changes (Spectator Mode)
+  useEffect(() => {
+    const checkNextBatchApplication = async () => {
+      if (isRegionClosed && session?.user?.id) {
+        // If region is closed, we want to check if user applied for the NEXT batch
+        // (Target Batch + 7 days)
+        let targetBatchDate = BatchUtils.getTargetBatchStartDate();
+        targetBatchDate = addDays(targetBatchDate, 7);
+
+        const { start: targetStart, end: targetEnd } = BatchUtils.getBatchApplicationRange(targetBatchDate);
+
+        const { data: memberData } = await supabase
+          .from('member')
+          .select('id')
+          .eq('auth_id', session.user.id)
+          .single();
+
+        if (memberData) {
+          const { data: applicationData } = await supabase
+            .from('dating_applications')
+            .select('status')
+            .eq('member_id', memberData.id)
+            .gte('created_at', targetStart.toISOString())
+            .lte('created_at', targetEnd.toISOString())
+            .neq('status', 'cancelled')
+            .maybeSingle();
+
+          if (applicationData) {
+            setIsApplied(true);
+          } else {
+            setIsApplied(false);
+          }
+        }
+      }
+    };
+
+    checkNextBatchApplication();
+  }, [isRegionClosed, session]);
+
+  const checkProfile = useCallback(async (userId: string) => {
     try {
       const { data, error: _error } = await supabase
         .from('member')
@@ -458,7 +502,13 @@ export default function App() {
         }
 
         // Check if user has applied for the NEXT cycle
-        const targetBatchDate = BatchUtils.getTargetBatchStartDate();
+        let targetBatchDate = BatchUtils.getTargetBatchStartDate();
+
+        // If region is closed (Spectator Mode), apply for the NEXT batch (after the current one)
+        if (isRegionClosedRef.current) {
+          targetBatchDate = addDays(targetBatchDate, 7);
+        }
+
         const { start: targetStart, end: targetEnd } = BatchUtils.getBatchApplicationRange(targetBatchDate);
 
         const { data: applicationData } = await supabase
@@ -483,22 +533,22 @@ export default function App() {
         const { data: receivedRequests, error: requestsError } = await supabase
           .from('match_requests')
           .select(`
-            id,
-            sender_id,
-            letter,
-            created_at,
-            sender:member!sender_id (
               id,
-              nickname,
-              age,
-              birth_date,
-              sido,
-              sigungu,
-              photo_url,
-              photos,
-              auth_id
-            )
-          `)
+              sender_id,
+              letter,
+              created_at,
+              sender:member!sender_id (
+                id,
+                nickname,
+                age,
+                birth_date,
+                sido,
+                sigungu,
+                photo_url,
+                photos,
+                auth_id
+              )
+            `)
           .eq('receiver_id', data.id)
           .eq('status', 'pending')
           .gte('created_at', cycleStartDate.toISOString()) // Filter by cycle
@@ -537,22 +587,22 @@ export default function App() {
         const { data: sentRequests, error: sentRequestsError } = await supabase
           .from('match_requests')
           .select(`
-            id,
-            receiver_id,
-            letter,
-            created_at,
-            receiver:member!receiver_id (
               id,
-              nickname,
-              age,
-              birth_date,
-              sido,
-              sigungu,
-              photo_url,
-              photos,
-              auth_id
-            )
-          `)
+              receiver_id,
+              letter,
+              created_at,
+              receiver:member!receiver_id (
+                id,
+                nickname,
+                age,
+                birth_date,
+                sido,
+                sigungu,
+                photo_url,
+                photos,
+                auth_id
+              )
+            `)
           .eq('sender_id', data.id)
           .eq('status', 'pending')
           .gte('created_at', cycleStartDate.toISOString()) // Filter by cycle
@@ -600,7 +650,7 @@ export default function App() {
       console.log("Setting isLoading to false");
       setIsLoading(false);
     }
-  };
+  }, [fetchMatches, isRegionClosedRef]);
 
   const handleSignUpComplete = () => {
     setHasProfile(true);
@@ -781,7 +831,17 @@ export default function App() {
       if (!member) return;
 
       // Check which batch we are applying for
-      const targetBatchDate = BatchUtils.getTargetBatchStartDate();
+      let targetBatchDate = BatchUtils.getTargetBatchStartDate();
+      let applicationTimestamp = new Date();
+
+      // If region is closed (Spectator Mode), apply for the NEXT batch (after the current one)
+      if (isRegionClosedRef.current) {
+        targetBatchDate = addDays(targetBatchDate, 7);
+        // Force timestamp to be within the next batch's range (e.g., the start of that batch)
+        // This ensures it's not counted as a "current batch" application
+        applicationTimestamp = targetBatchDate;
+      }
+
       const isNextWeek = targetBatchDate > BatchUtils.getCurrentBatchStartDate();
 
       const { error } = await supabase
@@ -789,37 +849,12 @@ export default function App() {
         .upsert({
           member_id: member.id,
           status: 'active',
-          created_at: new Date().toISOString() // This timestamp places it in the correct batch range
-        }, { onConflict: 'member_id' }); // Note: onConflict might need adjustment if we want multiple rows per user. 
-      // BUT, since we use created_at to filter, and upsert updates the existing row...
-      // Wait, if we upsert on member_id, we overwrite the previous application.
-      // This effectively "moves" the application to the new batch if we just update created_at.
-      // If we want to keep history, we should NOT use member_id as unique constraint for the table, 
-      // OR we need to accept that we only keep the LATEST application.
-      // Given the requirement "Reset: Sunday (initialize data)", keeping history might be good but 
-      // if the table has a unique constraint on member_id, we can't insert a new row.
-      // Let's assume for now we just update the timestamp, which effectively "renews" the application for the new batch.
-      // If the user applies again, the created_at updates, moving them to the new batch window.
+          created_at: applicationTimestamp.toISOString()
+        }, { onConflict: 'member_id' });
 
       if (error) throw error;
 
       setIsApplied(true);
-
-      // If we are in REGISTRATION phase, applying now also makes us a participant for the current (upcoming) batch immediately?
-      // Actually, if it's Sun-Thu (Registration), the "Current Batch" IS the one we are applying for.
-      // So we should also set isParticipant to true so they can see the "Application Completed" state 
-      // OR if the design is to show Recruiting View until Friday, then isParticipant should remain false?
-      // Wait, if I apply on Monday, I am "Registered" for the batch starting THIS Sunday.
-      // But the "Dating View" only activates on Friday.
-      // So isParticipant should track if I have a valid application for the ACTIVE matching batch.
-      // Since matching is only active Fri-Sat, isParticipant will only be relevant then.
-
-      // However, for the UI logic:
-      // BatchUtils.getCurrentSystemState() === 'MATCHING' && isParticipant
-
-      // If I apply on Monday (Registration Phase), SystemState is REGISTRATION.
-      // So even if isParticipant is true, I won't see Dating View.
-      // So it's safe to set isParticipant = true if we are applying for the current batch.
 
       if (!isNextWeek) {
         setIsParticipant(true);
@@ -1096,8 +1131,8 @@ export default function App() {
                 sentMatchRequests={sentMatchRequests}
                 receivedMatchRequests={receivedMatchRequests}
                 isMatched={profileSource === "mailbox" && mailboxActiveTab === "matched"}
-                disableMatching={profileSource === "mailbox" || selectedProfilePenalized || selectedProfileWithdrawn || isSpectator} // Disable for spectators
-                isSpectator={isSpectator} // Pass isSpectator explicitly for Toast logic
+                disableMatching={profileSource === "mailbox" || selectedProfilePenalized || selectedProfileWithdrawn || isSpectator || isRegionClosed} // Disable for spectators
+                isSpectator={isSpectator || isRegionClosed} // Pass isSpectator explicitly for Toast logic
                 isWithdrawn={selectedProfileWithdrawn}
                 partnerKakaoId={selectedProfileKakaoId} // Pass Kakao ID
                 isUnlocked={selectedProfileIsUnlocked}
