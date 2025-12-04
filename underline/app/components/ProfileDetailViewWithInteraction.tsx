@@ -862,45 +862,47 @@ export function ProfileDetailViewWithInteraction({
       </div>
 
 
-      {/* Floating Match Request Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-6 pb-8">
-        <button
-          onClick={handleOpenLetterModal}
-          disabled={!canRequest}
-          className={`w-full max-w-md mx-auto font-sans font-medium py-4 rounded-xl transition-all duration-300 shadow-2xl flex items-center justify-center gap-2
+      {/* Floating Match Request Button - Hidden in Spectator Mode */}
+      {!isSpectator && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-6 pb-8">
+          <button
+            onClick={handleOpenLetterModal}
+            disabled={!canRequest}
+            className={`w-full max-w-md mx-auto font-sans font-medium py-4 rounded-xl transition-all duration-300 shadow-2xl flex items-center justify-center gap-2
             ${canRequest
-              ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/30"
-              : "bg-[#F5F5F0] text-[var(--foreground)]/40 cursor-not-allowed shadow-none"
-            }`}
-        >
-          {isMatched ? (
-            <>
-              <Heart className="w-5 h-5 fill-current" />
-              <span>매칭된 상대입니다</span>
-            </>
-          ) : isRequestReceived ? (
-            <>
-              <Heart className="w-5 h-5" />
-              <span>매칭 신청을 받았습니다</span>
-            </>
-          ) : isRequestSent ? (
-            <>
-              <Send className="w-5 h-5" />
-              <span>매칭 신청 완료</span>
-            </>
-          ) : disableMatching ? (
-            <>
-              <Heart className="w-5 h-5" />
-              <span>매칭 신청 불가</span>
-            </>
-          ) : (
-            <>
-              <Send className="w-5 h-5" />
-              <span>매칭 신청하기</span>
-            </>
-          )}
-        </button>
-      </div>
+                ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/30"
+                : "bg-[#F5F5F0] text-[var(--foreground)]/40 cursor-not-allowed shadow-none"
+              }`}
+          >
+            {isMatched ? (
+              <>
+                <Heart className="w-5 h-5 fill-current" />
+                <span>매칭된 상대입니다</span>
+              </>
+            ) : isRequestReceived ? (
+              <>
+                <Heart className="w-5 h-5" />
+                <span>매칭 신청을 받았습니다</span>
+              </>
+            ) : isRequestSent ? (
+              <>
+                <Send className="w-5 h-5" />
+                <span>매칭 신청 완료</span>
+              </>
+            ) : disableMatching ? (
+              <>
+                <Heart className="w-5 h-5" />
+                <span>매칭 신청 불가</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-5 h-5" />
+                <span>매칭 신청하기</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Letter Modal */}
       <MatchRequestLetterModal
