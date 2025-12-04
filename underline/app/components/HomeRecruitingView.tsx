@@ -485,15 +485,19 @@ export function HomeRecruitingView({
           <h3 className="font-serif text-xl font-bold text-underline-text">
             실제 유저 후기
           </h3>
-          {isAdmin && (
-            <button
-              onClick={() => router.push('/admin/reviews')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-underline-red text-white text-sm rounded-lg hover:bg-underline-red/90 transition-colors"
-            >
-              <Edit className="w-4 h-4" />
-              후기 작성
-            </button>
-          )}
+          <button
+            onClick={() => {
+              if (isAdmin) {
+                router.push('/admin/reviews');
+              } else {
+                window.open('https://forms.gle/5omxgPTXh4qbCBnV8', '_blank');
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-underline-red text-white text-sm rounded-lg hover:bg-underline-red/90 transition-colors"
+          >
+            <Edit className="w-4 h-4" />
+            후기 작성
+          </button>
         </div>
 
         <div className="overflow-hidden" ref={emblaRef}>
