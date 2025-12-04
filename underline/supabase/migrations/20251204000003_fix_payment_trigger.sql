@@ -1,9 +1,24 @@
 -- Fix Payment Notification Trigger
 -- Drops and recreates the trigger to ensure it exists and has the correct logic.
 
--- 1. Drop existing trigger and function
-DROP TRIGGER IF EXISTS on_payment_completed ON payments;
-DROP FUNCTION IF EXISTS handle_contact_revealed();
+-- 1. Drop existing trigger and function (Robust Cleanup)
+DO $$
+DECLARE
+    t_name text;
+BEGIN
+    -- Loop through all USER triggers on the 'payments' table
+    FOR t_name IN 
+        SELECT tgname 
+        FROM pg_trigger 
+        WHERE tgrelid = 'payments'::regclass
+        AND tgisinternal = false -- Exclude system triggers
+    LOOP
+        -- Drop the trigger
+        EXECUTE 'DROP TRIGGER IF EXISTS ' || quote_ident(t_name) || ' ON payments CASCADE';
+    END LOOP;
+END $$;
+
+DROP FUNCTION IF EXISTS handle_contact_revealed() CASCADE;
 
 -- 2. Re-create Trigger Function (Hardened)
 CREATE OR REPLACE FUNCTION handle_contact_revealed()
