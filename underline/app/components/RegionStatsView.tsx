@@ -119,9 +119,9 @@ export function RegionStatsView({ onBack, isSignedUp, onShowLoginModal, userId }
                             return (
                                 <div key={region} className={`p-5 rounded-xl border ${isOpen ? 'bg-white border-underline-red/20 shadow-sm' : 'bg-white border-gray-100'}`}>
                                     <div className="flex items-center justify-between mb-4">
-                                        <span className="font-bold text-lg text-underline-text">{getRegionName(region)}</span>
+                                        <span className="font-bold text-sm text-underline-text">{getRegionName(region)}</span>
                                         {isOpen ? (
-                                            <span className="text-[10px] font-bold text-white bg-underline-red px-2 py-0.5 rounded-full shadow-sm">오픈 확정</span>
+                                            <span className="text-[9px] font-bold text-white bg-underline-red px-1.5 py-0.5 rounded-full shadow-sm">오픈 확정</span>
                                         ) : (
                                             <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">모집중</span>
                                         )}
