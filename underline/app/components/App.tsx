@@ -1006,6 +1006,8 @@ export default function App() {
               onShowNotifications={handleShowNotifications}
               isSpectator={isSpectator} // Pass isSpectator
               onRegister={handleRegister}
+              isApplied={isApplied}
+              userId={session?.user?.id}
             />
           ) : (
             <HomeRecruitingView
