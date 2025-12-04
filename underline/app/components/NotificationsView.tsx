@@ -52,6 +52,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
             if (response.ok) {
                 const data = await response.json();
                 console.log('[NotificationsView] Data received:', data);
+                console.log('[NotificationsView] Server sees User ID:', data.debug_user_id);
                 setNotifications(data.notifications || []);
                 setUnreadCount(data.unreadCount || 0);
             } else {

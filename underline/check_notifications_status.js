@@ -52,8 +52,30 @@ async function checkNotifications() {
         }
     }
 
-    console.log('\n--- Checking Triggers ---');
-    // We will check triggers via SQL tool next
+    // 3. Check logged-in user details
+    const loggedInUserId = '60dc0cb0-0206-4912-aa69-d07bfb119dcc';
+    console.log(`\n--- Checking Logged-in User (${loggedInUserId}) ---`);
+    const { data: loggedInMember, error: loggedInError } = await supabase
+        .from('member')
+        .select('id, nickname, auth_id')
+        .eq('auth_id', loggedInUserId)
+        .single();
+
+    if (loggedInError) console.error('Error fetching logged-in member:', loggedInError);
+    else console.log('Logged-in Member:', JSON.stringify(loggedInMember, null, 2));
+
+    // 4. Create RPC function for debugging (Commented out as we are using JS workaround)
+    // console.log('\n--- Creating RPC Function ---');
+    // const { error: rpcError } = await supabase.rpc('create_debug_function', {});
+
+    // Since we can't easily run raw SQL via supabase-js client without a helper,
+    // we will try to use the 'rpc' interface if we had a sql-runner function, but we don't.
+    // Wait, we can use the 'pg' library if available, but it's not.
+
+    // Alternative: We will assume the user can run the migration or we try to debug why the API fails.
+    // Let's try to debug the API failure by logging the exact query error in the API.
+
+    // Actually, let's revert to the API and log the 'error' object fully.
 }
 
 checkNotifications();
