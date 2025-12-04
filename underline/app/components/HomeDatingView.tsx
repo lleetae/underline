@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { MapPin, Bell } from "lucide-react";
+import { MapPin, Bell, Copy, X } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { supabase } from "../lib/supabase";
 import { useCountdown } from "../hooks/useCountdown";
 import { BatchUtils } from "../utils/BatchUtils";
 import { subDays } from "date-fns";
 import { getSidosInSameGroup, getRegionGroupKey } from "../utils/RegionUtils";
+import { handleCopy } from "../utils/clipboard";
 
 interface UserProfile {
   id: number;
@@ -23,19 +24,31 @@ interface UserProfile {
   isPenalized: boolean;
 }
 
-export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications, isSpectator: initialIsSpectator = false, onRegister }: {
+interface HomeDatingViewProps {
   onProfileClick?: (profileId: string, source?: "home" | "mailbox", metadata?: { isPenalized?: boolean }) => void;
   isSignedUp?: boolean;
-  onShowNotifications?: () => void;
-  isSpectator?: boolean;
+  onShowNotifications: () => void;
+  isSpectator: boolean;
   onRegister?: () => void;
-}) {
+  isApplied?: boolean;
+  userId?: string | null;
+}
+
+export function HomeDatingView({
+  isSignedUp,
+  onProfileClick,
+  onShowNotifications,
+  isSpectator,
+  onRegister,
+  isApplied = false,
+  userId
+}: HomeDatingViewProps) {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showSpectatorPopup, setShowSpectatorPopup] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [isSpectator, setIsSpectator] = useState(initialIsSpectator);
+  const [showReferralModal, setShowReferralModal] = useState(false);
 
   // Check for Welcome Modal flag
   useEffect(() => {
@@ -256,7 +269,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
           console.log("Debug: Region Stats", { groupKey, maleCount, femaleCount });
 
           if (maleCount < 1 || femaleCount < 1) {
-            setIsSpectator(true);
+            // setIsSpectator(true); // Logic moved to App.tsx
             console.log("Debug: Region Closed -> Spectator Mode");
           }
         }
@@ -373,7 +386,7 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
             <p className="text-sm text-gray-600 text-center mb-6 leading-relaxed">
               아쉽게도 인원이 조금 부족했어요.<br />
               대신 <b>지금 활발하게 매칭 중인 다른 동네</b><br />
-              분위기를 구경해보세요! (신청은 불가능해요)
+              분위기를 구경해보세요! (매칭 신청은 불가능해요)
             </p>
             <button
               onClick={() => setShowSpectatorPopup(false)}
@@ -406,10 +419,14 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
         {/* Floating Badge - Dating Period Timer OR Spectator Banner */}
         <div className="px-6 pb-3">
           {isSpectator ? (
-            <div className="px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500 bg-gray-800 shadow-black/20">
-              <span className="text-xs font-sans font-medium tracking-wide text-white">
-                👀 다른 지역 구경 중 (매칭 신청 불가)
-              </span>
+            <div className="w-full bg-gray-100 border border-gray-200 rounded-xl p-4 mb-2 text-center shadow-sm">
+              <p className="text-sm font-bold text-gray-800 mb-1">
+                아쉽게도 이번 주는 매칭이 쉬어가요 😢
+              </p>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                우리 동네 인원이 조금 부족했어요.<br />
+                대신 <span className="text-underline-red font-bold">지금 핫한 다른 동네</span>를 구경시켜 드릴게요!
+              </p>
             </div>
           ) : (
             <div className="px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500 bg-[var(--foreground)] shadow-black/20">
@@ -432,6 +449,16 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
           </div>
         ) : profiles.length > 0 ? (
           <>
+            {isSpectator && (
+              <div className="mb-4 px-2">
+                <h2 className="text-lg font-serif font-bold text-gray-800 mb-1">
+                  다른 지역 둘러보기 👀
+                </h2>
+                <p className="text-xs text-gray-500">
+                  매칭 신청은 불가능하지만, 어떤 분들이 있는지 구경해보세요.
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-3">
               {profiles.map((profile) => (
                 <div
@@ -449,6 +476,15 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
 
                     {/* Gradient Overlay for Text Readability */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+                    {/* Spectator Badge */}
+                    {isSpectator && (
+                      <div className="absolute top-3 right-3 z-10">
+                        <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20 shadow-lg">
+                          구경용
+                        </span>
+                      </div>
+                    )}
 
                     {/* Info Overlay */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
@@ -503,18 +539,88 @@ export function HomeDatingView({ onProfileClick, isSignedUp, onShowNotifications
       {isSpectator && <div className="fixed bottom-[80px] left-0 right-0 px-6 z-30">
         <button
           onClick={() => {
-            if (onRegister) {
-              onRegister();
+            if (isApplied) {
+              setShowReferralModal(true);
             } else {
-              alert("신청 기능을 불러올 수 없습니다.");
+              if (onRegister) {
+                onRegister();
+              } else {
+                alert("신청 기능을 불러올 수 없습니다.");
+              }
             }
           }}
-          className="w-full py-3 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/30 animate-bounce"
+          className={`w-full py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 ${isApplied
+            ? "bg-white text-underline-red border border-underline-red/30 shadow-underline-red/10"
+            : "bg-underline-red text-white shadow-underline-red/30 animate-bounce"
+            }`}
         >
-          다음 주 {profiles[0]?.location || '우리 동네'} 무료 신청 예약
+          {isApplied ? (
+            <>
+              <Copy className="w-4 h-4" />
+              친구 초대하고 무료 교환권 받기
+            </>
+          ) : (
+            "다음 주 우리 동네 무료 신청 예약"
+          )}
         </button>
       </div>
       }
+
+      {/* Referral Modal */}
+      {showReferralModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setShowReferralModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <h3 className="font-serif text-xl font-bold mb-6 text-center text-underline-text">
+              친구 초대 혜택
+            </h3>
+
+            <div className="space-y-4 mb-8">
+              <div className="bg-[#F5F5F0] p-4 rounded-xl flex items-center gap-4">
+                <div className="w-10 h-10 bg-underline-red/10 rounded-full flex items-center justify-center text-xl">
+                  🎁
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-bold mb-0.5">나 (초대자)</p>
+                  <p className="text-sm font-medium text-underline-text">무료 연락처 교환권 1장</p>
+                </div>
+              </div>
+
+              <div className="bg-[#F5F5F0] p-4 rounded-xl flex items-center gap-4">
+                <div className="w-10 h-10 bg-underline-red/10 rounded-full flex items-center justify-center text-xl">
+                  🎟️
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-bold mb-0.5">친구 (초대받은 사람)</p>
+                  <p className="text-sm font-medium text-underline-text">연락처 교환 50% 할인 쿠폰</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-underline-red/80 font-medium text-center mb-3">
+              *복사한 링크를 통해 가입해야 쿠폰을 받으실 수 있습니다
+            </p>
+
+            <button
+              onClick={() => {
+                const shareUrl = `${window.location.origin}?ref=${userId || ''}`;
+                handleCopy(shareUrl, '초대 링크가 복사되었습니다!');
+                setShowReferralModal(false);
+              }}
+              className="w-full py-3.5 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              <Copy className="w-4 h-4" />
+              초대 링크 복사하기
+            </button>
+          </div>
+        </div>
+      )}
       {/* Welcome Coupon Modal */}
       {showWelcomeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6 animate-in fade-in duration-200">
