@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { sendPushNotification } from '../../../lib/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,7 +118,16 @@ export async function POST(request: NextRequest) {
         }
 
         // 5. Send Notification to the Sender of the request
-        // Notification is handled by database trigger
+        try {
+            await sendPushNotification(
+                matchRequest.sender_id,
+                "매칭 성사!",
+                "상대방이 매칭을 수락했습니다. 지금 연락처를 확인해보세요!",
+                "/mailbox?tab=matched"
+            );
+        } catch (notificationError) {
+            console.error("Failed to send push notification:", notificationError);
+        }
 
         return NextResponse.json({ success: true, match: updatedMatch });
 

@@ -134,7 +134,9 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
           gender: fullUserData.gender,
           birth_date: fullUserData.birthDate,
           age: age, // ✅ Add age field
-          location: fullUserData.location,
+          sido: fullUserData.sido,
+          sigungu: fullUserData.sigungu,
+          // location: fullUserData.location, // REMOVED: Column dropped
           height: fullUserData.height,
           religion: fullUserData.religion,
           smoking: fullUserData.smoking,
