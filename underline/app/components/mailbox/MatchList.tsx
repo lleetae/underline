@@ -1,5 +1,5 @@
 import React from "react";
-import { Lock, Copy } from "lucide-react";
+import { Lock, Copy, Star } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { toast } from "sonner";
 import { DecryptedKakaoId } from "../DecryptedKakaoId";
@@ -35,6 +35,80 @@ export function MatchList({
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [memberInfo, setMemberInfo] = useState<{ id: string; free_reveals_count: number; has_welcome_coupon: boolean } | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+
+  // Manner Rating State
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [ratingScore, setRatingScore] = useState(5);
+  const [ratingComment, setRatingComment] = useState("");
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+
+  const openRatingModal = (match: Match) => {
+    setSelectedMatch(match);
+    setRatingScore(5);
+    setRatingComment("");
+    setRatingModalOpen(true);
+  };
+
+  const submitMannerRating = async () => {
+    if (!selectedMatch) return;
+
+    try {
+      setIsSubmittingRating(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("로그인이 필요합니다");
+        return;
+      }
+
+      // 1. Get rated user's auth_id
+      const { data: ratedMember, error: memberError } = await supabase
+        .from('member')
+        .select('auth_id')
+        .eq('id', selectedMatch.profileId)
+        .single();
+
+      if (memberError || !ratedMember) {
+        console.error("Error fetching rated member:", memberError);
+        toast.error("상대방 정보를 찾을 수 없습니다.");
+        setIsSubmittingRating(false);
+        return;
+      }
+
+      const ratedAuthId = ratedMember.auth_id;
+
+      // Check if already rated (Optional, but good UX)
+      const { count } = await supabase
+        .from('manner_ratings')
+        .select('*', { count: 'exact', head: true })
+        .eq('rater_id', session.user.id)
+        .eq('rated_id', ratedAuthId);
+
+      if (count && count > 0) {
+        toast.error("이미 평가한 상대입니다.");
+        setRatingModalOpen(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('manner_ratings')
+        .insert({
+          rater_id: session.user.id,
+          rated_id: ratedAuthId,
+          rating: ratingScore,
+          comment: ratingComment
+        });
+
+      if (error) throw error;
+
+      toast.success("매너 평가가 등록되었습니다!");
+      setRatingModalOpen(false);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      toast.error("평가 등록에 실패했습니다.");
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
 
   if (!matches || matches.length === 0) {
     return (
@@ -311,13 +385,22 @@ export function MatchList({
           )}
 
           {match.isUnlocked && (
-            <button
-              onClick={() => handleCopyContact(match.partnerKakaoId || "")}
-              className="w-full bg-[var(--foreground)] text-white font-sans font-medium py-3 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2 hover:bg-[var(--foreground)]/90"
-            >
-              <Copy className="w-4 h-4" />
-              연락처 복사하기
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={() => handleCopyContact(match.partnerKakaoId || "")}
+                className="w-full bg-[var(--foreground)] text-white font-sans font-medium py-3 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2 hover:bg-[var(--foreground)]/90"
+              >
+                <Copy className="w-4 h-4" />
+                연락처 복사하기
+              </button>
+              <button
+                onClick={() => openRatingModal(match)}
+                className="w-full bg-white border border-[var(--primary)] text-[var(--primary)] font-sans font-medium py-3 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2 hover:bg-[var(--primary)]/5"
+              >
+                <Star className="w-4 h-4" />
+                상대방 매너 평가하기
+              </button>
+            </div>
           )}
         </div>
       ))}
@@ -341,6 +424,65 @@ export function MatchList({
             >
               <Copy className="w-4 h-4 mr-2" />
               ID 복사하기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manner Rating Modal */}
+      <Dialog open={ratingModalOpen} onOpenChange={setRatingModalOpen}>
+        <DialogContent className="sm:max-w-md bg-white p-6 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-center font-sans text-xl">매너 평가</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-6 py-2">
+            <div className="text-center space-y-1">
+              <p className="text-sm text-[var(--foreground)]/60 font-sans">
+                <span className="font-bold text-[var(--foreground)]">{selectedMatch?.nickname}</span>님과의 대화는 어떠셨나요?
+              </p>
+              <p className="text-xs text-[var(--foreground)]/40 font-sans">
+                솔직한 후기가 쌓이면 매칭 정확도가 올라갑니다.
+              </p>
+            </div>
+
+            {/* Star Rating */}
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((score) => (
+                <button
+                  key={score}
+                  onClick={() => setRatingScore(score)}
+                  className="transition-transform hover:scale-110 focus:outline-none"
+                >
+                  <Star
+                    className={`w-8 h-8 ${score <= ratingScore
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300"
+                      }`}
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* Comment Area */}
+            <div className="space-y-2">
+              <textarea
+                value={ratingComment}
+                onChange={(e) => setRatingComment(e.target.value)}
+                placeholder="상대방의 매너에 대해 솔직하게 적어주세요. (선택사항)"
+                maxLength={500}
+                className="w-full h-32 p-3 rounded-xl border border-[var(--foreground)]/10 text-sm font-sans resize-none focus:outline-none focus:border-[var(--primary)]/50 focus:ring-1 focus:ring-[var(--primary)]/50"
+              />
+              <div className="text-right text-xs text-[var(--foreground)]/40 font-sans">
+                {ratingComment.length} / 500
+              </div>
+            </div>
+
+            <Button
+              onClick={submitMannerRating}
+              disabled={isSubmittingRating}
+              className="w-full h-12 text-base font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 rounded-xl"
+            >
+              {isSubmittingRating ? "등록 중..." : "평가 등록하기"}
             </Button>
           </div>
         </DialogContent>
