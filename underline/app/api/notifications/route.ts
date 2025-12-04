@@ -23,17 +23,20 @@ export async function GET(request: Request) {
         }
 
         // 1. Fetch notifications (without join first)
+        console.log(`[API] Fetching notifications for user: ${user.id}`);
         const { data: notifications, error } = await supabase
             .from('notifications')
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
-        console.log(`[API] Fetching notifications for user: ${user.id}`);
         console.log(`[API] Raw notifications found: ${notifications?.length || 0}`);
+        if (notifications && notifications.length > 0) {
+            console.log('[API] First notification:', JSON.stringify(notifications[0], null, 2));
+        }
+
         if (error) {
             console.error('[API] Error fetching notifications:', error);
-            console.error('Error fetching notifications:', error);
             return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
         }
 
