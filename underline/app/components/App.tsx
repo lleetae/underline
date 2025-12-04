@@ -422,6 +422,10 @@ export default function App() {
   const checkProfile = async (userId: string) => {
     try {
       const { data, error: _error } = await supabase
+        .from('member')
+        .select('*')
+        .eq('auth_id', userId)
+        .single();
 
       if (data) {
         setHasProfile(true);
