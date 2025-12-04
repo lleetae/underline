@@ -30,10 +30,10 @@ export function ProfileHeader({
         </div>
 
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-serif tracking-tight">
+          <h1 className="text-2xl font-sans tracking-tight">
             {name}, <span className="text-lg font-normal opacity-80">{age}</span>
           </h1>
-          
+
           <div className="flex items-center justify-center gap-1 text-sm uppercase tracking-widest opacity-60 font-sans mb-4">
             <MapPin className="w-3 h-3" />
             <span>{location}</span>

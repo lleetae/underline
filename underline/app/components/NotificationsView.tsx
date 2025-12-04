@@ -186,7 +186,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                     >
                         <ArrowLeft className="w-5 h-5 text-[var(--foreground)]" />
                     </button>
-                    <h1 className="font-serif text-2xl text-[var(--foreground)]">알림</h1>
+                    <h1 className="font-sans text-2xl text-[var(--foreground)]">알림</h1>
                     {unreadCount > 0 && (
                         <button
                             onClick={markAllAsRead}
@@ -207,7 +207,7 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                         <div className="w-16 h-16 rounded-full bg-[var(--primary)]/10 flex items-center justify-center mb-4">
                             <Bell className="w-8 h-8 text-[var(--primary)]/40" />
                         </div>
-                        <h3 className="font-serif text-xl text-[var(--foreground)] mb-2">
+                        <h3 className="font-sans text-xl text-[var(--foreground)] mb-2">
                             알림이 없습니다
                         </h3>
                         <p className="text-sm text-[var(--foreground)]/60 font-sans text-center leading-relaxed">

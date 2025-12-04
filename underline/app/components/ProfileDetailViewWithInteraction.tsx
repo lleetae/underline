@@ -502,7 +502,7 @@ export function ProfileDetailViewWithInteraction({
                 />
               </div>
               <div className="flex-1">
-                <h2 className="font-serif text-xl text-[var(--foreground)] mb-2">{selectedBook.title}</h2>
+                <h2 className="font-sans text-xl text-[var(--foreground)] mb-2">{selectedBook.title}</h2>
                 <p className="text-sm text-[var(--foreground)]/60 font-sans mb-4">{selectedBook.author}</p>
               </div>
             </div>
@@ -532,7 +532,7 @@ export function ProfileDetailViewWithInteraction({
                 }}
               />
 
-              <div className="relative z-10 font-serif text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words flex-1 overflow-y-auto pr-2 scrollbar-thin">
+              <div className="relative z-10 font-sans text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words flex-1 overflow-y-auto pr-2 scrollbar-thin">
                 {selectedBook.review}
               </div>
             </div>
@@ -549,7 +549,7 @@ export function ProfileDetailViewWithInteraction({
                       내가 보낸 편지
                     </p>
                     <div className="bg-white/60 rounded-lg p-3 border border-[var(--primary)]/20">
-                      <p className="font-serif text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words">
+                      <p className="font-sans text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words">
                         {existingRequest.letter}
                       </p>
                     </div>
@@ -794,7 +794,7 @@ export function ProfileDetailViewWithInteraction({
         <div className="px-6 py-8">
           <div className="flex items-center gap-2 mb-6">
             <BookOpen className="w-5 h-5 text-[var(--primary)]" />
-            <h3 className="font-serif text-xl text-[var(--foreground)]">{profile.nickname}님의 책장 {profile.books.length}권</h3>
+            <h3 className="font-sans text-xl text-[var(--foreground)]">{profile.nickname}님의 책장 {profile.books.length}권</h3>
             <div className="h-px flex-1 bg-[var(--primary)]/20 ml-2" />
           </div>
 
@@ -812,7 +812,7 @@ export function ProfileDetailViewWithInteraction({
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2">
-                  <p className="text-white text-xs font-serif line-clamp-2 leading-tight">
+                  <p className="text-white text-xs font-sans line-clamp-2 leading-tight">
                     {book.title}
                   </p>
                 </div>
@@ -842,7 +842,7 @@ export function ProfileDetailViewWithInteraction({
                     내가 보낸 편지
                   </p>
                   <div className="bg-white/60 rounded-lg p-3 border border-[var(--primary)]/20">
-                    <p className="font-serif text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words">
+                    <p className="font-sans text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words">
                       {existingRequest.letter}
                     </p>
                   </div>

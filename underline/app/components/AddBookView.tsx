@@ -171,7 +171,7 @@ export function AddBookView({
           <button className="p-1 hover:bg-[var(--foreground)]/5 rounded-full transition-colors" onClick={onBack}>
             <ArrowLeft className="w-5 h-5 text-[var(--foreground)]" />
           </button>
-          <h1 className="font-serif text-2xl text-[var(--foreground)]">책 추가</h1>
+          <h1 className="font-sans text-2xl text-[var(--foreground)]">책 추가</h1>
         </div>
       </div>
 
@@ -228,7 +228,7 @@ export function AddBookView({
                             className="w-16 h-22 object-cover rounded shadow-sm flex-shrink-0"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-serif text-sm text-[var(--foreground)] mb-1 truncate">
+                            <h4 className="font-sans text-sm text-[var(--foreground)] mb-1 truncate">
                               {book.title}
                             </h4>
                             <p className="text-xs text-[var(--foreground)]/60 font-sans mb-0.5 truncate">
@@ -264,7 +264,7 @@ export function AddBookView({
               {/* Selected Book Display */}
               <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-serif text-lg text-[var(--foreground)]">선택한 책</h3>
+                  <h3 className="font-sans text-lg text-[var(--foreground)]">선택한 책</h3>
                   <button
                     onClick={() => {
                       setSelectedBook(null);
@@ -285,7 +285,7 @@ export function AddBookView({
                     className="w-28 h-38 object-cover rounded-lg shadow-md flex-shrink-0"
                   />
                   <div className="flex-1">
-                    <h4 className="font-serif text-base text-[var(--foreground)] mb-2">{selectedBook.title}</h4>
+                    <h4 className="font-sans text-base text-[var(--foreground)] mb-2">{selectedBook.title}</h4>
                     <div className="space-y-1 text-xs text-[var(--foreground)]/70 font-sans">
                       <p>{selectedBook.author}</p>
                       <p>{selectedBook.publisher}</p>
@@ -313,7 +313,7 @@ export function AddBookView({
               {/* Review Section */}
               <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
-                  <h3 className="font-serif text-lg text-[var(--foreground)]">책 감상문</h3>
+                  <h3 className="font-sans text-lg text-[var(--foreground)]">책 감상문</h3>
                   <div className="h-px flex-1 bg-[var(--primary)]/30" />
                 </div>
 
@@ -322,7 +322,7 @@ export function AddBookView({
                   onChange={(e) => setBookReview(e.target.value)}
                   maxLength={10000}
                   rows={10}
-                  className="w-full px-4 py-3 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-serif text-sm focus:outline-none focus:border-[var(--primary)] transition-colors resize-none bg-white leading-relaxed"
+                  className="w-full px-4 py-3 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors resize-none bg-white leading-relaxed"
                   placeholder="이 책이 당신에게 어떤 의미인가요?&#10;&#10;당신의 마음을 움직인 문장이나 생각을 자유롭게 적어주세요..."
                 />
                 <div className="mt-2 space-y-1">

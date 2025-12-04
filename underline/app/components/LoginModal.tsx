@@ -41,7 +41,7 @@ export function LoginModal({
             <X className="w-5 h-5" />
           </button>
 
-          <h2 className="font-serif text-2xl mb-2">Underline</h2>
+          <h2 className="font-sans text-2xl mb-2">Underline</h2>
           <p className="text-sm text-white/80 font-sans">
             책으로 만나는 특별한 인연
           </p>

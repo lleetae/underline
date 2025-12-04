@@ -204,7 +204,7 @@ export function HomeRecruitingView({
       {/* 1. GNB (Header) */}
       <header className="sticky top-0 z-50 bg-underline-cream/90 backdrop-blur-sm h-[60px] flex items-center justify-between px-5 border-b border-black/5">
         <div className="w-6" /> {/* Spacer */}
-        <h1 className="font-serif text-2xl font-bold tracking-tight text-underline-text">
+        <h1 className="font-sans text-2xl font-bold tracking-tight text-underline-text">
           Under
           <span className="relative inline-block">
             line
@@ -234,25 +234,25 @@ export function HomeRecruitingView({
           </p>
           <div className="flex items-center justify-center gap-3">
             <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-black/5"}`}>
-              <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-underline-text"}`}>
+              <div className={`font-sans text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-underline-text"}`}>
                 {String(timeLeft.days).padStart(2, '0')}
               </div>
               <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-underline-text/50"}`}>
                 DAY
               </div>
             </div>
-            <div className="font-serif text-2xl text-underline-text/30">:</div>
+            <div className="font-sans text-2xl text-underline-text/30">:</div>
             <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-black/5"}`}>
-              <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-underline-text"}`}>
+              <div className={`font-sans text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-underline-text"}`}>
                 {String(timeLeft.hours).padStart(2, '0')}
               </div>
               <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-underline-text/50"}`}>
                 HOUR
               </div>
             </div>
-            <div className="font-serif text-2xl text-underline-text/30">:</div>
+            <div className="font-sans text-2xl text-underline-text/30">:</div>
             <div className={`border rounded-xl px-4 py-3 shadow-sm min-w-[70px] ${timeLeft.days === 0 ? "bg-[#FFF0F0] border-[#FF6B6B]" : "bg-white border-black/5"}`}>
-              <div className={`font-serif text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-underline-text"}`}>
+              <div className={`font-sans text-3xl ${timeLeft.days === 0 ? "text-[#FF6B6B]" : "text-underline-text"}`}>
                 {String(timeLeft.minutes).padStart(2, '0')}
               </div>
               <div className={`text-[10px] font-sans mt-1 ${timeLeft.days === 0 ? "text-[#FF6B6B]/70" : "text-underline-text/50"}`}>
@@ -262,7 +262,7 @@ export function HomeRecruitingView({
           </div>
         </div>
         {/* Main Copy */}
-        <h2 className="font-serif text-[26px] leading-snug font-semibold mb-4 text-underline-text break-keep">
+        <h2 className="font-sans text-[26px] leading-snug font-bold mb-4 text-underline-text break-keep">
           당신의 내면을 읽어줄 사람,<br />
           이번 주 금요일에 만나보세요.
         </h2>
@@ -324,7 +324,7 @@ export function HomeRecruitingView({
               <X className="w-6 h-6" />
             </button>
 
-            <h3 className="font-serif text-xl font-bold mb-6 text-center text-underline-text">
+            <h3 className="font-sans text-xl font-bold mb-6 text-center text-underline-text">
               친구 초대 혜택
             </h3>
 
@@ -377,7 +377,7 @@ export function HomeRecruitingView({
               🎟️
             </div>
 
-            <h3 className="font-serif text-xl font-bold mb-2 text-underline-text">
+            <h3 className="font-sans text-xl font-bold mb-2 text-underline-text">
               환영합니다!
             </h3>
 
@@ -417,7 +417,7 @@ export function HomeRecruitingView({
           className="w-full flex items-center justify-between group"
         >
           <div className="text-left">
-            <h3 className="font-serif text-xl font-bold text-underline-text group-hover:text-underline-red transition-colors">
+            <h3 className="font-sans text-xl font-bold text-underline-text group-hover:text-underline-red transition-colors">
               지역별 신청 현황
             </h3>
           </div>
@@ -451,7 +451,7 @@ export function HomeRecruitingView({
                         )}
                       </div>
                       <div className="flex items-end gap-1">
-                        <span className={`text-2xl font-serif font-bold ${isOpen ? 'text-underline-red' : 'text-blue-600'}`}>
+                        <span className={`text-2xl font-sans font-bold ${isOpen ? 'text-underline-red' : 'text-blue-600'}`}>
                           {data.total}
                         </span>
                         <span className="text-xs text-blue-600 mb-1">명</span>
@@ -482,7 +482,7 @@ export function HomeRecruitingView({
       {/* 3. Social Proof (Horizontal Scroll) */}
       <section className="py-10 bg-white border-y border-black/5">
         <div className="px-6 mb-6 flex items-center justify-between">
-          <h3 className="font-serif text-xl font-bold text-underline-text">
+          <h3 className="font-sans text-xl font-bold text-underline-text">
             실제 유저 후기
           </h3>
           {userId && (
@@ -567,7 +567,7 @@ export function HomeRecruitingView({
                 <div className="inline-block px-3 py-1.5 rounded-md bg-underline-red text-white text-xs font-medium mb-3 shadow-lg">
                   {selectedReview.bookInfo}
                 </div>
-                <h3 className="font-serif text-xl font-bold leading-tight text-[var(--foreground)]">
+                <h3 className="font-sans text-xl font-bold leading-tight text-[var(--foreground)]">
                   {selectedReview.title}
                 </h3>
               </div>
@@ -592,7 +592,7 @@ export function HomeRecruitingView({
 
       {/* 5. Process */}
       <section className="px-6 py-10 bg-white border-t border-black/5">
-        <h3 className="font-serif text-xl font-bold text-underline-text mb-8 text-center">
+        <h3 className="font-sans text-xl font-bold text-underline-text mb-8 text-center">
           가벼운 만남 대신,<br />
           이렇게 연결됩니다
         </h3>

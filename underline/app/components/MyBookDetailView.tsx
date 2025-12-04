@@ -84,7 +84,7 @@ export function MyBookDetailView({
             >
               <ArrowLeft className="w-5 h-5 text-[var(--foreground)]" />
             </button>
-            <h1 className="font-serif text-2xl text-[var(--foreground)]">Book Review</h1>
+            <h1 className="font-sans text-2xl text-[var(--foreground)]">Book Review</h1>
           </div>
 
           {/* Action Buttons */}
@@ -121,7 +121,7 @@ export function MyBookDetailView({
                 />
               </div>
               <div className="flex-1 flex flex-col justify-center">
-                <h2 className="font-serif text-xl text-[var(--foreground)] mb-3 leading-snug">
+                <h2 className="font-sans text-xl text-[var(--foreground)] mb-3 leading-snug">
                   {book.title}
                 </h2>
                 <div className="space-y-1">
@@ -157,7 +157,7 @@ export function MyBookDetailView({
           {/* My Review Header */}
           <div className="flex items-center gap-2 mt-8 px-1">
             <BookOpen className="w-4 h-4 text-[var(--primary)]" />
-            <h3 className="font-serif text-lg text-[var(--foreground)]">나의 감상</h3>
+            <h3 className="font-sans text-lg text-[var(--foreground)]">나의 감상</h3>
           </div>
 
           {/* Review Content */}
@@ -169,7 +169,7 @@ export function MyBookDetailView({
                   onChange={(e) => setEditedReview(e.target.value)}
                   maxLength={10000}
                   rows={15}
-                  className="w-full px-4 py-3 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-serif text-sm focus:outline-none focus:border-[var(--primary)] transition-colors resize-none bg-white leading-relaxed"
+                  className="w-full px-4 py-3 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors resize-none bg-white leading-relaxed"
                   placeholder="감상문을 작성해주세요..."
                 />
                 <div className="flex justify-end mt-2">
@@ -200,7 +200,7 @@ export function MyBookDetailView({
           ) : (
             <div className="bg-white border border-[var(--foreground)]/10 rounded-xl p-6 shadow-sm">
               <div className="prose prose-sm max-w-none">
-                <p className="text-[var(--foreground)] font-serif leading-loose whitespace-pre-wrap break-words">
+                <p className="text-[var(--foreground)] font-sans leading-loose whitespace-pre-wrap break-words">
                   {book.review}
                 </p>
               </div>
@@ -211,7 +211,7 @@ export function MyBookDetailView({
           {!isEditing && (
             <div className="text-center py-4">
               <div className="inline-block px-6 py-3 bg-[var(--primary)]/5 rounded-full border border-[var(--primary)]/20">
-                <p className="text-xs text-[var(--primary)] font-serif italic">
+                <p className="text-xs text-[var(--primary)] font-sans italic">
                   "책은 마음의 거울이다"
                 </p>
               </div>
@@ -224,7 +224,7 @@ export function MyBookDetailView({
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-6">
           <div className="bg-[#FCFCFA] p-8 rounded-2xl shadow-2xl max-w-sm w-full border border-[var(--foreground)]/10">
-            <h2 className="font-serif text-xl text-[var(--foreground)] mb-3">
+            <h2 className="font-sans text-xl text-[var(--foreground)] mb-3">
               책을 삭제하시겠습니까?
             </h2>
             <p className="text-sm text-[var(--foreground)]/70 font-sans mb-6 leading-relaxed">
