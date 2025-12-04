@@ -89,18 +89,9 @@ export async function POST(request: NextRequest) {
         await supabaseAdmin.from('matches').delete().eq('receiver_id', userId);
 
         // Dating Applications
-        // Try both column names just in case
-        await supabaseAdmin.from('dating_applications').delete().eq('user_id', userId);
-        // If auth_id exists in schema, it might be used
-        // We can't easily check schema here, but we can try delete. 
-        // If column doesn't exist, it throws error. We should wrap in try/catch or ignore.
-        // Actually, supabase-js ignores invalid columns in filter? No, it throws.
-        // Let's assume user_id based on previous migrations. 
-        // But wait, nuclear_fk_fix_v3 checked for auth_id too.
-        // Let's try to delete by auth_id if user_id delete didn't cover it?
-        // Safe bet: The previous migrations ensured user_id or auth_id FKs are CASCADE.
-        // So manual delete might not be strictly necessary if FKs are fixed.
-        // But if FKs are NOT fixed (e.g. migration failed silently), this helps.
+        if (member) {
+            await supabaseAdmin.from('dating_applications').delete().eq('member_id', member.id);
+        }
 
         // 4. Soft Delete Member Record
         if (member) {
@@ -140,14 +131,6 @@ export async function POST(request: NextRequest) {
             console.error('Database Error deleting user:', deleteResult);
             throw new Error(`Database Error: ${deleteResult.error} (State: ${deleteResult.detail})`);
         }
-
-        /*
-        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-        if (deleteError) {
-          console.error('Error deleting auth user:', deleteError);
-          throw new Error(`Failed to delete auth user: ${deleteError.message}`);
-        }
-        */
 
         return NextResponse.json({ success: true });
 

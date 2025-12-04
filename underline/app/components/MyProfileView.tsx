@@ -510,7 +510,11 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
       if (response.ok) {
         toast.success("회원 탈퇴가 완료되었습니다.");
         setShowWithdrawModal(false);
-        if (onLogout) onLogout(); // Trigger logout cleanup
+        if (onLogout) {
+          onLogout(); // Trigger logout cleanup
+        } else {
+          console.warn("onLogout prop is missing!");
+        }
       } else {
         const data = await response.json();
         throw new Error(data.error || "Withdrawal failed");
