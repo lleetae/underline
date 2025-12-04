@@ -64,7 +64,18 @@ export default function NotificationPermissionRequest() {
             }
         }
 
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                console.log("[NotificationPermissionRequest] User signed in, checking token...");
+                await requestPermission();
+            }
+        });
+
         requestPermission();
+
+        return () => {
+            subscription.unsubscribe();
+        };
     }, []);
 
     // Handle foreground messages
