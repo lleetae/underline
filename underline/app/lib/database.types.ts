@@ -16,6 +16,8 @@ export type Database = {
         Tables: {
             member: {
                 Row: {
+                    age: number | null
+                    auth_id: string
                     bio: string
                     birth_date: string
                     created_at: string
@@ -27,6 +29,9 @@ export type Database = {
                     location: string
                     nickname: string
                     phone_number: string
+                    photo_url: string | null
+                    photo_urls_blurred: string[] | null
+                    photo_urls_original: string[] | null
                     photos: string[] | null
                     religion: string
                     smoking: string
@@ -35,6 +40,8 @@ export type Database = {
                     has_welcome_coupon: boolean
                 }
                 Insert: {
+                    age?: number | null
+                    auth_id: string
                     bio: string
                     birth_date: string
                     created_at?: string
@@ -46,6 +53,9 @@ export type Database = {
                     location: string
                     nickname: string
                     phone_number: string
+                    photo_url?: string | null
+                    photo_urls_blurred?: string[] | null
+                    photo_urls_original?: string[] | null
                     photos?: string[] | null
                     religion: string
                     smoking: string
@@ -54,6 +64,8 @@ export type Database = {
                     has_welcome_coupon?: boolean
                 }
                 Update: {
+                    age?: number | null
+                    auth_id?: string
                     bio?: string
                     birth_date?: string
                     created_at?: string
@@ -65,6 +77,9 @@ export type Database = {
                     location?: string
                     nickname?: string
                     phone_number?: string
+                    photo_url?: string | null
+                    photo_urls_blurred?: string[] | null
+                    photo_urls_original?: string[] | null
                     photos?: string[] | null
                     religion?: string
                     smoking?: string

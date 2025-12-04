@@ -112,6 +112,19 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
         return;
       }
 
+      // Calculate age from birth date
+      let age = 0;
+      if (fullUserData.birthDate) {
+        const birthYear = parseInt(fullUserData.birthDate.substring(0, 4));
+        const currentYear = new Date().getFullYear();
+        age = currentYear - birthYear;
+      }
+
+      // Get first photo URL for photo_url field
+      const photoUrl = fullUserData.photos.length > 0 && fullUserData.photos[0].blurredUrl
+        ? fullUserData.photos[0].blurredUrl
+        : null;
+
       const { data: newMember, error } = await supabase
         .from('member')
         .insert({
@@ -120,8 +133,8 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
           nickname: fullUserData.nickname,
           gender: fullUserData.gender,
           birth_date: fullUserData.birthDate,
-          sido: (fullUserData.location || '').split(' ')[0] || '',
-          sigungu: (fullUserData.location || '').split(' ')[1] || '',
+          age: age, // ✅ Add age field
+          location: fullUserData.location,
           height: fullUserData.height,
           religion: fullUserData.religion,
           smoking: fullUserData.smoking,
@@ -129,6 +142,7 @@ export function SignUpView({ onComplete, onBack }: { onComplete?: () => void; on
           bio: fullUserData.bio,
           kakao_id: encryptedKakaoId, // ✅ Now encrypted
           // Photos
+          photo_url: photoUrl, // ✅ Add photo_url field (first photo)
           photos: fullUserData.photos.filter(p => p.blurredUrl).map(p => p.blurredUrl), // Default to blurred for public
           photo_urls_original: fullUserData.photos.filter(p => p.originalPath).map(p => p.originalPath),
           photo_urls_blurred: fullUserData.photos.filter(p => p.blurredUrl).map(p => p.blurredUrl),

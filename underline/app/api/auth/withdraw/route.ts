@@ -127,12 +127,26 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 5. Delete Auth User
-        const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-        if (deleteUserError) {
-            console.error("Error deleting auth user:", deleteUserError);
-            return NextResponse.json({ error: `Failed to delete auth user: ${deleteUserError.message}` }, { status: 500 });
+        // 2. Delete auth user via Debug RPC to get exact error
+        const { data: deleteResult, error: rpcError } = await supabaseAdmin.rpc('debug_delete_user', { target_user_id: userId });
+
+        if (rpcError) {
+            console.error('RPC Error deleting user:', rpcError);
+            throw new Error(`RPC Error: ${rpcError.message}`);
         }
+
+        if (deleteResult && !deleteResult.success) {
+            console.error('Database Error deleting user:', deleteResult);
+            throw new Error(`Database Error: ${deleteResult.error} (State: ${deleteResult.detail})`);
+        }
+
+        /*
+        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+        if (deleteError) {
+          console.error('Error deleting auth user:', deleteError);
+          throw new Error(`Failed to delete auth user: ${deleteError.message}`);
+        }
+        */
 
         return NextResponse.json({ success: true });
 
