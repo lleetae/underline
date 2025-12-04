@@ -531,7 +531,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
       {/* Header */}
       <div className="sticky top-0 z-10 bg-[#FCFCFA] border-b border-[var(--foreground)]/10">
         <div className="flex items-center justify-between px-6 py-4">
-          <h1 className="font-serif text-2xl text-[var(--foreground)]">My Profile</h1>
+          <h1 className="font-sans text-2xl text-[var(--foreground)]">My Profile</h1>
           <button
             onClick={() => setShowLogoutModal(true)}
             className="p-2 hover:bg-[var(--foreground)]/5 rounded-full transition-colors"
@@ -564,7 +564,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
 
               {/* Profile Info */}
               <div className="flex-1 min-w-0">
-                <h2 className="font-serif text-xl text-[var(--foreground)] mb-1">
+                <h2 className="font-sans text-xl text-[var(--foreground)] mb-1">
                   {profileData.nickname}
                 </h2>
                 <div className="flex items-center gap-3 text-xs text-[var(--foreground)]/60 font-sans">
@@ -606,7 +606,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
             className="w-full bg-white border border-[var(--foreground)]/10 rounded-xl p-5 shadow-sm flex items-center justify-between hover:bg-[var(--foreground)]/5 transition-colors group"
           >
             <div className="flex items-center gap-3">
-              <h3 className="font-serif text-lg text-[var(--foreground)]">내 쿠폰함</h3>
+              <h3 className="font-sans text-lg text-[var(--foreground)]">내 쿠폰함</h3>
               <span className="text-sm font-sans text-[var(--foreground)]/60">
                 {(profileData.freeRevealsCount || 0) + (profileData.hasWelcomeCoupon ? 1 : 0)}장
               </span>
@@ -628,7 +628,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
         {/* My Library */}
         <div className="px-6 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-serif text-xl text-[var(--foreground)]">My Library</h2>
+            <h2 className="font-sans text-xl text-[var(--foreground)]">My Library</h2>
             <div className="flex items-center gap-1.5 text-sm text-[var(--foreground)]/60 font-sans">
               <BookIcon className="w-4 h-4" />
               <span>{books.length}권</span>
@@ -688,7 +688,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
       {showLogoutModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
           <div className="bg-[#FCFCFA] p-8 rounded-2xl shadow-2xl max-w-sm w-full border border-[var(--foreground)]/10">
-            <h2 className="font-serif text-xl text-[var(--foreground)] mb-3">
+            <h2 className="font-sans text-xl text-[var(--foreground)] mb-3">
               정말 로그아웃하시나요?
             </h2>
             <p className="text-sm text-[var(--foreground)]/70 font-sans mb-6 leading-relaxed">
@@ -718,7 +718,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
       {showWithdrawModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
           <div className="bg-[#FCFCFA] p-8 rounded-2xl shadow-2xl max-w-sm w-full border border-[var(--foreground)]/10">
-            <h2 className="font-serif text-xl text-[var(--foreground)] mb-3 text-red-600">
+            <h2 className="font-sans text-xl text-[var(--foreground)] mb-3 text-red-600">
               정말 탈퇴하시겠습니까?
             </h2>
             <p className="text-sm text-[var(--foreground)]/70 font-sans mb-6 leading-relaxed">

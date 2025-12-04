@@ -51,7 +51,7 @@ export function MatchRequestLetterModal({
             <div className="w-full max-w-md bg-[#FCFCFA] rounded-2xl shadow-2xl flex flex-col max-h-[85vh] my-4">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--foreground)]/10">
-                    <h2 className="font-serif text-xl text-[var(--foreground)]">매칭 신청</h2>
+                    <h2 className="font-sans text-xl text-[var(--foreground)]">매칭 신청</h2>
                     <button
                         onClick={handleClose}
                         disabled={isSending}

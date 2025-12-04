@@ -34,7 +34,7 @@ export function CancelMatchModal({
 
           <div className="flex items-center gap-3 mb-2">
             <AlertCircle className="w-6 h-6 text-[var(--primary)]" />
-            <h2 className="font-serif text-2xl">매칭 신청 취소</h2>
+            <h2 className="font-sans text-2xl">매칭 신청 취소</h2>
           </div>
           <p className="text-sm text-white/80 font-sans">
             정말 취소하시겠습니까?

@@ -387,7 +387,7 @@ export function HomeDatingView({
       {showSpectatorPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95">
-            <h3 className="font-serif text-xl font-bold mb-2 text-center">이번 주 우리 동네는 쉬어가요</h3>
+            <h3 className="font-sans text-xl font-bold mb-2 text-center">이번 주 우리 동네는 쉬어가요</h3>
             <p className="text-sm text-gray-600 text-center mb-6 leading-relaxed">
               아쉽게도 인원이 조금 부족했어요.<br />
               대신 <b>지금 활발하게 매칭 중인 다른 동네</b><br />
@@ -407,7 +407,7 @@ export function HomeDatingView({
       <div className="sticky top-0 z-20 bg-[#FCFCFA]/95 backdrop-blur-md border-b border-[var(--foreground)]/5">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="w-8" /> {/* Spacer for centering */}
-          <h1 className="font-serif text-2xl text-[var(--foreground)] tracking-wide">
+          <h1 className="font-sans text-2xl text-[var(--foreground)] tracking-wide">
             Underline
           </h1>
           <button
@@ -458,7 +458,7 @@ export function HomeDatingView({
           <>
             {isSpectator && (
               <div className="mb-4 px-2">
-                <h2 className="text-lg font-serif font-bold text-gray-800 mb-1">
+                <h2 className="text-lg font-sans font-bold text-gray-800 mb-1">
                   다른 지역 둘러보기 👀
                 </h2>
                 <p className="text-xs text-gray-500">
@@ -584,7 +584,7 @@ export function HomeDatingView({
               <X className="w-6 h-6" />
             </button>
 
-            <h3 className="font-serif text-xl font-bold mb-6 text-center text-underline-text">
+            <h3 className="font-sans text-xl font-bold mb-6 text-center text-underline-text">
               친구 초대 혜택
             </h3>
 
@@ -636,7 +636,7 @@ export function HomeDatingView({
               🎟️
             </div>
 
-            <h3 className="font-serif text-xl font-bold mb-2 text-underline-text">
+            <h3 className="font-sans text-xl font-bold mb-2 text-underline-text">
               환영합니다!
             </h3>
 

@@ -85,7 +85,7 @@ export function RegionStatsView({ onBack, isSignedUp, onShowLoginModal, userId }
                 >
                     <ChevronLeft className="w-6 h-6 text-gray-600" />
                 </button>
-                <h1 className="font-serif text-lg font-bold text-underline-text">지역별 신청 현황</h1>
+                <h1 className="font-sans text-lg font-bold text-underline-text">지역별 신청 현황</h1>
             </div>
 
             <div className="p-6 space-y-4">
@@ -128,7 +128,7 @@ export function RegionStatsView({ onBack, isSignedUp, onShowLoginModal, userId }
                                     </div>
 
                                     <div className="flex items-end gap-1 mb-3">
-                                        <span className={`text-2xl font-serif font-bold ${isOpen ? 'text-underline-red' : 'text-blue-600'}`}>
+                                        <span className={`text-2xl font-sans font-bold ${isOpen ? 'text-underline-red' : 'text-blue-600'}`}>
                                             {data.total}
                                         </span>
                                         <span className="text-xs text-blue-600 mb-1">명</span>
@@ -162,7 +162,7 @@ export function RegionStatsView({ onBack, isSignedUp, onShowLoginModal, userId }
                             <X className="w-6 h-6" />
                         </button>
 
-                        <h3 className="font-serif text-xl font-bold mb-6 text-center text-underline-text">
+                        <h3 className="font-sans text-xl font-bold mb-6 text-center text-underline-text">
                             친구 초대 혜택
                         </h3>
 

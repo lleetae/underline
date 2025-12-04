@@ -32,7 +32,7 @@ export function CancelRecruitmentModal({
 
           <div className="flex items-center gap-3 mb-2">
             <AlertTriangle className="w-6 h-6 text-[var(--primary)]" />
-            <h2 className="font-serif text-2xl">소개팅 신청 취소</h2>
+            <h2 className="font-sans text-2xl">소개팅 신청 취소</h2>
           </div>
           <p className="text-sm text-white/80 font-sans">
             정말 이번 주 소개팅을 포기하시겠습니까?

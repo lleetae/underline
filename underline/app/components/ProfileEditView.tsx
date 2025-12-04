@@ -422,7 +422,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
             >
               <ArrowLeft className="w-5 h-5 text-[var(--foreground)]" />
             </button>
-            <h1 className="font-serif text-2xl text-[var(--foreground)]">프로필 수정</h1>
+            <h1 className="font-sans text-2xl text-[var(--foreground)]">프로필 수정</h1>
           </div>
           {/* Save button removed from header */}
         </div>
@@ -434,7 +434,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
           {/* Profile Photos Section */}
           <div className="bg-white border border-[var(--foreground)]/10 rounded-xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-serif text-lg text-[var(--foreground)]">프로필 사진</h3>
+              <h3 className="font-sans text-lg text-[var(--foreground)]">프로필 사진</h3>
               <span className="text-xs text-[var(--foreground)]/60 font-sans">
                 {formData.profilePhotos.length} / 5
               </span>
@@ -498,7 +498,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
 
           {/* Basic Information */}
           <div className="bg-white border border-[var(--foreground)]/10 rounded-xl p-5 shadow-sm">
-            <h3 className="font-serif text-lg text-[var(--foreground)] mb-4">기본 정보</h3>
+            <h3 className="font-sans text-lg text-[var(--foreground)] mb-4">기본 정보</h3>
             <div className="space-y-4">
               {/* Nickname */}
               <div>
@@ -579,7 +579,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
 
           {/* Additional Information */}
           <div className="bg-white border border-[var(--foreground)]/10 rounded-xl p-5 shadow-sm">
-            <h3 className="font-serif text-lg text-[var(--foreground)] mb-4">추가 정보</h3>
+            <h3 className="font-sans text-lg text-[var(--foreground)] mb-4">추가 정보</h3>
             <div className="space-y-4">
               {/* Location */}
               <div>
@@ -733,7 +733,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
 
           {/* About Me */}
           <div className="bg-white border border-[var(--foreground)]/10 rounded-xl p-5 shadow-sm">
-            <h3 className="font-serif text-lg text-[var(--foreground)] mb-4">자기소개</h3>
+            <h3 className="font-sans text-lg text-[var(--foreground)] mb-4">자기소개</h3>
             <div className="space-y-4">
               {/* Bio */}
               <div>
