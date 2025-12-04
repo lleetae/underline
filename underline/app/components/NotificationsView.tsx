@@ -38,6 +38,8 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
 
+            console.log('[NotificationsView] Fetching with token:', token ? 'Token exists' : 'No token');
+
             const response = await fetch(`/api/notifications?t=${new Date().getTime()}`, {
                 cache: 'no-store',
                 headers: {
@@ -45,10 +47,15 @@ export function NotificationsView({ onBack, onNavigateToMatch }: NotificationsVi
                 }
             });
 
+            console.log('[NotificationsView] Response status:', response.status);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log('[NotificationsView] Data received:', data);
                 setNotifications(data.notifications || []);
                 setUnreadCount(data.unreadCount || 0);
+            } else {
+                console.error('[NotificationsView] Response error:', await response.text());
             }
         } catch (error: any) {
             console.error("Error fetching notifications:", error);
