@@ -26,6 +26,7 @@ export default function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isParticipant, setIsParticipant] = useState(false); // User is active in the CURRENT batch (for Dating View)
   const [isSpectator, setIsSpectator] = useState(false); // User is in a FAILED region (Spectator Mode)
+  const [isRegionClosed, setIsRegionClosed] = useState(false); // Region has insufficient users
   const [isApplied, setIsApplied] = useState(false); // User has applied for the TARGET batch (for Button Status)
   const [showCancelModal, setShowCancelModal] = useState(false);
 
@@ -419,23 +420,16 @@ export default function App() {
   }, [session, fetchMatches]);
 
   const checkProfile = async (userId: string) => {
-    console.log("checkProfile called with:", userId);
     try {
-      console.log("Fetching member profile...");
       const { data, error: _error } = await supabase
         .from('member')
         .select('*')
         .eq('auth_id', userId)
         .single();
 
-      console.log("Member profile result:", data, _error);
-
       if (data) {
         setHasProfile(true);
         setIsSignedUp(true);
-
-        // Check application status
-        console.log("Checking application status...");
 
         // 1. Check if user is a PARTICIPANT in the CURRENT batch (for Dating View access)
         const currentBatchDate = BatchUtils.getCurrentBatchStartDate();
@@ -462,9 +456,6 @@ export default function App() {
           setIsParticipant(false);
           setIsSpectator(false);
         }
-
-
-
 
         // Check if user has applied for the NEXT cycle
         const targetBatchDate = BatchUtils.getTargetBatchStartDate();
@@ -999,15 +990,16 @@ export default function App() {
             
             DEBUG OVERRIDE: isDatingPhase toggle forces Dating View
           */}
-          {(BatchUtils.getCurrentSystemState() === 'MATCHING' || isDatingPhase) && (isParticipant || isDatingPhase || isSpectator) ? (
+          {(BatchUtils.getCurrentSystemState() === 'MATCHING' || isDatingPhase) && (isParticipant || isDatingPhase || isSpectator || isRegionClosed) ? (
             <HomeDatingView
               isSignedUp={isSignedUp}
               onProfileClick={handleProfileClick}
               onShowNotifications={handleShowNotifications}
-              isSpectator={isSpectator} // Pass isSpectator
+              isSpectator={isSpectator || isRegionClosed} // Combine DB status and Region status
               onRegister={handleRegister}
               isApplied={isApplied}
               userId={session?.user?.id}
+              onSetSpectator={setIsRegionClosed} // Update region status only
             />
           ) : (
             <HomeRecruitingView

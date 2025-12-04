@@ -32,6 +32,7 @@ interface HomeDatingViewProps {
   onRegister?: () => void;
   isApplied?: boolean;
   userId?: string | null;
+  onSetSpectator?: (isSpectator: boolean) => void;
 }
 
 export function HomeDatingView({
@@ -41,7 +42,8 @@ export function HomeDatingView({
   isSpectator,
   onRegister,
   isApplied = false,
-  userId
+  userId,
+  onSetSpectator
 }: HomeDatingViewProps) {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -237,9 +239,8 @@ export function HomeDatingView({
           console.log("Debug: No candidates found. Check DB for matching records.");
         }
         // Check if my region is "Open" (>= 1 males AND >= 1 females)
-        // For MVP, we use a simple check.
-        // We need to count users in my group.
-        if (mySido) {
+        // Only check if NOT already in spectator mode to avoid infinite loop
+        if (!isSpectator && mySido) {
           const groupKey = getRegionGroupKey(mySido);
           const { data: statsData } = await supabase
             .from('dating_applications')
@@ -269,7 +270,9 @@ export function HomeDatingView({
           console.log("Debug: Region Stats", { groupKey, maleCount, femaleCount });
 
           if (maleCount < 1 || femaleCount < 1) {
-            // setIsSpectator(true); // Logic moved to App.tsx
+            if (onSetSpectator) {
+              onSetSpectator(true);
+            }
             console.log("Debug: Region Closed -> Spectator Mode");
           }
         }
@@ -416,19 +419,9 @@ export function HomeDatingView({
           </button>
         </div>
 
-        {/* Floating Badge - Dating Period Timer OR Spectator Banner */}
-        <div className="px-6 pb-3">
-          {isSpectator ? (
-            <div className="w-full bg-gray-100 border border-gray-200 rounded-xl p-4 mb-2 text-center shadow-sm">
-              <p className="text-sm font-bold text-gray-800 mb-1">
-                아쉽게도 이번 주는 매칭이 쉬어가요 😢
-              </p>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                우리 동네 인원이 조금 부족했어요.<br />
-                대신 <span className="text-underline-red font-bold">지금 핫한 다른 동네</span>를 구경시켜 드릴게요!
-              </p>
-            </div>
-          ) : (
+        {/* Floating Badge - Dating Period Timer (Only for Participants) */}
+        {!isSpectator && (
+          <div className="px-6 pb-3">
             <div className="px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500 bg-[var(--foreground)] shadow-black/20">
               <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
               <span className="text-xs font-sans font-medium tracking-wide text-white">
@@ -436,12 +429,24 @@ export function HomeDatingView({
                 소개팅 기간 종료까지 {String(totalHours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
               </span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Profile Feed */}
       <div className="flex-1 overflow-y-auto pb-24 px-4 py-3">
+        {/* Spectator Mode Banner (Scrollable) */}
+        {isSpectator && (
+          <div className="w-full bg-gray-100 border border-gray-200 rounded-xl p-4 mb-6 text-center shadow-sm">
+            <p className="text-sm font-bold text-gray-800 mb-1">
+              아쉽게도 이번 주는 매칭이 쉬어가요 😢
+            </p>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              우리 동네 인원이 조금 부족했어요.<br />
+              대신 <span className="text-underline-red font-bold">지금 핫한 다른 동네</span>를 구경시켜 드릴게요!
+            </p>
+          </div>
+        )}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-3"></div>
@@ -536,7 +541,7 @@ export function HomeDatingView({
       </div>
 
       {/* Sticky CTA for Spectators */}
-      {isSpectator && <div className="fixed bottom-[80px] left-0 right-0 px-6 z-30">
+      {isSpectator && <div className="fixed bottom-[100px] left-0 right-0 px-6 z-30">
         <button
           onClick={() => {
             if (isApplied) {
