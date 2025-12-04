@@ -5,7 +5,7 @@ export function MailboxHeader({ onShowNotifications, unreadCount = 0 }: { onShow
   return (
     <div className="sticky top-0 z-40 bg-[#FCFCFA]/95 backdrop-blur-md border-b border-[var(--foreground)]/5">
       <div className="px-6 py-4 flex items-center justify-between">
-        <h1 className="font-serif text-2xl font-medium text-[var(--foreground)] tracking-tight">
+        <h1 className="font-sans text-2xl font-medium text-[var(--foreground)] tracking-tight">
           Mailbox
         </h1>
         <button

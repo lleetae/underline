@@ -21,7 +21,7 @@ export function LoginView() {
             <div className="w-full max-w-md space-y-12 relative z-10">
                 {/* Logo / Title Area */}
                 <div className="text-center space-y-4">
-                    <h1 className="font-serif text-4xl text-[var(--foreground)] tracking-tight">
+                    <h1 className="font-sans text-4xl text-[var(--foreground)] tracking-tight">
                         Underline
                     </h1>
                     <p className="text-[var(--foreground)]/60 font-sans text-sm leading-relaxed">

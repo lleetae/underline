@@ -62,20 +62,20 @@ export function BookReview({ coverUrl, selectedQuote, onQuoteSelect }: BookRevie
           <h2 className="text-xs font-sans tracking-[0.2em] uppercase text-[var(--primary)] mb-6 text-center">
             My Life Book
           </h2>
-          
+
           <div className="flex gap-6 items-start">
             <div className="w-24 shrink-0 shadow-md rotate-1 transition-transform hover:rotate-0 duration-300">
-               <div className="aspect-[2/3] relative bg-[#e5e5e5]">
+              <div className="aspect-[2/3] relative bg-[#e5e5e5]">
                 <ImageWithFallback
                   src={coverUrl}
                   alt="Book Cover"
                   className="w-full h-full object-cover"
                 />
-               </div>
+              </div>
             </div>
-            
+
             <div className="space-y-4">
-              <h3 className="font-serif text-xl leading-tight">
+              <h3 className="font-sans text-xl leading-tight">
                 참을 수 없는 존재의 가벼움
               </h3>
               <p className="text-xs font-sans opacity-60 tracking-wide">
@@ -85,20 +85,20 @@ export function BookReview({ coverUrl, selectedQuote, onQuoteSelect }: BookRevie
           </div>
         </div>
 
-        <div className="font-serif text-[1.05rem] leading-loose text-[var(--foreground)]/90 space-y-6 break-keep">
+        <div className="font-sans text-[1.05rem] leading-loose text-[var(--foreground)]/90 space-y-6 break-keep">
           {paragraphs.map((paragraphSentences, pIndex) => (
             <p key={pIndex}>
               {paragraphSentences.map((sentence, sIndex) => {
                 const active = sentence.trim() === selectedQuote.trim();
 
                 return (
-                   <React.Fragment key={sIndex}>
-                     <SelectableSentence 
-                       text={sentence}
-                       isSelected={active}
-                       onClick={() => onQuoteSelect(sentence.trim())}
-                     />
-                   </React.Fragment>
+                  <React.Fragment key={sIndex}>
+                    <SelectableSentence
+                      text={sentence}
+                      isSelected={active}
+                      onClick={() => onQuoteSelect(sentence.trim())}
+                    />
+                  </React.Fragment>
                 );
               })}
             </p>

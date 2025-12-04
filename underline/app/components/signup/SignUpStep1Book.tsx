@@ -231,7 +231,7 @@ export function SignUpStep1Book({
                                                         className="w-16 h-22 object-cover rounded shadow-sm flex-shrink-0"
                                                     />
                                                     <div className="flex-1 min-w-0">
-                                                        <h4 className="font-serif text-sm text-[var(--foreground)] mb-1 truncate">
+                                                        <h4 className="font-sans text-sm text-[var(--foreground)] mb-1 truncate">
                                                             {book.title}
                                                         </h4>
                                                         <p className="text-xs text-[var(--foreground)]/60 font-sans mb-0.5 truncate">
@@ -267,7 +267,7 @@ export function SignUpStep1Book({
                             {/* Selected Book Display */}
                             <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-5 shadow-sm">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-serif text-lg text-[var(--foreground)]">선택한 책</h3>
+                                    <h3 className="font-sans text-lg text-[var(--foreground)]">선택한 책</h3>
                                     <button
                                         onClick={() => {
                                             setSelectedBook(null);
@@ -288,7 +288,7 @@ export function SignUpStep1Book({
                                         className="w-28 h-38 object-cover rounded-lg shadow-md flex-shrink-0"
                                     />
                                     <div className="flex-1">
-                                        <h4 className="font-serif text-base text-[var(--foreground)] mb-2">{selectedBook.title}</h4>
+                                        <h4 className="font-sans text-base text-[var(--foreground)] mb-2">{selectedBook.title}</h4>
                                         <div className="space-y-1 text-xs text-[var(--foreground)]/70 font-sans">
                                             <p>{selectedBook.author}</p>
                                             <p>{selectedBook.publisher}</p>
@@ -316,7 +316,7 @@ export function SignUpStep1Book({
                             {/* Review Section */}
                             <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-5 shadow-sm">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <h3 className="font-serif text-lg text-[var(--foreground)]">책 감상문</h3>
+                                    <h3 className="font-sans text-lg text-[var(--foreground)]">책 감상문</h3>
                                     <div className="h-px flex-1 bg-[var(--primary)]/30" />
                                 </div>
 

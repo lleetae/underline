@@ -280,7 +280,7 @@ export function MailboxView({
                           </div>
                         </div>
                         <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border border-[var(--primary)]/20 rounded-lg p-3">
-                          <p className="font-serif text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap line-clamp-3">
+                          <p className="font-sans text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap line-clamp-3">
                             {request.letter}
                           </p>
                         </div>
@@ -364,7 +364,7 @@ export function MailboxView({
                         </div>
                       </div>
                       <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border border-[var(--primary)]/20 rounded-lg p-3">
-                        <p className="font-serif text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap line-clamp-3">
+                        <p className="font-sans text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap line-clamp-3">
                           {request.letter}
                         </p>
                       </div>

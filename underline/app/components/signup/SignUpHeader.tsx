@@ -26,7 +26,7 @@ export function SignUpHeader({
                     >
                         <ArrowLeft className="w-6 h-6 text-[var(--foreground)]" />
                     </button>
-                    <h1 className="font-serif text-xl text-[var(--foreground)] pt-0.5">{title}</h1>
+                    <h1 className="font-sans text-xl text-[var(--foreground)] pt-0.5">{title}</h1>
                 </div>
             </div>
             {/* Progress Bar */}

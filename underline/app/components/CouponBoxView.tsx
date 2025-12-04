@@ -69,7 +69,7 @@ export function CouponBoxView({ onBack }: { onBack: () => void }) {
                     >
                         <ArrowLeft className="w-6 h-6 text-[var(--foreground)]" />
                     </button>
-                    <h1 className="font-serif text-xl text-[var(--foreground)]">내 쿠폰함</h1>
+                    <h1 className="font-sans text-xl text-[var(--foreground)]">내 쿠폰함</h1>
                 </div>
             </div>
 
@@ -136,7 +136,7 @@ export function CouponBoxView({ onBack }: { onBack: () => void }) {
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl mx-auto mb-4 shadow-sm">
                         💌
                     </div>
-                    <h3 className="font-serif text-lg font-bold text-[var(--foreground)] mb-2">
+                    <h3 className="font-sans text-lg font-bold text-[var(--foreground)] mb-2">
                         친구 초대하고 혜택 받기
                     </h3>
                     <p className="text-sm text-[var(--foreground)]/70 mb-6 leading-relaxed">
