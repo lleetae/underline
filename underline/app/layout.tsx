@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
+import NotificationPermissionRequest from "./components/NotificationPermissionRequest";
 
 export const metadata: Metadata = {
     title: "Underline - 책으로 시작하는 인연",
@@ -24,6 +25,7 @@ export default function RootLayout({
         <html lang="ko">
             <body className="antialiased">
                 {children}
+                <NotificationPermissionRequest />
                 <Toaster position="top-center" />
                 <script src="https://pay.nicepay.co.kr/v1/js/"></script>
             </body>
