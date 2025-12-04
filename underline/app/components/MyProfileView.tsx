@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { ChannelTalk } from "./ChannelTalk";
 import { Plus, Edit3, User, LogOut, MapPin, Book as BookIcon } from "lucide-react";
+
+import { toast } from "sonner";
+import { supabase } from "../lib/supabase";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { MyBookDetailView } from "./MyBookDetailView";
 import { AddBookView } from "./AddBookView";
 import { ProfileEditView } from "./ProfileEditView";
 
-import { toast } from "sonner";
-import { supabase } from "../lib/supabase";
+
 
 interface Book {
   id: string;
@@ -87,6 +90,7 @@ function TotalPagesStats({ books }: { books: Book[] }) {
 }
 
 export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogout?: () => void; onNavigate: (view: any, params?: any, options?: { replace?: boolean }) => void; selectedBookId?: string; }) {
+  const [userId, setUserId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [books, setBooks] = useState<Book[]>([]);
   const [profileData, setProfileData] = useState({
@@ -127,6 +131,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
         setLoading(false);
         return;
       }
+      setUserId(user.id);
 
       // 1. Fetch Member Profile
       const { data: member, error: memberError } = await supabase
@@ -745,6 +750,17 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
       )}
 
 
+      {/* Channel Talk Integration */}
+      <ChannelTalk
+        pluginKey={process.env.NEXT_PUBLIC_CHANNEL_TALK_PLUGIN_KEY || ""}
+        memberId={userId}
+        profile={{
+          name: profileData.nickname,
+          mobileNumber: profileData.kakaoId,
+          CUSTOM_VALUE_1: profileData.gender,
+          CUSTOM_VALUE_2: profileData.location,
+        }}
+      />
     </div>
   );
 }
