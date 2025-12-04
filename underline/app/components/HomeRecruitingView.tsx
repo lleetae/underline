@@ -4,7 +4,6 @@ import { Bell, BookOpen, User, Mail, Edit, X, Copy, ChevronDown } from "lucide-r
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCountdown } from "../hooks/useCountdown";
-import useEmblaCarousel from "embla-carousel-react";
 
 
 import { supabase } from "../lib/supabase";
@@ -45,7 +44,6 @@ export function HomeRecruitingView({
   const timeLeft = useCountdown(5, 0);
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [emblaRef] = useEmblaCarousel({ align: "start", dragFree: true });
   const [activePolicyModal, setActivePolicyModal] = useState<'terms' | 'privacy' | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [reviews, setReviews] = useState<SuccessStory[]>([]);
@@ -55,6 +53,35 @@ export function HomeRecruitingView({
   const [regionStats, setRegionStats] = useState<Record<string, { male: number; female: number; total: number }>>({});
   const [isRegionStatsOpen, setIsRegionStatsOpen] = useState(false);
   const router = useRouter();
+
+  // Drag to scroll logic
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const onMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const onMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // scroll-fast
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   // Check for Welcome Modal flag
   useEffect(() => {
@@ -200,7 +227,7 @@ export function HomeRecruitingView({
   };
 
   return (
-    <div className="min-h-screen bg-underline-cream text-underline-text font-sans pb-20 max-w-md mx-auto shadow-2xl shadow-black/5 relative">
+    <div className="min-h-screen bg-underline-cream text-underline-text font-sans pb-20 w-full max-w-md mx-auto shadow-2xl shadow-black/5 relative overflow-x-hidden">
       {/* 1. GNB (Header) */}
       <header className="sticky top-0 z-50 bg-underline-cream/90 backdrop-blur-sm h-[60px] flex items-center justify-between px-5 border-b border-black/5">
         <div className="w-6" /> {/* Spacer */}
@@ -502,13 +529,20 @@ export function HomeRecruitingView({
           )}
         </div>
 
-        <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex px-6 gap-4">
+        <div
+          className="overflow-x-auto snap-x snap-mandatory scroll-pl-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-4 cursor-grab active:cursor-grabbing"
+          ref={scrollRef}
+          onMouseDown={onMouseDown}
+          onMouseLeave={onMouseLeave}
+          onMouseUp={onMouseUp}
+          onMouseMove={onMouseMove}
+        >
+          <div className="flex gap-4 w-max px-6">
             {reviews.map((story) => (
               <div
                 key={story.id}
-                onClick={() => setSelectedReview(story)}
-                className="flex-[0_0_70%] min-w-0 relative rounded-2xl overflow-hidden aspect-[3/4] shadow-md group cursor-pointer"
+                onClick={() => !isDragging && setSelectedReview(story)}
+                className="w-[280px] flex-none snap-start relative rounded-2xl overflow-hidden aspect-[3/4] shadow-md group cursor-pointer select-none"
               >
                 {/* Background Image */}
                 <ImageWithFallback
@@ -553,9 +587,9 @@ export function HomeRecruitingView({
               <X className="w-8 h-8" />
             </button>
 
-            <div className="bg-white rounded-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-2xl w-full max-h-[70vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
               <div className="p-1.5">
-                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl">
+                <div className="relative aspect-square w-full overflow-hidden rounded-xl">
                   <ImageWithFallback
                     src={selectedReview.imageUrl}
                     alt="Review"
