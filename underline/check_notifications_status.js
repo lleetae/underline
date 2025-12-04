@@ -22,7 +22,7 @@ async function checkNotifications() {
     if (countError) console.error('Error counting notifications:', countError);
     else console.log(`Total Notifications: ${count}`);
 
-    // 2. List recent notifications
+    // 2. List recent notifications with ID details
     const { data: recent, error: listError } = await supabase
         .from('notifications')
         .select('*')
@@ -32,25 +32,28 @@ async function checkNotifications() {
     if (listError) console.error('Error listing notifications:', listError);
     else {
         console.log('Recent Notifications:');
-        console.log(JSON.stringify(recent, null, 2));
+        for (const n of recent) {
+            console.log(`\n[Notification] ID: ${n.id}, Type: ${n.type}`);
+            console.log(`  - user_id (Recipient): ${n.user_id}`);
+            console.log(`  - sender_id: ${n.sender_id}`);
+
+            // Check if this user_id exists in member table as auth_id
+            const { data: member, error: memberError } = await supabase
+                .from('member')
+                .select('id, nickname, auth_id')
+                .eq('auth_id', n.user_id)
+                .single();
+
+            if (member) {
+                console.log(`  - Mapped to Member: ${member.nickname} (ID: ${member.id})`);
+            } else {
+                console.log(`  - WARNING: No Member found with auth_id = ${n.user_id}`);
+            }
+        }
     }
 
-    // 3. Check specific sender
-    const senderId = 'd5188c3b-bd9b-4d1d-944c-8c48f52cb56a';
-    const { data: sender, error: senderError } = await supabase
-        .from('member')
-        .select('*')
-        .eq('auth_id', senderId)
-        .single();
-
-    if (senderError) console.error('Error fetching sender:', senderError);
-    else console.log('Sender Details:', JSON.stringify(sender, null, 2));
-
-    // 3. Check for orphaned notifications (invalid user_id)
-    // We can't easily join auth.users via JS client, but we can check if user_id is null if schema allows
-
     console.log('\n--- Checking Triggers ---');
-    // We can't check triggers via JS client easily, but we can check if data is being inserted.
+    // We will check triggers via SQL tool next
 }
 
 checkNotifications();
