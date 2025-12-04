@@ -125,13 +125,15 @@ export function HomeDatingView({
           return;
         }
 
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-        if (userError || !user) {
-          console.error("Debug: Failed to get user", userError);
+        if (sessionError || !session?.user) {
+          console.error("Debug: Failed to get session", sessionError);
           setIsLoading(false);
           return;
         }
+
+        const user = session.user;
 
         // Fetch current user's gender using auth_id
         const { data: currentUserData } = await supabase
