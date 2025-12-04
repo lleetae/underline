@@ -713,6 +713,18 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    try {
+      if (session?.user?.id) {
+        // Clear FCM token to prevent notifications on this device
+        await supabase
+          .from('member')
+          .update({ fcm_token: null })
+          .eq('auth_id', session.user.id);
+      }
+    } catch (error) {
+      console.error("Error clearing FCM token:", error);
+    }
+
     await supabase.auth.signOut();
     setSession(null);
     setHasProfile(false);
