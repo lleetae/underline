@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
         if (partnerIds.length > 0) {
             const { data: partnersData, error: partnersError } = await supabaseAdmin
                 .from('member')
-                .select('id, nickname, age, birth_date, location, sido, sigungu, photo_url, photos, auth_id')
+                .select('id, nickname, age, birth_date, sido, sigungu, photo_url, photos, auth_id')
                 .in('id', partnerIds);
 
             if (partnersError) {
@@ -150,11 +150,7 @@ export async function GET(request: NextRequest) {
                 if (p.sido && p.sigungu) {
                     return `${p.sido} ${p.sigungu}`;
                 }
-                const locationMap: { [key: string]: string } = {
-                    seoul: "서울", busan: "부산", incheon: "인천", daegu: "대구",
-                    daejeon: "대전", gwangju: "광주", other: "기타"
-                };
-                return locationMap[p.location] || p.location;
+                return p.sido || "지역 정보 없음";
             };
 
             return {
