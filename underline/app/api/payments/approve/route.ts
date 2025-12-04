@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
+import { sendPushNotification } from '../../../lib/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -286,6 +287,18 @@ export async function POST(request: NextRequest) {
                                         console.error("Error inserting payment notification:", insertError);
                                     } else {
                                         console.log(`Notification sent successfully to member ${targetMemberId}`);
+
+                                        // Send Push Notification
+                                        try {
+                                            await sendPushNotification(
+                                                targetMemberId,
+                                                "연락처 공개 알림",
+                                                "상대방이 연락처를 확인했습니다.",
+                                                "/mailbox?tab=matched"
+                                            );
+                                        } catch (pushError) {
+                                            console.error("Failed to send push notification:", pushError);
+                                        }
                                     }
                                 } else {
                                     console.error("Payer member not found in DB, but proceeding with ID from orderId");
