@@ -475,64 +475,49 @@ export default function App() {
         setHasProfile(true);
         setIsSignedUp(true);
 
-        // 1. Check if user is a PARTICIPANT in the CURRENT batch (for Dating View access)
+        // Prepare dates
         const currentBatchDate = BatchUtils.getCurrentBatchStartDate();
         const { start: currentStart, end: currentEnd } = BatchUtils.getBatchApplicationRange(currentBatchDate);
 
-        const { data: participantData } = await supabase
-          .from('dating_applications')
-          .select('status')
-          .eq('member_id', data.id)
-          .gte('created_at', currentStart.toISOString())
-          .lte('created_at', currentEnd.toISOString())
-          .in('status', ['active', 'failed']) // Check for both active and failed
-          .maybeSingle();
-
-        if (participantData) {
-          if (participantData.status === 'active') {
-            setIsParticipant(true);
-            setIsSpectator(false);
-          } else if (participantData.status === 'failed') {
-            setIsParticipant(false);
-            setIsSpectator(true);
-          }
-        } else {
-          setIsParticipant(false);
-          setIsSpectator(false);
-        }
-
-        // Check if user has applied for the NEXT cycle
         let targetBatchDate = BatchUtils.getTargetBatchStartDate();
-
-        // If region is closed (Spectator Mode), apply for the NEXT batch (after the current one)
         if (isRegionClosedRef.current) {
           targetBatchDate = addDays(targetBatchDate, 7);
         }
-
         const { start: targetStart, end: targetEnd } = BatchUtils.getBatchApplicationRange(targetBatchDate);
 
-        const { data: applicationData } = await supabase
-          .from('dating_applications')
-          .select('status')
-          .eq('member_id', data.id)
-          .gte('created_at', targetStart.toISOString())
-          .lte('created_at', targetEnd.toISOString())
-          .neq('status', 'cancelled')
-          .maybeSingle();
-
-        if (applicationData) {
-          setIsApplied(true);
-        } else {
-          setIsApplied(false);
-        }
-
-        // Get Current Interaction Cycle Start Date (for Mailbox Filtering)
         const cycleStartDate = BatchUtils.getCurrentInteractionCycleStart();
 
-        // Fetch received match requests
-        const { data: receivedRequests, error: requestsError } = await supabase
-          .from('match_requests')
-          .select(`
+        // Parallelize independent fetches
+        const [
+          participantResult,
+          applicationResult,
+          receivedRequestsResult,
+          sentRequestsResult
+        ] = await Promise.all([
+          // 1. Check current batch participation
+          supabase
+            .from('dating_applications')
+            .select('status')
+            .eq('member_id', data.id)
+            .gte('created_at', currentStart.toISOString())
+            .lte('created_at', currentEnd.toISOString())
+            .in('status', ['active', 'failed'])
+            .maybeSingle(),
+
+          // 2. Check next batch application
+          supabase
+            .from('dating_applications')
+            .select('status')
+            .eq('member_id', data.id)
+            .gte('created_at', targetStart.toISOString())
+            .lte('created_at', targetEnd.toISOString())
+            .neq('status', 'cancelled')
+            .maybeSingle(),
+
+          // 3. Fetch received match requests
+          supabase
+            .from('match_requests')
+            .select(`
               id,
               sender_id,
               letter,
@@ -549,44 +534,15 @@ export default function App() {
                 auth_id
               )
             `)
-          .eq('receiver_id', data.id)
-          .eq('status', 'pending')
-          .gte('created_at', cycleStartDate.toISOString()) // Filter by cycle
-          .order('created_at', { ascending: false });
+            .eq('receiver_id', data.id)
+            .eq('status', 'pending')
+            .gte('created_at', cycleStartDate.toISOString())
+            .order('created_at', { ascending: false }),
 
-        if (!requestsError && receivedRequests) {
-          const formattedRequests = receivedRequests
-            .filter((req: any) => req.sender && req.sender.auth_id !== null) // Filter out withdrawn users
-            .map((req: any) => {
-              // Handle photos: check photos array first, then photo_url
-              const photos = req.sender.photos && req.sender.photos.length > 0
-                ? req.sender.photos
-                : (req.sender.photo_url ? [req.sender.photo_url] : []);
-
-              // Handle age: use age if available, otherwise calculate from birth_date
-              const age = req.sender.age || (req.sender.birth_date
-                ? new Date().getFullYear() - parseInt(req.sender.birth_date.substring(0, 4))
-                : 0);
-
-              return {
-                id: req.id,
-                profileId: req.sender.id.toString(),
-                nickname: req.sender.nickname,
-                age: age,
-                location: (req.sender.sido && req.sender.sigungu) ? `${req.sender.sido} ${req.sender.sigungu}` : "알 수 없음",
-                photo: photos[0] || "",
-                letter: req.letter,
-                timestamp: new Date(req.created_at),
-                isBlurred: true // Received requests are blurred
-              };
-            });
-          setReceivedMatchRequests(formattedRequests);
-        }
-
-        // Fetch sent match requests
-        const { data: sentRequests, error: sentRequestsError } = await supabase
-          .from('match_requests')
-          .select(`
+          // 4. Fetch sent match requests
+          supabase
+            .from('match_requests')
+            .select(`
               id,
               receiver_id,
               letter,
@@ -603,14 +559,69 @@ export default function App() {
                 auth_id
               )
             `)
-          .eq('sender_id', data.id)
-          .eq('status', 'pending')
-          .gte('created_at', cycleStartDate.toISOString()) // Filter by cycle
-          .order('created_at', { ascending: false });
+            .eq('sender_id', data.id)
+            .eq('status', 'pending')
+            .gte('created_at', cycleStartDate.toISOString())
+            .order('created_at', { ascending: false })
+        ]);
 
-        if (!sentRequestsError && sentRequests) {
+        // Process Participant Data
+        const participantData = participantResult.data;
+        if (participantData) {
+          if (participantData.status === 'active') {
+            setIsParticipant(true);
+            setIsSpectator(false);
+          } else if (participantData.status === 'failed') {
+            setIsParticipant(false);
+            setIsSpectator(true);
+          }
+        } else {
+          setIsParticipant(false);
+          setIsSpectator(false);
+        }
+
+        // Process Application Data
+        const applicationData = applicationResult.data;
+        if (applicationData) {
+          setIsApplied(true);
+        } else {
+          setIsApplied(false);
+        }
+
+        // Process Received Requests
+        const receivedRequests = receivedRequestsResult.data;
+        if (!receivedRequestsResult.error && receivedRequests) {
+          const formattedRequests = receivedRequests
+            .filter((req: any) => req.sender && req.sender.auth_id !== null)
+            .map((req: any) => {
+              const photos = req.sender.photos && req.sender.photos.length > 0
+                ? req.sender.photos
+                : (req.sender.photo_url ? [req.sender.photo_url] : []);
+
+              const age = req.sender.age || (req.sender.birth_date
+                ? new Date().getFullYear() - parseInt(req.sender.birth_date.substring(0, 4))
+                : 0);
+
+              return {
+                id: req.id,
+                profileId: req.sender.id.toString(),
+                nickname: req.sender.nickname,
+                age: age,
+                location: (req.sender.sido && req.sender.sigungu) ? `${req.sender.sido} ${req.sender.sigungu}` : "알 수 없음",
+                photo: photos[0] || "",
+                letter: req.letter,
+                timestamp: new Date(req.created_at),
+                isBlurred: true
+              };
+            });
+          setReceivedMatchRequests(formattedRequests);
+        }
+
+        // Process Sent Requests
+        const sentRequests = sentRequestsResult.data;
+        if (!sentRequestsResult.error && sentRequests) {
           const formattedSentRequests = sentRequests
-            .filter((req: any) => req.receiver.auth_id !== null) // Filter out withdrawn users
+            .filter((req: any) => req.receiver.auth_id !== null)
             .map((req: any) => {
               const photos = req.receiver.photos && req.receiver.photos.length > 0
                 ? req.receiver.photos
@@ -628,13 +639,14 @@ export default function App() {
                 photo: photos[0] || "",
                 letter: req.letter,
                 timestamp: new Date(req.created_at),
-                isBlurred: true // Sent requests are blurred
+                isBlurred: true
               };
             });
           setSentMatchRequests(formattedSentRequests);
         }
 
-        // Fetch matches (accepted requests) via API to bypass RLS issues
+        // Fetch matches (accepted requests) via API
+        // This is still separate because it hits an API endpoint, not Supabase directly
         await fetchMatches();
 
       } else {

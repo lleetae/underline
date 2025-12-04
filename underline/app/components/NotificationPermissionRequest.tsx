@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { getToken, getMessaging, isSupported } from "firebase/messaging";
 import { app } from "../lib/firebase";
 import { supabase } from "../lib/supabase";
@@ -8,8 +8,13 @@ import { supabase } from "../lib/supabase";
 const VAPID_KEY = "BCGU8r_zOuEwQnW1rzeHwKURt_VQJJBhRFa7nK-oGxu3bmW8IyPNGat5t4EBZhNbx1xcIZQktwjQ3v4G1UkCnqk";
 
 export default function NotificationPermissionRequest() {
+    const isRequesting = useRef(false);
+
     useEffect(() => {
         async function requestPermission() {
+            if (isRequesting.current) return;
+            isRequesting.current = true;
+
             console.log("[NotificationPermissionRequest] Starting permission request flow...");
             try {
                 if (typeof window === "undefined") {
@@ -61,6 +66,8 @@ export default function NotificationPermissionRequest() {
                 }
             } catch (error) {
                 console.error("[NotificationPermissionRequest] Error requesting notification permission:", error);
+            } finally {
+                isRequesting.current = false;
             }
         }
 
@@ -120,5 +127,4 @@ export default function NotificationPermissionRequest() {
 
     return null; // This component doesn't render anything visible
 }
-
 
