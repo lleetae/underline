@@ -397,7 +397,7 @@ export function HomeDatingView({
               onClick={() => setShowSpectatorPopup(false)}
               className="w-full py-3 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20"
             >
-              핫한 다른 지역 구경가기
+              다른 지역 소개팅 구경가기
             </button>
           </div>
         </div>
@@ -445,7 +445,7 @@ export function HomeDatingView({
             </p>
             <p className="text-xs text-gray-500 leading-relaxed">
               우리 동네 인원이 조금 부족했어요.<br />
-              대신 <span className="text-underline-red font-bold">지금 핫한 다른 동네</span>를 구경시켜 드릴게요!
+              대신 <span className="text-underline-red font-bold">지금 다른 동네</span>를 구경시켜 드릴게요!
             </p>
           </div>
         )}
