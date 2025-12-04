@@ -67,6 +67,46 @@ export default function NotificationPermissionRequest() {
         requestPermission();
     }, []);
 
+    // Handle foreground messages
+    useEffect(() => {
+        async function setupForegroundListener() {
+            try {
+                if (typeof window !== "undefined" && await isSupported()) {
+                    const { onMessage } = await import("firebase/messaging");
+                    const messaging = getMessaging(app);
+
+                    const unsubscribe = onMessage(messaging, (payload) => {
+                        console.log("[NotificationPermissionRequest] Foreground message received:", payload);
+                        // You can customize how to show the notification here.
+                        // Since we have a service worker for background, this is for when the app is OPEN.
+                        // We can use the browser's Notification API if permission is granted, 
+                        // OR just show a toast/snackbar.
+
+                        if (payload.notification) {
+                            const { title, body } = payload.notification;
+                            // Example: Show a system notification even in foreground (if supported/allowed)
+                            // Or better, use your UI library's toast
+                            // import { toast } from "sonner"; // Assuming you use sonner
+                            // toast(title, { description: body });
+
+                            // For now, let's try to spawn a system notification if the browser allows it in foreground
+                            new Notification(title || "New Message", {
+                                body: body,
+                                icon: "/icons/icon-192x192.png"
+                            });
+                        }
+                    });
+
+                    return () => unsubscribe();
+                }
+            } catch (error) {
+                console.error("[NotificationPermissionRequest] Error setting up foreground listener:", error);
+            }
+        }
+
+        setupForegroundListener();
+    }, []);
+
     return null; // This component doesn't render anything visible
 }
 

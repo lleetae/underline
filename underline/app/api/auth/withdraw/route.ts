@@ -117,7 +117,8 @@ export async function POST(request: NextRequest) {
                     photos: [],
                     referrer_auth_id: null,
                     legacy_auth_id: member.auth_id, // Save the original UUID
-                    auth_id: null // Unlink to allow deletion (FK safe)
+                    auth_id: null, // Unlink to allow deletion (FK safe)
+                    fcm_token: null // Clear push token
                 })
                 .eq('id', member.id);
 

@@ -38,6 +38,7 @@ export type Database = {
                     referrer_user_id: string | null
                     free_reveals_count: number
                     has_welcome_coupon: boolean
+                    fcm_token: string | null
                 }
                 Insert: {
                     age?: number | null
@@ -62,6 +63,7 @@ export type Database = {
                     referrer_user_id?: string | null
                     free_reveals_count?: number
                     has_welcome_coupon?: boolean
+                    fcm_token?: string | null
                 }
                 Update: {
                     age?: number | null
@@ -86,6 +88,7 @@ export type Database = {
                     referrer_auth_id: string | null
                     free_reveals_count?: number
                     has_welcome_coupon?: boolean
+                    fcm_token?: string | null
                 }
                 Relationships: []
             }

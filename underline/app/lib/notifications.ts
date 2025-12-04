@@ -46,7 +46,18 @@ export async function sendPushNotification(userId: string, title: string, body: 
         const response = await adminMessaging.send(message);
         console.log('Successfully sent message:', response);
         return response;
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error sending message:', error);
+
+        // Check for invalid token error codes
+        if (error.code === 'messaging/registration-token-not-registered' ||
+            error.code === 'messaging/invalid-argument') {
+            console.log(`Removing invalid FCM token for user ${userId}`);
+            const supabase = getSupabaseAdmin();
+            await supabase
+                .from('member')
+                .update({ fcm_token: null })
+                .eq('id', userId);
+        }
     }
 }
