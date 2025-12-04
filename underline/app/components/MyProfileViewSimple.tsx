@@ -247,7 +247,9 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
             return;
           }
 
-          const { error } = await supabase.from('member').update({
+          const photoUrls = updatedData.profilePhotos?.map(p => p.url) || [];
+
+          const { error, count } = await supabase.from('member').update({
             nickname: updatedData.nickname,
             location: updatedData.location,
             religion: updatedData.religion,
@@ -257,13 +259,31 @@ export function MyProfileView({ onLogout }: { onLogout?: () => void }) {
             bio: updatedData.bio,
             kakao_id: encryptedKakaoId,
             age: age,
-            photo_url: updatedData.profilePhotos?.[0]?.url,
-            photos: updatedData.profilePhotos?.map(p => p.url)
-          }).eq('auth_id', user.id);
+            photo_url: photoUrls.length > 0 ? photoUrls[0] : null,
+            photos: photoUrls
+          }, { count: 'exact' }).eq('auth_id', user.id);
+
+          console.log("Update result:", { count, error });
+
+          if (count === 0) {
+            console.error("No rows updated! Check auth_id match or RLS policies.");
+            toast.error("저장 실패: 사용자 정보를 찾을 수 없습니다.");
+            return;
+          }
 
           if (error) {
             console.error("Error saving profile:", error);
-            toast.error("저장 실패");
+            console.error("Error details:", {
+              message: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            });
+            console.error("Update data:", {
+              location: updatedData.location,
+              userId: user.id
+            });
+            toast.error(`저장 실패: ${error.message}`);
             return;
           }
 
