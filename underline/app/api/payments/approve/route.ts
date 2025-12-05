@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
 
                                 if (payerMember) {
                                     console.log(`Inserting notification: user_id=${targetMember.auth_id}, sender_id=${payerMemberId}`);
-                                    const { error: insertError } = await supabaseAdmin
+                                    const { data: insertedNotification, error: insertError } = await supabaseAdmin
                                         .from('notifications')
                                         .insert({
                                             user_id: targetMember.auth_id, // Receiver of notification
@@ -281,7 +281,9 @@ export async function POST(request: NextRequest) {
                                             sender_id: payerMember.auth_id, // Sender of notification (Payer Auth ID)
                                             is_read: false,
                                             metadata: {}
-                                        });
+                                        })
+                                        .select()
+                                        .single();
 
                                     if (insertError) {
                                         console.error("Error inserting payment notification:", insertError);
@@ -290,14 +292,42 @@ export async function POST(request: NextRequest) {
 
                                         // Send Push Notification
                                         try {
-                                            await sendPushNotification(
+                                            const pushResult = await sendPushNotification(
                                                 targetMemberId,
                                                 "연락처 공개 알림",
                                                 "상대방이 연락처를 확인했습니다.",
                                                 "/mailbox?tab=matched"
                                             );
-                                        } catch (pushError) {
+
+                                            // Log success to metadata
+                                            if (insertedNotification) {
+                                                await supabaseAdmin
+                                                    .from('notifications')
+                                                    .update({
+                                                        metadata: {
+                                                            ...insertedNotification.metadata,
+                                                            push_result: pushResult || 'no_response',
+                                                            push_attempted: true
+                                                        }
+                                                    })
+                                                    .eq('id', insertedNotification.id);
+                                            }
+                                        } catch (pushError: any) {
                                             console.error("Failed to send push notification:", pushError);
+
+                                            // Log error to metadata
+                                            if (insertedNotification) {
+                                                await supabaseAdmin
+                                                    .from('notifications')
+                                                    .update({
+                                                        metadata: {
+                                                            ...insertedNotification.metadata,
+                                                            push_error: pushError.message || 'Unknown error',
+                                                            push_attempted: true
+                                                        }
+                                                    })
+                                                    .eq('id', insertedNotification.id);
+                                            }
                                         }
                                     }
                                 } else {
