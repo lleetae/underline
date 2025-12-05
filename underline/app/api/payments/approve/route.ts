@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
                                             user_id: targetMember.auth_id, // Receiver of notification
                                             type: 'contact_revealed',
                                             match_id: matchRequestId,
-                                            sender_id: payerMemberId, // Sender of notification (Payer Member ID)
+                                            sender_id: payerMember.auth_id, // Sender of notification (Payer Auth ID)
                                             is_read: false,
                                             metadata: {}
                                         });
