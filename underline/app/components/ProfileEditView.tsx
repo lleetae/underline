@@ -348,15 +348,27 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const originalFile = e.target.files?.[0];
+    if (!originalFile) return;
 
     // Reset input
     e.target.value = '';
 
-    const loadingToast = toast.loading("사진을 검사하고 있습니다...");
+    const loadingToast = toast.loading("사진을 압축하고 검사하고 있습니다...");
 
     try {
+      // 0. Compress Image
+      const imageCompression = (await import('browser-image-compression')).default;
+
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        fileType: 'image/jpeg'
+      };
+
+      const file = await imageCompression(originalFile, options);
+      console.log(`Original: ${originalFile.size / 1024 / 1024}MB, Compressed: ${file.size / 1024 / 1024}MB`);
       // 1. Check Nudity
       const isNsfw = await checkNudity(file);
 
