@@ -699,44 +699,63 @@ export function ProfileDetailViewWithInteraction({
                     <DecryptedKakaoId encryptedId={profile.kakaoId} fallback="ID 정보 없음" />
                   </p>
                 </div>
-                <button
-                  onClick={async () => {
-                    try {
-                      if (!profile.kakaoId) return;
 
-                      const { data: { session } } = await supabase.auth.getSession();
-                      const token = session?.access_token;
+                {/* Display Decrypted ID */}
+                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 flex items-center justify-between gap-2">
+                  <DecryptedKakaoId
+                    encryptedId={profile.kakaoId}
+                    className="font-mono text-sm text-[var(--foreground)] break-all"
+                  />
+                  <button
+                    onClick={() => {
+                      // We can't easily copy from DecryptedKakaoId since it manages state internally.
+                      // But we can just use the same API call or let user copy manually.
+                      // Ideally DecryptedKakaoId could expose a copy handler or ref.
+                      // For now, let's just keep a simple copy button that might need to re-fetch or just copy the text content if we could access it.
+                      // Actually, DecryptedKakaoId is a span.
+                      // Let's just rely on user selecting text OR implement a smarter component.
+                      // Wait, the user wants to SEE the original ID.
+                      // I will wrap DecryptedKakaoId and add a copy button that might fetch again (cached by browser/swr potentially) or just copy the dirty way.
+                      // Simpler: Just render DecryptedKakaoId. The user can copy it manually.
+                      // If we want a copy button, we can add it side-by-side but it needs the value.
+                      // Let's just show the ID for now as requested.
+                    }}
+                    className="hidden" // Hiding copy button for now as DecryptedKakaoId doesn't expose value
+                  >
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        if (!profile.kakaoId) return;
 
-                      if (!token) {
-                        toast.error("로그인이 필요합니다");
-                        return;
+                        // Quick re-fetch to get value for clipboard (secure)
+                        const { data: { session } } = await supabase.auth.getSession();
+                        const token = session?.access_token;
+                        if (!token) return;
+
+                        const response = await fetch('/api/decrypt/kakao', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                          },
+                          body: JSON.stringify({ encryptedId: profile.kakaoId })
+                        });
+
+                        if (response.ok) {
+                          const data = await response.json();
+                          await navigator.clipboard.writeText(data.decryptedId);
+                          toast.success("복사되었습니다");
+                        }
+                      } catch (e) {
+                        toast.error("복사 실패");
                       }
-
-                      const response = await fetch('/api/decrypt/kakao', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ encryptedId: profile.kakaoId })
-                      });
-
-                      if (response.ok) {
-                        const data = await response.json();
-                        await navigator.clipboard.writeText(data.decryptedId);
-                        toast.success("카카오톡 ID가 복사되었습니다");
-                      } else {
-                        throw new Error("Decryption failed");
-                      }
-                    } catch (e) {
-                      console.error("Copy error:", e);
-                      toast.error("복사에 실패했습니다");
-                    }
-                  }}
-                  className="text-xs bg-[var(--foreground)]/5 hover:bg-[var(--foreground)]/10 text-[var(--foreground)] px-3 py-1.5 rounded-md transition-colors font-sans"
-                >
-                  복사
-                </button>
+                    }}
+                    className="text-xs bg-[var(--foreground)]/5 hover:bg-[var(--foreground)]/10 text-[var(--foreground)] px-3 py-1.5 rounded-md transition-colors font-sans flex-shrink-0"
+                  >
+                    복사
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="bg-white p-4 rounded-lg border border-[var(--foreground)]/10 shadow-sm text-center">
@@ -752,7 +771,8 @@ export function ProfileDetailViewWithInteraction({
               </div>
             )}
           </div>
-        )}
+        )
+        }
 
         {/* Additional Info Grid */}
         <div className="px-6 py-4 border-b border-[var(--foreground)]/10">
@@ -857,50 +877,52 @@ export function ProfileDetailViewWithInteraction({
             </div>
           )}
         </div>
-      </div>
+      </div >
 
 
       {/* Floating Match Request Button - Hidden in Spectator Mode */}
-      {!isSpectator && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-6 pb-8">
-          <button
-            onClick={handleOpenLetterModal}
-            disabled={!canRequest}
-            className={`w-full max-w-md mx-auto font-sans font-medium py-4 rounded-xl transition-all duration-300 shadow-2xl flex items-center justify-center gap-2
+      {
+        !isSpectator && (
+          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-6 pb-8">
+            <button
+              onClick={handleOpenLetterModal}
+              disabled={!canRequest}
+              className={`w-full max-w-md mx-auto font-sans font-medium py-4 rounded-xl transition-all duration-300 shadow-2xl flex items-center justify-center gap-2
             ${canRequest
-                ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/30"
-                : "bg-[#F5F5F0] text-[var(--foreground)]/40 cursor-not-allowed shadow-none"
-              }`}
-          >
-            {isMatched ? (
-              <>
-                <Heart className="w-5 h-5 fill-current" />
-                <span>매칭된 상대입니다</span>
-              </>
-            ) : isRequestReceived ? (
-              <>
-                <Heart className="w-5 h-5" />
-                <span>매칭 신청을 받았습니다</span>
-              </>
-            ) : isRequestSent ? (
-              <>
-                <Send className="w-5 h-5" />
-                <span>매칭 신청 완료</span>
-              </>
-            ) : disableMatching ? (
-              <>
-                <Heart className="w-5 h-5" />
-                <span>매칭 신청 불가</span>
-              </>
-            ) : (
-              <>
-                <Send className="w-5 h-5" />
-                <span>매칭 신청하기</span>
-              </>
-            )}
-          </button>
-        </div>
-      )}
+                  ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/30"
+                  : "bg-[#F5F5F0] text-[var(--foreground)]/40 cursor-not-allowed shadow-none"
+                }`}
+            >
+              {isMatched ? (
+                <>
+                  <Heart className="w-5 h-5 fill-current" />
+                  <span>매칭된 상대입니다</span>
+                </>
+              ) : isRequestReceived ? (
+                <>
+                  <Heart className="w-5 h-5" />
+                  <span>매칭 신청을 받았습니다</span>
+                </>
+              ) : isRequestSent ? (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>매칭 신청 완료</span>
+                </>
+              ) : disableMatching ? (
+                <>
+                  <Heart className="w-5 h-5" />
+                  <span>매칭 신청 불가</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>매칭 신청하기</span>
+                </>
+              )}
+            </button>
+          </div>
+        )
+      }
 
       {/* Letter Modal */}
       <MatchRequestLetterModal
@@ -911,6 +933,6 @@ export function ProfileDetailViewWithInteraction({
         recipientPhoto={profile.photos[0]}
         isSending={isSendingRequest}
       />
-    </div>
+    </div >
   );
 }

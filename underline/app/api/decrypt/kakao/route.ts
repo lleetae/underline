@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
         const { data: targetMember, error: memberError } = await supabaseAdmin
             .from('member')
-            .select('id')
+            .select('id, auth_id')
             .eq('kakao_id', encryptedId)
             .single();
 
@@ -58,25 +58,30 @@ export async function POST(request: NextRequest) {
 
         const targetMemberId = targetMember.id;
 
-        // Find if they have a match request record
-        // Current user must be sender OR receiver, and target must be the OTHER one.
-        // AND is_unlocked must be true.
-        const { data: matchReq, error: matchError } = await supabaseAdmin
-            .from('match_requests')
-            .select('id, is_unlocked')
-            .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetMemberId}),and(sender_id.eq.${targetMemberId},receiver_id.eq.${user.id})`)
-            .eq('is_unlocked', true)
-            .maybeSingle();
+        // Allow decryption if it's the user's own ID
+        if (targetMember.auth_id === user.id) {
+            // Self-decryption is allowed
+        } else {
+            // Find if they have a match request record
+            // Current user must be sender OR receiver, and target must be the OTHER one.
+            // AND is_unlocked must be true.
+            const { data: matchReq, error: matchError } = await supabaseAdmin
+                .from('match_requests')
+                .select('id, is_unlocked')
+                .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetMemberId}),and(sender_id.eq.${targetMemberId},receiver_id.eq.${user.id})`)
+                .eq('is_unlocked', true)
+                .maybeSingle();
 
-        if (matchError) {
-            console.error("Error checking match authorization:", matchError);
-            return NextResponse.json({ error: 'Database error' }, { status: 500 });
-        }
+            if (matchError) {
+                console.error("Error checking match authorization:", matchError);
+                return NextResponse.json({ error: 'Database error' }, { status: 500 });
+            }
 
-        if (!matchReq) {
-            // Unauthorized: No unlocked match found between these two users
-            console.warn(`User ${user.id} attempted to decrypt ID of ${targetMemberId} without unlocked match.`);
-            return NextResponse.json({ error: 'Forbidden: You do not have permission to view this contact.' }, { status: 403 });
+            if (!matchReq) {
+                // Unauthorized: No unlocked match found between these two users
+                console.warn(`User ${user.id} attempted to decrypt ID of ${targetMemberId} without unlocked match.`);
+                return NextResponse.json({ error: 'Forbidden: You do not have permission to view this contact.' }, { status: 403 });
+            }
         }
 
         // 3. Decrypt using RPC
