@@ -18,6 +18,7 @@ import { Session } from "@supabase/supabase-js";
 import { addDays } from 'date-fns';
 import { CancelRecruitmentModal } from "./CancelRecruitmentModal";
 import { BatchUtils } from "../utils/BatchUtils";
+import { getRegionGroupKey, getSidosInGroup } from "../utils/RegionUtils";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -27,7 +28,8 @@ export default function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isParticipant, setIsParticipant] = useState(false); // User is active in the CURRENT batch (for Dating View)
   const [isSpectator, setIsSpectator] = useState(false); // User is in a FAILED region (Spectator Mode)
-  const [isRegionClosed, setIsRegionClosed] = useState(false); // Region has insufficient users
+  const [isRegionClosed, setIsRegionClosed] = useState(false); // User CHOSEN to view Spectator Mode (or forced by old logic, now manual)
+  const [isRegionFailed, setIsRegionFailed] = useState(false); // Region IS actually closed (detected)
   const isRegionClosedRef = useRef(isRegionClosed);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function App() {
   const [showCancelModal, setShowCancelModal] = useState(false);
 
 
-  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications" | "couponBox" | "regionStats">("home");
+  const [currentView, setCurrentView] = useState<"signup" | "home" | "mailbox" | "profile" | "profileDetail" | "notifications" | "couponBox" | "regionStats" | "spectator">("home");
   const [isDatingPhase, setIsDatingPhase] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [selectedProfilePenalized, setSelectedProfilePenalized] = useState(false);
@@ -588,6 +590,49 @@ export default function App() {
           setIsApplied(false);
         }
 
+        if (receivedRequestsResult.error) {
+          console.error("Error fetching received requests:", receivedRequestsResult.error);
+        }
+
+        // --- NEW: Check Region Status for Spectator Mode ---
+        // If it's MATCHING period, and user is NOT a participant AND NOT already spectator
+        if (BatchUtils.getCurrentSystemState() === 'MATCHING' && !participantResult.data) {
+          if (data.sido) {
+            const regionKey = getRegionGroupKey(data.sido);
+            const sidosInGroup = getSidosInGroup(regionKey);
+
+            // Fetch active male count in this region group
+            const { count: maleCount } = await supabase
+              .from('dating_applications')
+              .select('id, member!inner(sido)', { count: 'exact', head: true })
+              .in('status', ['active'])
+              .gte('created_at', currentStart.toISOString())
+              .lte('created_at', currentEnd.toISOString())
+              .eq('gender', 'male')
+              .in('member.sido', sidosInGroup);
+
+            // Fetch active female count in this region group
+            const { count: femaleCount } = await supabase
+              .from('dating_applications')
+              .select('id, member!inner(sido)', { count: 'exact', head: true })
+              .in('status', ['active'])
+              .gte('created_at', currentStart.toISOString())
+              .lte('created_at', currentEnd.toISOString())
+              .eq('gender', 'female')
+              .in('member.sido', sidosInGroup);
+
+            const isClosed = (maleCount || 0) < 1 || (femaleCount || 0) < 1;
+
+            if (isClosed) {
+              console.log(`Region ${regionKey} is closed (M:${maleCount}, F:${femaleCount}). Enable Spectator Mode option.`);
+              setIsRegionFailed(true);
+              // Removed auto-switch: setIsRegionClosed(true);
+            } else {
+              setIsRegionFailed(false);
+              setIsRegionClosed(false);
+            }
+          }
+        }
         // Process Received Requests
         const receivedRequests = receivedRequestsResult.data;
         if (!receivedRequestsResult.error && receivedRequests) {
@@ -1058,7 +1103,6 @@ export default function App() {
               onRegister={handleRegister}
               isApplied={isApplied}
               userId={session?.user?.id}
-              onSetSpectator={setIsRegionClosed} // Update region status only
             />
           ) : (
             <HomeRecruitingView
@@ -1069,6 +1113,8 @@ export default function App() {
               onCancelRegister={handleCancelRegister}
               onShowNotifications={handleShowNotifications}
               onNavigate={navigateTo}
+              isRegionFailed={isRegionFailed}
+              onEnterSpectator={() => navigateTo('spectator')}
             />
           )}
           <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
@@ -1080,102 +1126,125 @@ export default function App() {
           />
         </>
       )}
-
-      {currentView === "notifications" && (
-        <NotificationsView
-          onBack={() => window.history.back()}
-          onNavigateToMatch={handleNotificationNavigateToMatch}
-        />
-      )}
-
-      {isSignedUp && (
+      {currentView === 'spectator' && (
         <>
-          {currentView === "mailbox" && (
-            <>
-              <MailboxView
-                sentMatchRequests={sentMatchRequests}
-                receivedMatchRequests={receivedMatchRequests}
-                matches={matches}
-                onProfileClick={handleProfileClick}
-                activeTab={mailboxActiveTab}
-                onTabChange={(tab) => setMailboxActiveTab(tab as "matched" | "sent" | "messages")}
-                onAcceptMatch={handleAcceptMatch}
-                onRejectMatch={handleRejectMatch}
-                onShowNotifications={handleShowNotifications}
-                onRefreshMatches={fetchMatches}
-              />
-              <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
-            </>
-          )}
-
-          {/* Keep MailboxView mounted when showing profile detail from mailbox */}
-          {currentView === "profileDetail" && profileSource === "mailbox" && (
-            <>
-              <MailboxView
-                sentMatchRequests={sentMatchRequests}
-                receivedMatchRequests={receivedMatchRequests}
-                matches={matches}
-                onProfileClick={handleProfileClick}
-                activeTab={mailboxActiveTab}
-                onTabChange={(tab) => setMailboxActiveTab(tab as "matched" | "sent" | "messages")}
-                onAcceptMatch={handleAcceptMatch}
-                onRejectMatch={handleRejectMatch}
-                onShowNotifications={handleShowNotifications}
-                onRefreshMatches={fetchMatches}
-              />
-              <BottomNav activeTab="mailbox" onTabChange={handleTabChange} />
-            </>
-          )}
-
-          {currentView === "profile" && (
-            <>
-              <MyProfileView
-                onLogout={handleLogout}
-                onNavigate={navigateTo}
-                selectedBookId={viewParams.bookId}
-              />
-              <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
-            </>
-          )}
-
-          {currentView === "couponBox" && (
-            <CouponBoxView
-              onBack={() => navigateTo("profile")}
-            />
-          )}
-
-          {currentView === "profileDetail" && selectedProfileId && (
-            <div className={profileSource === "mailbox" ? "fixed inset-0 z-[100] bg-[#FCFCFA] flex justify-center" : ""}>
-              <ProfileDetailViewWithInteraction
-                profileId={selectedProfileId}
-                onBack={handleBackFromProfileDetail}
-                onNavigate={navigateTo}
-                selectedBookId={viewParams.bookId}
-                onMatchRequest={handleMatchRequest}
-                sentMatchRequests={sentMatchRequests}
-                receivedMatchRequests={receivedMatchRequests}
-                isMatched={profileSource === "mailbox" && mailboxActiveTab === "matched"}
-                disableMatching={profileSource === "mailbox" || selectedProfilePenalized || selectedProfileWithdrawn || isSpectator || isRegionClosed} // Disable for spectators
-                isSpectator={isSpectator || isRegionClosed} // Pass isSpectator explicitly for Toast logic
-                isWithdrawn={selectedProfileWithdrawn}
-                partnerKakaoId={selectedProfileKakaoId} // Pass Kakao ID
-                isUnlocked={selectedProfileIsUnlocked}
-                // @ts-ignore
-                matchId={selectedMatchId}
-              />
-            </div>
-          )}
+          <HomeDatingView
+            isSignedUp={isSignedUp}
+            onProfileClick={handleProfileClick}
+            onShowNotifications={handleShowNotifications}
+            isSpectator={true} // Force spectator mode
+            onRegister={handleRegister}
+            isApplied={isApplied}
+            userId={session?.user?.id}
+            onSetSpectator={setIsRegionClosed}
+            onBack={() => navigateTo('home')}
+          />
+          <BottomNav activeTab="home" onTabChange={handleTabChange} />
         </>
-      )}
+      )
+      }
 
-      {currentView === "regionStats" && (
-        <RegionStatsView
-          onBack={() => navigateTo("home")}
-          isSignedUp={isSignedUp}
-          onShowLoginModal={() => setShowLoginModal(true)}
-          userId={session?.user?.id}
-        />
-      )}
+      {
+        currentView === "notifications" && (
+          <NotificationsView
+            onBack={() => window.history.back()}
+            onNavigateToMatch={handleNotificationNavigateToMatch}
+          />
+        )
+      }
+
+      {
+        isSignedUp && (
+          <>
+            {currentView === "mailbox" && (
+              <>
+                <MailboxView
+                  sentMatchRequests={sentMatchRequests}
+                  receivedMatchRequests={receivedMatchRequests}
+                  matches={matches}
+                  onProfileClick={handleProfileClick}
+                  activeTab={mailboxActiveTab}
+                  onTabChange={(tab) => setMailboxActiveTab(tab as "matched" | "sent" | "messages")}
+                  onAcceptMatch={handleAcceptMatch}
+                  onRejectMatch={handleRejectMatch}
+                  onShowNotifications={handleShowNotifications}
+                  onRefreshMatches={fetchMatches}
+                />
+                <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
+              </>
+            )}
+
+            {/* Keep MailboxView mounted when showing profile detail from mailbox */}
+            {currentView === "profileDetail" && profileSource === "mailbox" && (
+              <>
+                <MailboxView
+                  sentMatchRequests={sentMatchRequests}
+                  receivedMatchRequests={receivedMatchRequests}
+                  matches={matches}
+                  onProfileClick={handleProfileClick}
+                  activeTab={mailboxActiveTab}
+                  onTabChange={(tab) => setMailboxActiveTab(tab as "matched" | "sent" | "messages")}
+                  onAcceptMatch={handleAcceptMatch}
+                  onRejectMatch={handleRejectMatch}
+                  onShowNotifications={handleShowNotifications}
+                  onRefreshMatches={fetchMatches}
+                />
+                <BottomNav activeTab="mailbox" onTabChange={handleTabChange} />
+              </>
+            )}
+
+            {currentView === "profile" && (
+              <>
+                <MyProfileView
+                  onLogout={handleLogout}
+                  onNavigate={navigateTo}
+                  selectedBookId={viewParams.bookId}
+                />
+                <BottomNav activeTab={currentView} onTabChange={handleTabChange} />
+              </>
+            )}
+
+            {currentView === "couponBox" && (
+              <CouponBoxView
+                onBack={() => navigateTo("profile")}
+              />
+            )}
+
+            {currentView === "profileDetail" && selectedProfileId && (
+              <div className={profileSource === "mailbox" ? "fixed inset-0 z-[100] bg-[#FCFCFA] flex justify-center" : ""}>
+                <ProfileDetailViewWithInteraction
+                  profileId={selectedProfileId}
+                  onBack={handleBackFromProfileDetail}
+                  onNavigate={navigateTo}
+                  selectedBookId={viewParams.bookId}
+                  onMatchRequest={handleMatchRequest}
+                  sentMatchRequests={sentMatchRequests}
+                  receivedMatchRequests={receivedMatchRequests}
+                  isMatched={profileSource === "mailbox" && mailboxActiveTab === "matched"}
+                  disableMatching={profileSource === "mailbox" || selectedProfilePenalized || selectedProfileWithdrawn || isSpectator || isRegionClosed} // Disable for spectators
+                  isSpectator={isSpectator || isRegionClosed} // Pass isSpectator explicitly for Toast logic
+                  isWithdrawn={selectedProfileWithdrawn}
+                  partnerKakaoId={selectedProfileKakaoId} // Pass Kakao ID
+                  isUnlocked={selectedProfileIsUnlocked}
+                  // @ts-ignore
+                  matchId={selectedMatchId}
+                />
+              </div>
+            )}
+          </>
+        )
+      }
+
+      {
+        currentView === "regionStats" && (
+          <RegionStatsView
+            onBack={() => navigateTo("home")}
+            isSignedUp={isSignedUp}
+            onShowLoginModal={() => setShowLoginModal(true)}
+            userId={session?.user?.id}
+          />
+        )
+      }
 
       <Toaster position="top-center" />
 
@@ -1186,6 +1255,6 @@ export default function App() {
         onLoginSuccess={handleLoginSuccess}
         onSignUpClick={handleSignUpClick}
       />
-    </div>
+    </div >
   );
 }
