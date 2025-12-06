@@ -387,7 +387,7 @@ export function HomeDatingView({
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
       {/* Spectator Popup */}
       {showSpectatorPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95">
             <h3 className="font-sans text-xl font-bold mb-2 text-center">이번 주 우리 동네는 쉬어가요</h3>
             <p className="text-sm text-gray-600 text-center mb-6 leading-relaxed">
