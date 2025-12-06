@@ -405,51 +405,51 @@ export function HomeDatingView({
         </div>
       )}
 
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#FCFCFA]/95 backdrop-blur-md border-b border-[var(--foreground)]/5">
-        <div className="flex items-center justify-between px-6 py-4">
-          {onBack ? (
-            <button
-              onClick={onBack}
-              className="p-2 -ml-2 rounded-full hover:bg-[var(--foreground)]/5 transition-colors text-[var(--foreground)]"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-          ) : (
-            <div className="w-8" /> // Spacer for centering
-          )}
-
-          <h1 className="font-sans text-2xl font-bold tracking-tight text-[var(--foreground)]">
-            Under
-            <span className="relative inline-block">
-              line
-              <span className="absolute bottom-0 left-0 w-full h-[4px] bg-underline-red rounded-full"></span>
-            </span>
-          </h1>
+      {/* Header - Aligned with HomeRecruitingView */}
+      <header className="sticky top-0 z-50 bg-underline-cream/90 backdrop-blur-sm h-[60px] flex items-center justify-between px-5 border-b border-black/5">
+        {onBack ? (
           <button
-            onClick={onShowNotifications}
-            className="p-2 -mr-2 rounded-full hover:bg-[var(--foreground)]/5 transition-colors text-[var(--foreground)] relative"
+            onClick={onBack}
+            className="p-2 -ml-2 rounded-full hover:bg-black/5 transition-colors text-underline-text"
           >
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[var(--primary)] rounded-full border border-[#FCFCFA]"></span>
-            )}
+            <ChevronLeft className="w-6 h-6" />
           </button>
-        </div>
-
-        {/* Floating Badge - Dating Period Timer (Only for Participants) */}
-        {!isSpectator && (
-          <div className="px-6 pb-3">
-            <div className="px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500 bg-[var(--foreground)] shadow-black/20">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-              <span className="text-xs font-sans font-medium tracking-wide text-white">
-                {totalHours < 24 ? "마감 임박! " : ""}
-                소개팅 기간 종료까지 {String(totalHours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
-              </span>
-            </div>
-          </div>
+        ) : (
+          <div className="w-6" /> // Spacer matching HomeRecruitingView width
         )}
-      </div>
+
+        <h1 className="font-sans text-2xl font-bold tracking-tight text-underline-text">
+          Under
+          <span className="relative inline-block">
+            line
+            <span className="absolute bottom-0 left-0 w-full h-[4px] bg-underline-red rounded-full"></span>
+          </span>
+        </h1>
+
+        <button
+          onClick={onShowNotifications}
+          className="relative p-2 -mr-2 text-underline-text/80 hover:text-underline-text transition-colors"
+        >
+          <Bell className="w-6 h-6" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-underline-red rounded-full border border-underline-cream"></span>
+          )}
+        </button>
+      </header>
+
+      {/* Floating Badge - Dating Period Timer (Only for Participants) */}
+      {!isSpectator && (
+        <div className="px-6 pb-3">
+          <div className="px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 transition-all duration-500 bg-[var(--foreground)] shadow-black/20">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            <span className="text-xs font-sans font-medium tracking-wide text-white">
+              {totalHours < 24 ? "마감 임박! " : ""}
+              소개팅 기간 종료까지 {String(totalHours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+            </span>
+          </div>
+        </div>
+      )}
+
 
       {/* Profile Feed */}
       <div className="flex-1 overflow-y-auto pb-24 px-4 py-3">
@@ -559,126 +559,131 @@ export function HomeDatingView({
       </div>
 
       {/* Sticky CTA for Spectators */}
-      {isSpectator && <div className="fixed bottom-[100px] left-0 right-0 px-6 z-30">
-        <button
-          onClick={() => {
-            if (isApplied) {
-              setShowReferralModal(true);
-            } else {
-              if (onRegister) {
-                onRegister();
+      {
+        isSpectator && <div className="fixed bottom-[100px] left-0 right-0 px-6 z-30">
+          <button
+            onClick={() => {
+              if (isApplied) {
+                setShowReferralModal(true);
               } else {
-                alert("신청 기능을 불러올 수 없습니다.");
+                if (onRegister) {
+                  onRegister();
+                } else {
+                  alert("신청 기능을 불러올 수 없습니다.");
+                }
               }
-            }
-          }}
-          className={`w-full py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 ${isApplied
-            ? "bg-white text-underline-red border border-underline-red/30 shadow-underline-red/10"
-            : "bg-underline-red text-white shadow-underline-red/30 animate-bounce"
-            }`}
-        >
-          {isApplied ? (
-            <>
-              <Copy className="w-4 h-4" />
-              친구 초대하고 무료 교환권 받기
-            </>
-          ) : (
-            "다음 주 우리 동네 무료 신청 예약"
-          )}
-        </button>
-      </div>
+            }}
+            className={`w-full py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 ${isApplied
+              ? "bg-white text-underline-red border border-underline-red/30 shadow-underline-red/10"
+              : "bg-underline-red text-white shadow-underline-red/30 animate-bounce"
+              }`}
+          >
+            {isApplied ? (
+              <>
+                <Copy className="w-4 h-4" />
+                친구 초대하고 무료 교환권 받기
+              </>
+            ) : (
+              "다음 주 우리 동네 무료 신청 예약"
+            )}
+          </button>
+        </div>
       }
 
       {/* Referral Modal */}
-      {showReferralModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <button
-              onClick={() => setShowReferralModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-6 h-6" />
-            </button>
+      {
+        showReferralModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-200">
+              <button
+                onClick={() => setShowReferralModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
 
-            <h3 className="font-sans text-xl font-bold mb-6 text-center text-underline-text">
-              친구 초대 혜택
-            </h3>
+              <h3 className="font-sans text-xl font-bold mb-6 text-center text-underline-text">
+                친구 초대 혜택
+              </h3>
 
-            <div className="space-y-4 mb-8">
-              <div className="bg-[#F5F5F0] p-4 rounded-xl flex items-center gap-4">
-                <div className="w-10 h-10 bg-underline-red/10 rounded-full flex items-center justify-center text-xl">
-                  🎁
+              <div className="space-y-4 mb-8">
+                <div className="bg-[#F5F5F0] p-4 rounded-xl flex items-center gap-4">
+                  <div className="w-10 h-10 bg-underline-red/10 rounded-full flex items-center justify-center text-xl">
+                    🎁
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-bold mb-0.5">나 (초대자)</p>
+                    <p className="text-sm font-medium text-underline-text">무료 연락처 교환권 1장</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-bold mb-0.5">나 (초대자)</p>
-                  <p className="text-sm font-medium text-underline-text">무료 연락처 교환권 1장</p>
+
+                <div className="bg-[#F5F5F0] p-4 rounded-xl flex items-center gap-4">
+                  <div className="w-10 h-10 bg-underline-red/10 rounded-full flex items-center justify-center text-xl">
+                    🎟️
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-bold mb-0.5">친구 (초대받은 사람)</p>
+                    <p className="text-sm font-medium text-underline-text">연락처 교환 50% 할인 쿠폰</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-[#F5F5F0] p-4 rounded-xl flex items-center gap-4">
-                <div className="w-10 h-10 bg-underline-red/10 rounded-full flex items-center justify-center text-xl">
-                  🎟️
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-bold mb-0.5">친구 (초대받은 사람)</p>
-                  <p className="text-sm font-medium text-underline-text">연락처 교환 50% 할인 쿠폰</p>
-                </div>
-              </div>
+              <p className="text-xs text-underline-red/80 font-medium text-center mb-3">
+                *복사한 링크를 통해 가입해야 쿠폰을 받으실 수 있습니다
+              </p>
+
+              <button
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}?ref=${userId || ''}`;
+                  handleCopy(shareUrl, '초대 링크가 복사되었습니다!');
+                  setShowReferralModal(false);
+                }}
+                className="w-full py-3.5 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              >
+                <Copy className="w-4 h-4" />
+                초대 링크 복사하기
+              </button>
             </div>
-
-            <p className="text-xs text-underline-red/80 font-medium text-center mb-3">
-              *복사한 링크를 통해 가입해야 쿠폰을 받으실 수 있습니다
-            </p>
-
-            <button
-              onClick={() => {
-                const shareUrl = `${window.location.origin}?ref=${userId || ''}`;
-                handleCopy(shareUrl, '초대 링크가 복사되었습니다!');
-                setShowReferralModal(false);
-              }}
-              className="w-full py-3.5 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-            >
-              <Copy className="w-4 h-4" />
-              초대 링크 복사하기
-            </button>
           </div>
-        </div>
-      )}
+        )
+      }
       {/* Welcome Coupon Modal */}
-      {showWelcomeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-200 text-center">
-            <div className="w-16 h-16 bg-underline-red/10 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
-              🎟️
+      {
+        showWelcomeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-200 text-center">
+              <div className="w-16 h-16 bg-underline-red/10 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+                🎟️
+              </div>
+
+              <h3 className="font-sans text-xl font-bold mb-2 text-underline-text">
+                환영합니다!
+              </h3>
+
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                친구 초대로 가입하여<br />
+                <span className="text-underline-red font-bold">50% 할인 쿠폰</span>을 받으셨어요!
+              </p>
+
+              <div className="bg-[#F5F5F0] p-4 rounded-xl mb-6 text-left">
+                <p className="text-xs text-gray-500 font-bold mb-1">쿠폰 혜택</p>
+                <p className="text-sm font-medium text-underline-text">첫 연락처 교환 시 50% 할인</p>
+                <p className="text-[10px] text-gray-400 mt-1">마이페이지에서 확인하실 수 있습니다.</p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowWelcomeModal(false);
+                  sessionStorage.removeItem('showWelcomeModal');
+                }}
+                className="w-full py-3.5 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20 active:scale-[0.98] transition-transform"
+              >
+                확인했어요
+              </button>
             </div>
-
-            <h3 className="font-sans text-xl font-bold mb-2 text-underline-text">
-              환영합니다!
-            </h3>
-
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              친구 초대로 가입하여<br />
-              <span className="text-underline-red font-bold">50% 할인 쿠폰</span>을 받으셨어요!
-            </p>
-
-            <div className="bg-[#F5F5F0] p-4 rounded-xl mb-6 text-left">
-              <p className="text-xs text-gray-500 font-bold mb-1">쿠폰 혜택</p>
-              <p className="text-sm font-medium text-underline-text">첫 연락처 교환 시 50% 할인</p>
-              <p className="text-[10px] text-gray-400 mt-1">마이페이지에서 확인하실 수 있습니다.</p>
-            </div>
-
-            <button
-              onClick={() => {
-                setShowWelcomeModal(false);
-                sessionStorage.removeItem('showWelcomeModal');
-              }}
-              className="w-full py-3.5 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20 active:scale-[0.98] transition-transform"
-            >
-              확인했어요
-            </button>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }
