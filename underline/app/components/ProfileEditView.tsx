@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Plus, X, Shield, Save, Check } from "lucide-react";
+import { ArrowLeft, Check, Plus, Save, Shield, X } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner";
 import { koreaDistrict } from "../data/koreaDistrict";
@@ -52,7 +53,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
   // Update formData.location whenever city or district changes
   useEffect(() => {
     if (city && district) {
-      setFormData(prev => ({ ...prev, location: `${city} ${district}` }));
+      setFormData(prev => ({ ...prev, location: `${city} ${district} ` }));
     } else if (city && !district) {
       // If district is not selected yet (and not auto-selected), we might want to clear location or keep partial?
       // But the validation checks for location presence.
@@ -60,7 +61,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
       // Actually, let's update it to just city if district is empty (though invalid for our logic)
       // or just wait until both are present.
       // Better to update it so isDirty detection works.
-      setFormData(prev => ({ ...prev, location: `${city}` }));
+      setFormData(prev => ({ ...prev, location: `${city} ` }));
     }
   }, [city, district]);
 
@@ -79,7 +80,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token} `
               },
               body: JSON.stringify({ path: photo.originalPath })
             });
@@ -187,7 +188,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
 
     setIsCheckingNickname(true);
     try {
-      const response = await fetch(`/api/check-nickname?nickname=${encodeURIComponent(formData.nickname)}`);
+      const response = await fetch(`/ api / check - nickname ? nickname = ${encodeURIComponent(formData.nickname)} `);
       const data = await response.json();
 
       if (response.ok && data.available) {
@@ -294,7 +295,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
     } catch (error: any) {
       console.error("Save failed:", error);
       toast.dismiss(loadingToast);
-      toast.error(`저장 실패: ${error.message || "알 수 없는 오류"}`);
+      toast.error(`저장 실패: ${error.message || "알 수 없는 오류"} `);
     } finally {
       setIsSaving(false);
     }
@@ -455,7 +456,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
                   <div className="w-full h-full rounded-lg overflow-hidden border border-[var(--foreground)]/10">
                     <ImageWithFallback
                       src={photo.url}
-                      alt={`Profile ${index + 1}`}
+                      alt={`Profile ${index + 1} `}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -767,7 +768,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
                   maxLength={30}
                 />
                 <p className="text-xs text-[var(--foreground)]/40 mt-1 font-sans">
-                  매칭 성사 시 공개됩니다
+                  매칭 수락 후 연락처 잠금 해제 시에만 공개됩니다.
                 </p>
               </div>
             </div>

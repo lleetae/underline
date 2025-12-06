@@ -1021,14 +1021,14 @@ export default function App() {
                       },
                       body: JSON.stringify({ type: 'contact_revealed' })
                     });
-                    if (response.ok) alert('연락처 공개 알림 생성!');
+                    if (response.ok) alert('연락처 잠금 해제 알림 생성!');
                   } catch (e) {
                     console.error(e);
                   }
                 }}
                 className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition"
               >
-                📱 연락처 공개
+                📱 연락처 잠금 해제
               </button>
             </div>
           </div>

@@ -294,7 +294,7 @@ export async function POST(request: NextRequest) {
                                         try {
                                             const pushResult = await sendPushNotification(
                                                 targetMemberId,
-                                                "연락처 공개 알림",
+                                                "연락처 잠금 해제 알림",
                                                 "상대방이 연락처를 확인했습니다.",
                                                 "/mailbox?tab=matched"
                                             );
