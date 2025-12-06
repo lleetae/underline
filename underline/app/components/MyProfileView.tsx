@@ -538,20 +538,22 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
   return (
     <div className="w-full max-w-md relative shadow-2xl shadow-black/5 min-h-screen bg-[#FCFCFA] flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#FCFCFA] border-b border-[var(--foreground)]/10">
-        <div className="flex items-center justify-between px-6 py-4">
-          <h1 className="font-sans text-2xl text-[var(--foreground)]">My Profile</h1>
-          <button
-            onClick={() => setShowLogoutModal(true)}
-            className="p-2 hover:bg-[var(--foreground)]/5 rounded-full transition-colors"
-          >
-            <LogOut className="w-5 h-5 text-[var(--foreground)]" />
-          </button>
-        </div>
-      </div>
+
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto pb-40">
+        {/* Header */}
+        <div className="bg-[#FCFCFA] border-b border-[var(--foreground)]/10">
+          <div className="flex items-center justify-between px-6 py-4">
+            <h1 className="font-sans text-2xl text-[var(--foreground)]">My Profile</h1>
+            <button
+              onClick={() => setShowLogoutModal(true)}
+              className="p-2 hover:bg-[var(--foreground)]/5 rounded-full transition-colors"
+            >
+              <LogOut className="w-5 h-5 text-[var(--foreground)]" />
+            </button>
+          </div>
+        </div>
         {/* Profile Summary Card */}
         <div className="px-6 pt-6 pb-4">
           <div className="bg-gradient-to-br from-[#FCFCFA] to-[#F5F5F0] border-2 border-[var(--primary)]/20 rounded-xl p-5 shadow-sm">

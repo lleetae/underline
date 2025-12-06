@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { MapPin, Bell, Copy, X, ChevronLeft } from "lucide-react";
+import { PWAInstallModal } from "./pwa/PWAInstallModal";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { supabase } from "../lib/supabase";
 import { useCountdown } from "../hooks/useCountdown";
@@ -162,24 +162,24 @@ export function HomeDatingView({
         let query = supabase
           .from('member')
           .select(`
-            id,
-            nickname,
-            age,
-            birth_date,
-            sido,
-            sigungu,
-            photo_url,
-            photos,
-            bio,
-            gender,
-            member_books(
-              book_title,
-              book_review,
-              created_at
-            ),
-            dating_applications!inner(
-              created_at
-            )
+id,
+  nickname,
+  age,
+  birth_date,
+  sido,
+  sigungu,
+  photo_url,
+  photos,
+  bio,
+  gender,
+  member_books(
+    book_title,
+    book_review,
+    created_at
+  ),
+  dating_applications!inner(
+    created_at
+  )
           `)
           .gte('dating_applications.created_at', start.toISOString())
           .lte('dating_applications.created_at', end.toISOString())
@@ -203,7 +203,7 @@ export function HomeDatingView({
             // But `neq` on `location` string was easy.
             // Let's try to use `not.and` if available, or just filter out by `location` string for now if it's still populated?
             // User wants FULL migration.
-            // We can use `not` with a filter string: `not.and(sido.eq.${mySido},sigungu.eq.${mySigungu})` - syntax might be tricky.
+            // We can use `not` with a filter string: `not.and(sido.eq.${ mySido }, sigungu.eq.${ mySigungu })` - syntax might be tricky.
             // Simpler approach: Filter out by Sido OR Sigungu? No.
             // Let's assume strict matching:
             // query = query.not('sido', 'eq', mySido).not('sigungu', 'eq', mySigungu) -> This excludes anyone with same sido OR same sigungu. Too strict.
@@ -249,10 +249,10 @@ export function HomeDatingView({
           const { data: statsData } = await supabase
             .from('dating_applications')
             .select(`
-              member!inner (
-                sido,
-                gender
-              )
+member!inner(
+  sido,
+  gender
+)
             `)
             .gte('created_at', start.toISOString())
             .lte('created_at', end.toISOString())
@@ -290,7 +290,7 @@ export function HomeDatingView({
             .from('match_requests')
             .select('sender_id, receiver_id')
             .eq('status', 'accepted')
-            .or(`sender_id.eq.${myMemberId},receiver_id.eq.${myMemberId}`)
+            .or(`sender_id.eq.${myMemberId}, receiver_id.eq.${myMemberId} `)
             .gte('created_at', oneWeekAgo.toISOString());
 
           const matchedUserIds = new Set<number>();
@@ -316,7 +316,7 @@ export function HomeDatingView({
               const age = member.age || (member.birth_date ? new Date().getFullYear() - parseInt(member.birth_date.substring(0, 4)) : 0);
               // Construct location from sido/sigungu
               const locationDisplay = (member.sido && member.sigungu)
-                ? `${member.sido} ${member.sigungu}`
+                ? `${member.sido} ${member.sigungu} `
                 : (member.location || "알 수 없음");
 
               const photos = member.photos && member.photos.length > 0 ? member.photos : (member.photo_url ? [member.photo_url] : []);
@@ -559,7 +559,7 @@ export function HomeDatingView({
             className={`w-full py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 ${isApplied
               ? "bg-white text-underline-red border border-underline-red/30 shadow-underline-red/10"
               : "bg-underline-red text-white shadow-underline-red/30 animate-bounce"
-              }`}
+              } `}
           >
             {isApplied ? (
               <>
@@ -617,7 +617,7 @@ export function HomeDatingView({
 
               <button
                 onClick={() => {
-                  const shareUrl = `${window.location.origin}?ref=${userId || ''}`;
+                  const shareUrl = `${window.location.origin}?ref = ${userId || ''} `;
                   handleCopy(shareUrl, '초대 링크가 복사되었습니다!');
                   setShowReferralModal(false);
                 }}
@@ -686,6 +686,8 @@ export function HomeDatingView({
           </div>
         </div>
       )}
-    </div >
+      {/* PWA Install Modal (Option C) */}
+      <PWAInstallModal />
+    </div>
   );
 }
