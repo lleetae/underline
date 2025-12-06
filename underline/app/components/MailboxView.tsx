@@ -4,6 +4,7 @@ import { MailboxHeader } from "./mailbox/MailboxHeader";
 import { MatchList } from "./mailbox/MatchList";
 import { MailboxTabs } from "./mailbox/MailboxTabs";
 import { RejectConfirmModal } from "./RejectConfirmModal";
+import { PWAInstallBanner } from "./pwa/PWAInstallBanner";
 
 interface SentMatchRequest {
   profileId: string;
@@ -399,6 +400,8 @@ export function MailboxView({
         onAccept={handleAcceptFromModal}
         nickname={selectedRequest?.nickname || ""}
       />
+      {/* PWA Install Banner (Option A) */}
+      <PWAInstallBanner />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { TermsContent, PrivacyContent } from "../utils/PolicyComponents";
-import { Bell, BookOpen, User, Mail, Edit, X, Copy, ChevronDown } from "lucide-react";
+import { Bell, BookOpen, User, Mail, Edit, X, Copy, ChevronDown, Share } from "lucide-react";
+import { PWAInstallModal } from "./pwa/PWAInstallModal";
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCountdown } from "../hooks/useCountdown";
@@ -450,6 +451,9 @@ export function HomeRecruitingView({
           </div>
         </div>
       )}
+
+      {/* PWA Install Modal (Option C) */}
+      <PWAInstallModal />
 
       {/* 4. Region Status */}
       <section className="px-6 py-5 bg-[#F5F5F0] border-y border-black/5">
