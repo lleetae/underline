@@ -3,7 +3,7 @@ import { Bell } from "lucide-react";
 
 export function MailboxHeader({ onShowNotifications, unreadCount = 0 }: { onShowNotifications?: () => void; unreadCount?: number }) {
   return (
-    <div className="sticky top-0 z-40 bg-[#FCFCFA]/95 backdrop-blur-md border-b border-[var(--foreground)]/5">
+    <div className="bg-[#FCFCFA] border-b border-[var(--foreground)]/5">
       <div className="px-6 py-4 flex items-center justify-between">
         <h1 className="font-sans text-2xl font-medium text-[var(--foreground)] tracking-tight">
           Mailbox
