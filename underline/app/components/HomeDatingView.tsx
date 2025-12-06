@@ -667,6 +667,25 @@ export function HomeDatingView({
           </div>
         )
       }
+      {/* Spectator Popup - Moved to bottom for Z-Index safety */}
+      {showSpectatorPopup && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95">
+            <h3 className="font-sans text-xl font-bold mb-2 text-center">이번 주 우리 동네는 쉬어가요</h3>
+            <p className="text-sm text-gray-600 text-center mb-6 leading-relaxed">
+              아쉽게도 인원이 조금 부족했어요.<br />
+              대신 <b>지금 활발하게 매칭 중인 다른 동네</b><br />
+              분위기를 구경해보세요! (매칭 신청은 불가능해요)
+            </p>
+            <button
+              onClick={() => setShowSpectatorPopup(false)}
+              className="w-full py-3 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20"
+            >
+              다른 지역 소개팅 구경하기
+            </button>
+          </div>
+        </div>
+      )}
     </div >
   );
 }
