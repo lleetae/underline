@@ -29,6 +29,8 @@ interface HomeRecruitingViewProps {
   onRegister: () => void;
   onCancelRegister: () => void;
   onNavigate: (view: any) => void;
+  isRegionFailed?: boolean;
+  onEnterSpectator?: () => void;
 }
 
 export function HomeRecruitingView({
@@ -38,8 +40,16 @@ export function HomeRecruitingView({
   isRegistered,
   onRegister,
   onCancelRegister,
-  onNavigate
+  onNavigate,
+  isRegionFailed,
+  onEnterSpectator
 }: HomeRecruitingViewProps) {
+  // ... existing code ...
+
+  // To avoid re-pasting the whole file, I will target the props definition first.
+  // Wait, I need to check where the buttons are rendered. Hero section (lines 303-340).
+  // I will make two edits.
+
   // Countdown timer for next Friday 00:00:00 (Thursday 23:59 deadline)
   const timeLeft = useCountdown(5, 0);
   const [showReferralModal, setShowReferralModal] = useState(false);
@@ -326,10 +336,19 @@ export function HomeRecruitingView({
                 onShowLoginModal();
               }
             }}
-            className="mt-3 w-full py-3 rounded-xl border border-underline-red/30 text-underline-red font-medium flex items-center justify-center gap-2 hover:bg-underline-red/5 transition-colors"
+            className="mt-3 w-full py-3 rounded-xl border border-underline-red text-underline-red font-medium flex items-center justify-center gap-2 hover:bg-underline-red/5 transition-colors"
           >
             <span className="text-sm">친구 초대하고 무료 교환권 받기</span>
           </button>
+
+          {isRegionFailed && onEnterSpectator && (
+            <button
+              onClick={onEnterSpectator}
+              className="mt-3 w-full py-3 rounded-xl bg-gray-100 text-gray-600 font-medium flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
+            >
+              <span className="text-sm">다른 동네 매칭 구경하기</span>
+            </button>
+          )}
 
           <p className="text-[11px] text-underline-text/40 mt-3">
             {isRegistered
@@ -433,7 +452,7 @@ export function HomeRecruitingView({
       )}
 
       {/* 4. Region Status */}
-      <section className="px-6 pt-3 pb-5 bg-[#F5F5F0] border-y border-black/5">
+      <section className="px-6 py-5 bg-[#F5F5F0] border-y border-black/5">
         <button
           onClick={() => {
             if (!isRegionStatsOpen) {
