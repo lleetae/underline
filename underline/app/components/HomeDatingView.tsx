@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { MapPin, Bell, Copy, X } from "lucide-react";
+import { MapPin, Bell, Copy, X, ChevronLeft } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { supabase } from "../lib/supabase";
 import { useCountdown } from "../hooks/useCountdown";
@@ -33,6 +33,7 @@ interface HomeDatingViewProps {
   isApplied?: boolean;
   userId?: string | null;
   onSetSpectator?: (isSpectator: boolean) => void;
+  onBack?: () => void;
 }
 
 export function HomeDatingView({
@@ -43,7 +44,8 @@ export function HomeDatingView({
   onRegister,
   isApplied = false,
   userId,
-  onSetSpectator
+  onSetSpectator,
+  onBack
 }: HomeDatingViewProps) {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -397,7 +399,7 @@ export function HomeDatingView({
               onClick={() => setShowSpectatorPopup(false)}
               className="w-full py-3 bg-underline-red text-white rounded-xl font-bold shadow-lg shadow-underline-red/20"
             >
-              다른 지역 소개팅 구경가기
+              다른 지역 소개팅 구경하기
             </button>
           </div>
         </div>
@@ -406,9 +408,23 @@ export function HomeDatingView({
       {/* Header */}
       <div className="sticky top-0 z-20 bg-[#FCFCFA]/95 backdrop-blur-md border-b border-[var(--foreground)]/5">
         <div className="flex items-center justify-between px-6 py-4">
-          <div className="w-8" /> {/* Spacer for centering */}
-          <h1 className="font-sans text-2xl text-[var(--foreground)] tracking-wide">
-            Underline
+          {onBack ? (
+            <button
+              onClick={onBack}
+              className="p-2 -ml-2 rounded-full hover:bg-[var(--foreground)]/5 transition-colors text-[var(--foreground)]"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          ) : (
+            <div className="w-8" /> // Spacer for centering
+          )}
+
+          <h1 className="font-sans text-2xl font-bold tracking-tight text-[var(--foreground)]">
+            Under
+            <span className="relative inline-block">
+              line
+              <span className="absolute bottom-0 left-0 w-full h-[4px] bg-underline-red rounded-full"></span>
+            </span>
           </h1>
           <button
             onClick={onShowNotifications}
