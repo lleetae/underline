@@ -39,7 +39,7 @@ async function testMatchDelete() {
         .insert({
             user_id: userId,
             match_id: matchReq.id,
-            amount: 500,
+            amount: 19900,
             status: 'test_match_del'
         })
         .select()

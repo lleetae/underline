@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   match_id UUID NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
-  amount INTEGER NOT NULL DEFAULT 3300, -- 3,300원 (Golden Bell price)
+  amount INTEGER NOT NULL DEFAULT 19900, -- 19,900원
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
   payment_method TEXT,
   transaction_id TEXT,

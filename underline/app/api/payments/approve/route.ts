@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        console.log(`NicePayments Callback Body: ${JSON.stringify(body, null, 2)}`);
+        // Sanitize logs: Don't log full body as it may contain PII or tokens
+        console.log(`Processing Order: ${body.orderId}, TID: ${body.tid}, Amount: ${body.amount}`);
 
         const { authResultCode, authResultMsg, tid, orderId, amount } = body;
 
@@ -47,6 +48,53 @@ export async function POST(request: NextRequest) {
         if (authResultCode !== "0000") {
             console.log(`NicePayments Auth Failed: ${authResultMsg}`);
             return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent(authResultMsg)}`, request.url), { status: 303 });
+        }
+
+        // 1.5 Extract Order Info & Pre-Validate
+        // orderId format: matchRequestId_payerMemberId
+        const [matchRequestId, payerMemberIdStr] = orderId.split('_');
+
+        // Fetch Payer Member & Match Request Status BEFORE approving payment
+        const { data: payerMember } = await supabaseAdmin
+            .from('member')
+            .select('has_welcome_coupon, auth_id')
+            .eq('id', payerMemberIdStr)
+            .single();
+
+        const { data: matchRequestPre } = await supabaseAdmin
+            .from('match_requests')
+            .select('is_unlocked, sender_id, receiver_id')
+            .eq('id', matchRequestId)
+            .single();
+
+        if (!matchRequestPre) {
+            console.error(`Match request not found: ${matchRequestId}`);
+            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent("Match request not found")}`, request.url), { status: 303 });
+        }
+
+        if (matchRequestPre.is_unlocked) {
+            console.error(`Match request already unlocked: ${matchRequestId}`);
+            // TODO: In a real scenario, we might need to cancel the auth with NicePay if it was a real attempt, 
+            // but since we haven't called "approve" yet, the transaction shouldn't be finalized.
+            // However, NicePay "Auth" step (step 1) happened on client side. 
+            // We just stop here so we don't capture the money.
+            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent("Already unlocked")}`, request.url), { status: 303 });
+        }
+
+        // Validate Amount strictly against Coupon
+        const requestAmount = parseInt(String(amount));
+        const validAmounts = [19900, 9900];
+
+        if (!validAmounts.includes(requestAmount)) {
+            console.error(`Invalid amount attempted: ${requestAmount}`);
+            return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent("Invalid payment amount")}`, request.url), { status: 303 });
+        }
+
+        if (requestAmount === 9900) {
+            if (!payerMember?.has_welcome_coupon) {
+                console.error("User tried to pay discounted price without coupon");
+                return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent("Invalid coupon usage")}`, request.url), { status: 303 });
+            }
         }
 
         // 2. Call NicePayments Approval API
@@ -89,7 +137,7 @@ export async function POST(request: NextRequest) {
                 "Authorization": `Bearer ${accessToken}`,
             },
             body: JSON.stringify({
-                amount: amount || 9900, // Ensure amount matches
+                amount: requestAmount, // Use validated amount
             }),
         });
 
@@ -100,32 +148,28 @@ export async function POST(request: NextRequest) {
 
         if (paymentResult.resultCode === "0000") {
             // 3. Update Database
-            // orderId format: matchRequestId_payerMemberId (new) OR matchRequestId (old)
-            const [matchRequestId, payerMemberIdStr] = orderId.split('_');
 
-            // Coupon Validation & Consumption
-            if (payerMemberIdStr && parseInt(String(amount)) === 4950) {
-                const { data: payerMember } = await supabaseAdmin
+            // Validate Approved Amount
+            // NicePay returns the actually captured amount. We must verify this matches our expectation.
+            const approvedAmount = paymentResult.data?.amount || paymentResult.amount || 0;
+            // Note: NicePay API response structure might vary, 'data.amount' or root 'amount'. 
+            // Sandbox usually returns root amount for some endpoints, but let's be safe.
+            // Based on logs, it seems to return at root.
+
+            if (parseInt(String(approvedAmount)) !== requestAmount) {
+                console.error(`Approved amount mismatch! Requested: ${requestAmount}, Approved: ${approvedAmount}`);
+                // Critical Security Alert: Payment amount tamper?
+                // We should theoretically void the payment here.
+                return NextResponse.redirect(new URL(`/?payment_error=${encodeURIComponent("Payment amount mismatch")}`, request.url), { status: 303 });
+            }
+
+            // Coupon Consumption (Now safe to do since we validated eligibility before paying)
+            if (payerMemberIdStr && requestAmount === 9900) {
+                // Consume coupon
+                await supabaseAdmin
                     .from('member')
-                    .select('has_welcome_coupon, auth_id')
-                    .eq('id', payerMemberIdStr)
-                    .single();
-
-                if (!payerMember?.has_welcome_coupon) {
-                    console.error("User tried to pay discounted price without coupon");
-                    // Should we void the payment? For now, just log it.
-                    // Ideally we should have validated BEFORE calling NicePayments approval, 
-                    // but NicePayments approval is what finalizes the transaction.
-                    // If we want to reject, we should do it before step 2.
-                    // But step 2 is "Call NicePayments Approval API".
-                    // So yes, we should validate before step 2.
-                } else {
-                    // Consume coupon
-                    await supabaseAdmin
-                        .from('member')
-                        .update({ has_welcome_coupon: false })
-                        .eq('id', payerMemberIdStr);
-                }
+                    .update({ has_welcome_coupon: false })
+                    .eq('id', payerMemberIdStr);
             }
 
             console.log(`Updating match request ${matchRequestId} to unlocked`);

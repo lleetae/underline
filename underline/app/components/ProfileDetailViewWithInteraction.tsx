@@ -416,11 +416,11 @@ export function ProfileDetailViewWithInteraction({
     }
 
     const matchRequestId = matchId || profileId;
-    let amount = 9900;
+    let amount = 19900;
     let goodsName = '연락처 잠금해제';
 
     if (type === 'discount' && member.has_welcome_coupon) {
-      amount = 4950;
+      amount = 9900;
       goodsName = '연락처 잠금해제 (첫 만남 50% 할인)';
     }
 
@@ -747,7 +747,7 @@ export function ProfileDetailViewWithInteraction({
                   onClick={handlePayment}
                   className="w-full bg-[var(--primary)] text-white font-sans font-medium py-3 rounded-lg hover:bg-[var(--primary)]/90 transition-colors shadow-md flex items-center justify-center gap-2"
                 >
-                  <span>연락처 잠금해제 (9,900원)</span>
+                  <span>연락처 잠금해제 (19,900원)</span>
                 </button>
               </div>
             )}

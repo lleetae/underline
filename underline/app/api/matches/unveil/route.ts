@@ -24,20 +24,46 @@ const supabaseAdmin = supabaseServiceKey
  */
 export async function POST(request: NextRequest) {
     try {
-
-
-        const { matchId, requestingUserId } = await request.json();
-
         if (!supabaseAdmin) {
             console.error('Supabase Admin client not initialized');
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        if (!matchId || !requestingUserId) {
-            return NextResponse.json(
-                { error: 'Match ID and User ID required' },
-                { status: 400 }
-            );
+
+        // 1. Verify Authentication
+        const authHeader = request.headers.get('Authorization');
+        if (!authHeader) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        }
+
+        const { matchId } = await request.json();
+
+        if (!matchId) {
+            return NextResponse.json({ error: 'Match ID required' }, { status: 400 });
+        }
+
+        // Get requesting user's member ID from auth ID
+        const { data: requestMember, error: memberError } = await supabaseAdmin
+            .from('member')
+            .select('id')
+            .eq('auth_id', user.id)
+            .single();
+
+        if (memberError || !requestMember) {
+            return NextResponse.json({ error: 'Member profile not found' }, { status: 404 });
+        }
+
+        const requestingUserId = requestMember.id;
+
+        if (!supabaseAdmin) {
+            console.error('Supabase Admin client not initialized');
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
         // 1. Verify match exists and is accepted

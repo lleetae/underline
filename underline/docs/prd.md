@@ -97,5 +97,5 @@
 * **Revenue Model:** Pay-per-contact (건당 과금).
 * **Mechanism:** 매칭 성사 후, 둘 중 **한 명이라도 결제하면 양쪽 모두에게** 연락처(Kakao ID) 공개.
 * **Pricing:**
-    * **Early Bird:** 9,900 KRW.
-    * **Regular:** 14,900 KRW.
+    * **Price:** 19,900 KRW.
+    * **Discount:** 9,900 KRW (with 50% off coupon).

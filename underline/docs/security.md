@@ -83,7 +83,7 @@ Supabase(PostgreSQL)의 **RLS(Row Level Security)**를 사용하여 데이터베
 
 1. **Client:** PortOne 결제 성공 → 서버(Next.js API Route / Edge Function)로 `imp_uid`, `merchant_uid` 전송.
 2. **Server:** PortOne REST API를 호출하여 실제 결제 내역과 금액이 일치하는지 검증 (Cross-Check).
-   - 결제 금액이 9,900 또는 14,900원과 정확히 일치하는지 확인.
+   - 결제 금액이 9,900 또는 19,900원과 정확히 일치하는지 확인.
 3. **Process:** 검증 완료 시에만 DB의 `payments` 테이블 기록 및 상대방 카카오 ID 공개 로직 수행.
 
 ### 5.2 "골든벨" 로직 보안
