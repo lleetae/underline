@@ -54,18 +54,15 @@ export async function POST(request: NextRequest) {
         // const userId = formData.get('userId') as string; 
 
         // Check if user exists in member table (optional but good practice)
+        // Check if user exists in member table (optional)
         const { data: memberData, error: memberError } = await supabaseAdmin
             .from('member')
             .select('id')
             .eq('auth_id', user.id)
             .single();
 
-        if (memberError || !memberData) {
-            return NextResponse.json({ error: 'Member profile not found' }, { status: 404 });
-        }
-
-        // Use the member ID for filename
-        const userId = memberData.id;
+        // Use member ID if available (for consistency), otherwise use Auth ID (for signup)
+        const userId = memberData?.id ? memberData.id.toString() : user.id;
 
         if (!file) {
             return NextResponse.json(
