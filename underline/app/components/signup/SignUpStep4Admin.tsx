@@ -3,6 +3,7 @@ import { Check, Lock, Plus, Shield, X } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { toast } from "sonner";
 import { SignUpHeader } from "./SignUpHeader";
+import { Badge } from "../ui/badge";
 
 interface PhotoSlot {
     id: string;
@@ -214,8 +215,7 @@ export function SignUpStep4Admin({
 
                     {/* KakaoTalk ID */}
                     <div>
-                        <label className="block text-sm text-[var(--foreground)]/70 font-sans mb-2 flex items-center gap-1.5">
-                            <Lock className="w-3.5 h-3.5 text-[var(--foreground)]/40" />
+                        <label className="block text-sm text-[var(--foreground)]/70 font-sans mb-2">
                             카카오톡 ID
                         </label>
                         <input
@@ -225,9 +225,12 @@ export function SignUpStep4Admin({
                             className="w-full px-4 py-2.5 border border-[var(--foreground)]/20 rounded-lg text-[var(--foreground)] font-sans text-sm focus:outline-none focus:border-[var(--primary)] transition-colors"
                             placeholder="카카오톡 ID를 입력하세요"
                         />
-                        <p className="text-xs text-[var(--foreground)]/40 mt-1.5 font-sans">
-                            매칭에 성공한 상대방에게 공유될 연락처입니다
-                        </p>
+                        <div className="mt-2 flex items-start gap-2 bg-blue-50/80 border border-blue-200/50 rounded-lg py-2 px-3">
+                            <Lock className="w-3.5 h-3.5 text-blue-600 mt-0.5" />
+                            <p className="text-xs text-blue-700 font-sans leading-relaxed">
+                                매칭 후 연락처 잠금 해제 전까지 절대 공개되지 않으니 안심하세요.
+                            </p>
+                        </div>
                     </div>
 
                     {/* Photo Upload */}
@@ -268,12 +271,14 @@ export function SignUpStep4Admin({
                                 </div>
                             ))}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-2">
-                            <Shield className="w-3.5 h-3.5 text-[var(--primary)]" />
-                            <p className="text-xs text-[var(--foreground)]/40 font-sans">
-                                AI 부적절한 사진 검사 활성화
-                            </p>
-                        </div>
+                        <Badge variant="outline" className="mt-2 py-2 px-3 rounded-lg font-normal bg-blue-50/80 text-blue-700 border-blue-200/50 block text-start">
+                            <div className="flex items-start gap-2">
+                                <Shield className="w-3.5 h-3.5 text-blue-600 mt-0.5 shrink-0" />
+                                <span className="leading-relaxed">
+                                    매칭 성사 전까지 사진은 블러 처리되어 공개되지 않습니다.
+                                </span>
+                            </div>
+                        </Badge>
                     </div>
 
                 </div>
