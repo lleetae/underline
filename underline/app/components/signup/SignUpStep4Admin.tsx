@@ -135,6 +135,9 @@ export function SignUpStep4Admin({
 
             const response = await fetch('/api/upload/photo', {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: formData
             });
 
