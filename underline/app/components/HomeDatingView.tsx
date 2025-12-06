@@ -137,7 +137,7 @@ export function HomeDatingView({
 
         const user = session.user;
 
-        // Fetch current user's gender using auth_id
+        // Fetch current user's gender & region using auth_id
         const { data: currentUserData } = await supabase
           .from('member')
           .select('id, gender, sido, sigungu')
@@ -152,124 +152,126 @@ export function HomeDatingView({
         console.log("Debug: Current User", { myMemberId, myGender, mySido, mySigungu });
 
         // 1. Determine Current Batch Range
-        // We only want candidates who applied for THIS batch.
         const currentBatchDate = BatchUtils.getCurrentBatchStartDate();
         const { start, end } = BatchUtils.getBatchApplicationRange(currentBatchDate);
 
-        console.log("Debug: Batch Range", { currentBatchDate, start, end });
+        // ---------------------------------------------------------
+        // PARALLEL EXECUTION BLOCK
+        // We prepare Promises for independent tasks
+        // ---------------------------------------------------------
 
-        // 2. Fetch candidates (excluding myself) and filter by dating_applications existence in range
-        let query = supabase
+        // Task A: Fetch Candidates Query Construction
+        let candidatesQuery = supabase
           .from('member')
           .select(`
-id,
-  nickname,
-  age,
-  birth_date,
-  sido,
-  sigungu,
-  photo_url,
-  photos,
-  bio,
-  gender,
-  member_books(
-    book_title,
-    book_review,
-    created_at
-  ),
-  dating_applications!inner(
-    created_at
-  )
+            id,
+            nickname,
+            age,
+            birth_date,
+            sido,
+            sigungu,
+            photo_url,
+            photos,
+            bio,
+            gender,
+            member_books(
+              book_title,
+              book_review,
+              created_at
+            ),
+            dating_applications!inner(
+              created_at
+            )
           `)
           .gte('dating_applications.created_at', start.toISOString())
           .lte('dating_applications.created_at', end.toISOString())
-          .eq('dating_applications.status', 'active') // Only show active applications
-          .not('auth_id', 'is', null); // Exclude withdrawn members
+          .eq('dating_applications.status', 'active')
+          .not('auth_id', 'is', null);
 
         if (myMemberId) {
-          query = query.neq('id', myMemberId);
+          candidatesQuery = candidatesQuery.neq('id', myMemberId);
         }
 
+        // Region Filtering Logic
         if (isSpectator) {
-          // If Spectator (Failed Region), show users from OTHER regions
-          // Exclude my own region (sido + sigungu)
-          if (mySido && mySigungu) {
-            // Note: Supabase doesn't support complex NEQ on multiple columns easily in one go for "NOT (A AND B)"
-            // But we can approximate or use a filter.
-            // For now, let's just filter by Sido if possible, or maybe just show everyone else?
-            // "Other regions" usually implies "Not my exact location".
-            // Let's filter out anyone with SAME sido AND sigungu.
-            // Since ORM limitations, we might filter in memory if dataset is small, or use a raw filter.
-            // But `neq` on `location` string was easy.
-            // Let's try to use `not.and` if available, or just filter out by `location` string for now if it's still populated?
-            // User wants FULL migration.
-            // We can use `not` with a filter string: `not.and(sido.eq.${ mySido }, sigungu.eq.${ mySigungu })` - syntax might be tricky.
-            // Simpler approach: Filter out by Sido OR Sigungu? No.
-            // Let's assume strict matching:
-            // query = query.not('sido', 'eq', mySido).not('sigungu', 'eq', mySigungu) -> This excludes anyone with same sido OR same sigungu. Too strict.
-            // We want to exclude (sido == mySido && sigungu == mySigungu).
-            // Let's fetch all and filter in memory for spectator mode, or use the `location` string if we trust it's synced.
-            // Since we are syncing, let's use `location` for the NEQ query for simplicity, OR construct the filter.
-            // Actually, let's try to filter by `sido` first?
-            // If I am in Seoul Gangnam, I want to see people NOT in Seoul Gangnam.
-            // Maybe just `neq('sido', mySido)`? No, I might want to see Seoul Mapo.
-            // Let's do in-memory filtering for Spectator mode to be safe and correct with new columns.
-          }
+          // Spectator logic: Filter out same region group if in-memory filtering is preferred 
+          // (Fetching is done first, filtering later as per original logic)
         } else {
-          // If Participant (Active Region), show users from MY region GROUP
+          // Participant logic
           if (mySido) {
             const sidosInGroup = getSidosInSameGroup(mySido);
-            console.log("Debug: Sidos in Group", sidosInGroup);
             if (sidosInGroup.length > 0) {
-              query = query.in('sido', sidosInGroup);
+              candidatesQuery = candidatesQuery.in('sido', sidosInGroup);
             } else {
-              // Fallback if no group found (shouldn't happen for valid sidos)
-              query = query.eq('sido', mySido);
+              candidatesQuery = candidatesQuery.eq('sido', mySido);
             }
           }
         }
 
         if (myGender) {
-          // Filter for opposite gender
-          query = query.neq('gender', myGender);
+          candidatesQuery = candidatesQuery.neq('gender', myGender);
         }
 
-        const { data, error } = await query.limit(50); // Fetch more to handle sorting
+        const candidatesPromise = candidatesQuery.limit(50);
 
-        if (error) throw error;
-
-        console.log("Debug: Fetched Candidates Count", data?.length);
-        if (data && data.length === 0) {
-          console.log("Debug: No candidates found. Check DB for matching records.");
-        }
-        // Check if my region is "Open" (>= 1 males AND >= 1 females)
-        // Only check if NOT already in spectator mode to avoid infinite loop
+        // Task B: Region Stats (Only if not spectator and mySido exists)
+        // Initialize as a Promise-like object that resolves to null data structure
+        let regionStatsPromise: PromiseLike<any> = Promise.resolve({ data: null });
         if (!isSpectator && mySido) {
-          const groupKey = getRegionGroupKey(mySido);
-          const { data: statsData } = await supabase
+          regionStatsPromise = supabase
             .from('dating_applications')
             .select(`
-member!inner(
-  sido,
-  gender
-)
+              member!inner(
+                sido,
+                gender
+              )
             `)
             .gte('created_at', start.toISOString())
             .lte('created_at', end.toISOString())
             .neq('status', 'cancelled');
+        }
 
+        // Task C: Recent Matches (Only if myMemberId exists)
+        const oneWeekAgo = subDays(new Date(), 7);
+        let recentMatchesPromise: PromiseLike<any> = Promise.resolve({ data: [] });
+
+        if (myMemberId) {
+          recentMatchesPromise = supabase
+            .from('match_requests')
+            .select('sender_id, receiver_id')
+            .eq('status', 'accepted')
+            .or(`sender_id.eq.${myMemberId}, receiver_id.eq.${myMemberId}`)
+            .gte('created_at', oneWeekAgo.toISOString());
+        }
+
+        // EXECUTE ALL PARALLEL
+        const [candidatesResult, regionStatsResult, recentMatchesResult] = await Promise.all([
+          candidatesPromise,
+          regionStatsPromise,
+          recentMatchesPromise
+        ]);
+
+        const { data, error } = candidatesResult;
+        const { data: statsData } = regionStatsResult || { data: null };
+        const { data: recentMatches } = recentMatchesResult || { data: null };
+
+        if (error) throw error;
+
+        console.log("Debug: Fetched Candidates Count", data?.length);
+
+        // Process Region Stats
+        if (statsData && !isSpectator && mySido) {
+          const groupKey = getRegionGroupKey(mySido);
           let maleCount = 0;
           let femaleCount = 0;
 
-          if (statsData) {
-            statsData.forEach((app: any) => {
-              const appGroupKey = getRegionGroupKey(app.member?.sido || '');
-              if (appGroupKey === groupKey) {
-                if (app.member?.gender === 'male') maleCount++;
-                else if (app.member?.gender === 'female') femaleCount++;
-              }
-            });
-          }
+          statsData.forEach((app: any) => {
+            const appGroupKey = getRegionGroupKey(app.member?.sido || '');
+            if (appGroupKey === groupKey) {
+              if (app.member?.gender === 'male') maleCount++;
+              else if (app.member?.gender === 'female') femaleCount++;
+            }
+          });
 
           console.log("Debug: Region Stats", { groupKey, maleCount, femaleCount });
 
@@ -281,42 +283,30 @@ member!inner(
           }
         }
 
+        // Process Recent Matches for Penalty
+        const matchedUserIds = new Set<number>();
+        if (recentMatches) {
+          recentMatches.forEach((m: any) => {
+            matchedUserIds.add(m.sender_id);
+            matchedUserIds.add(m.receiver_id);
+          });
+        }
+
         if (data) {
-          // 3. Penalty Logic: Check for previous matches
-          // ... (same as before)
-          const oneWeekAgo = subDays(new Date(), 7);
-
-          const { data: recentMatches } = await supabase
-            .from('match_requests')
-            .select('sender_id, receiver_id')
-            .eq('status', 'accepted')
-            .or(`sender_id.eq.${myMemberId}, receiver_id.eq.${myMemberId} `)
-            .gte('created_at', oneWeekAgo.toISOString());
-
-          const matchedUserIds = new Set<number>();
-          if (recentMatches) {
-            recentMatches.forEach(m => {
-              matchedUserIds.add(m.sender_id);
-              matchedUserIds.add(m.receiver_id);
-            });
-          }
-
           let formattedProfiles: UserProfile[] = (data as any)
-            .filter((member: any) => member.member_books && member.member_books.length > 0) // Only show members with books
+            .filter((member: any) => member.member_books && member.member_books.length > 0)
             .map((member: any) => {
-              // Sort books by created_at desc to get the latest one
+              // Sort books
               const books = Array.isArray(member.member_books) ? member.member_books : [member.member_books];
               const sortedBooks = [...books].sort((a: any, b: any) =>
                 new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
               );
               const latestBook = sortedBooks[0];
 
-              // Handle potential missing fields
               const nickname = member.nickname || "익명";
               const age = member.age || (member.birth_date ? new Date().getFullYear() - parseInt(member.birth_date.substring(0, 4)) : 0);
-              // Construct location from sido/sigungu
               const locationDisplay = (member.sido && member.sigungu)
-                ? `${member.sido} ${member.sigungu} `
+                ? `${member.sido} ${member.sigungu}`
                 : (member.location || "알 수 없음");
 
               const photos = member.photos && member.photos.length > 0 ? member.photos : (member.photo_url ? [member.photo_url] : []);
@@ -338,12 +328,11 @@ member!inner(
                 reviewExcerpt: latestBook.book_review.length > 50
                   ? latestBook.book_review.substring(0, 50) + "..."
                   : latestBook.book_review,
-                isPenalized: matchedUserIds.has(member.id) // Add flag for sorting
+                isPenalized: matchedUserIds.has(member.id)
               };
             })
             .filter((p: any): p is UserProfile => p !== null);
 
-          // In-memory filtering for Spectator mode (exclude my region GROUP)
           if (isSpectator && mySido) {
             const sidosInGroup = getSidosInSameGroup(mySido);
             formattedProfiles = formattedProfiles.filter(p =>
@@ -351,7 +340,6 @@ member!inner(
             );
           }
 
-          // Sort: Non-penalized first, then Penalized.
           formattedProfiles.sort((a: UserProfile, b: UserProfile) => {
             if (a.isPenalized === b.isPenalized) return 0;
             return a.isPenalized ? 1 : -1;
