@@ -699,242 +699,240 @@ export function ProfileDetailViewWithInteraction({
                     <DecryptedKakaoId encryptedId={profile.kakaoId} fallback="ID 정보 없음" />
                   </p>
                 </div>
-              </p>
-                </div>
-                
+
                 {/* Display Decrypted ID */}
-        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 flex items-center justify-between gap-2">
-          <DecryptedKakaoId
-            encryptedId={profile.kakaoId}
-            className="font-mono text-sm text-[var(--foreground)] break-all"
-          />
-          <button
-            onClick={() => {
-              // We can't easily copy from DecryptedKakaoId since it manages state internally.
-              // But we can just use the same API call or let user copy manually.
-              // Ideally DecryptedKakaoId could expose a copy handler or ref.
-              // For now, let's just keep a simple copy button that might need to re-fetch or just copy the text content if we could access it.
-              // Actually, DecryptedKakaoId is a span.
-              // Let's just rely on user selecting text OR implement a smarter component.
-              // Wait, the user wants to SEE the original ID.
-              // I will wrap DecryptedKakaoId and add a copy button that might fetch again (cached by browser/swr potentially) or just copy the dirty way.
-              // Simpler: Just render DecryptedKakaoId. The user can copy it manually.
-              // If we want a copy button, we can add it side-by-side but it needs the value.
-              // Let's just show the ID for now as requested.
-            }}
-            className="hidden" // Hiding copy button for now as DecryptedKakaoId doesn't expose value
-          >
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                if (!profile.kakaoId) return;
+                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 flex items-center justify-between gap-2">
+                  <DecryptedKakaoId
+                    encryptedId={profile.kakaoId}
+                    className="font-mono text-sm text-[var(--foreground)] break-all"
+                  />
+                  <button
+                    onClick={() => {
+                      // We can't easily copy from DecryptedKakaoId since it manages state internally.
+                      // But we can just use the same API call or let user copy manually.
+                      // Ideally DecryptedKakaoId could expose a copy handler or ref.
+                      // For now, let's just keep a simple copy button that might need to re-fetch or just copy the text content if we could access it.
+                      // Actually, DecryptedKakaoId is a span.
+                      // Let's just rely on user selecting text OR implement a smarter component.
+                      // Wait, the user wants to SEE the original ID.
+                      // I will wrap DecryptedKakaoId and add a copy button that might fetch again (cached by browser/swr potentially) or just copy the dirty way.
+                      // Simpler: Just render DecryptedKakaoId. The user can copy it manually.
+                      // If we want a copy button, we can add it side-by-side but it needs the value.
+                      // Let's just show the ID for now as requested.
+                    }}
+                    className="hidden" // Hiding copy button for now as DecryptedKakaoId doesn't expose value
+                  >
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        if (!profile.kakaoId) return;
 
-                // Quick re-fetch to get value for clipboard (secure)
-                const { data: { session } } = await supabase.auth.getSession();
-                const token = session?.access_token;
-                if (!token) return;
+                        // Quick re-fetch to get value for clipboard (secure)
+                        const { data: { session } } = await supabase.auth.getSession();
+                        const token = session?.access_token;
+                        if (!token) return;
 
-                const response = await fetch('/api/decrypt/kakao', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify({ encryptedId: profile.kakaoId })
-                });
+                        const response = await fetch('/api/decrypt/kakao', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                          },
+                          body: JSON.stringify({ encryptedId: profile.kakaoId })
+                        });
 
-                if (response.ok) {
-                  const data = await response.json();
-                  await navigator.clipboard.writeText(data.decryptedId);
-                  toast.success("복사되었습니다");
-                }
-              } catch (e) {
-                toast.error("복사 실패");
-              }
-            }}
-            className="text-xs bg-[var(--foreground)]/5 hover:bg-[var(--foreground)]/10 text-[var(--foreground)] px-3 py-1.5 rounded-md transition-colors font-sans flex-shrink-0"
-          >
-            복사
-          </button>
-        </div>
-      </div>
-      ) : (
-      <div className="bg-white p-4 rounded-lg border border-[var(--foreground)]/10 shadow-sm text-center">
-        <p className="text-sm text-[var(--foreground)]/60 font-sans mb-3">
-          연락처를 확인하려면 잠금해제가 필요합니다.
-        </p>
-        <button
-          onClick={handlePayment}
-          className="w-full bg-[var(--primary)] text-white font-sans font-medium py-3 rounded-lg hover:bg-[var(--primary)]/90 transition-colors shadow-md flex items-center justify-center gap-2"
-        >
-          <span>연락처 잠금해제 (19,900원)</span>
-        </button>
-      </div>
+                        if (response.ok) {
+                          const data = await response.json();
+                          await navigator.clipboard.writeText(data.decryptedId);
+                          toast.success("복사되었습니다");
+                        }
+                      } catch (e) {
+                        toast.error("복사 실패");
+                      }
+                    }}
+                    className="text-xs bg-[var(--foreground)]/5 hover:bg-[var(--foreground)]/10 text-[var(--foreground)] px-3 py-1.5 rounded-md transition-colors font-sans flex-shrink-0"
+                  >
+                    복사
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white p-4 rounded-lg border border-[var(--foreground)]/10 shadow-sm text-center">
+                <p className="text-sm text-[var(--foreground)]/60 font-sans mb-3">
+                  연락처를 확인하려면 잠금해제가 필요합니다.
+                </p>
+                <button
+                  onClick={handlePayment}
+                  className="w-full bg-[var(--primary)] text-white font-sans font-medium py-3 rounded-lg hover:bg-[var(--primary)]/90 transition-colors shadow-md flex items-center justify-center gap-2"
+                >
+                  <span>연락처 잠금해제 (19,900원)</span>
+                </button>
+              </div>
             )}
-    </div>
-  )
-}
-
-{/* Additional Info Grid */ }
-<div className="px-6 py-4 border-b border-[var(--foreground)]/10">
-  <div className="grid grid-cols-4 gap-2">
-    <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
-      <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">종교</p>
-      <p className="text-sm text-[var(--foreground)] font-sans font-medium">
-        {getReligionText(profile.religion)}
-      </p>
-    </div>
-    <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
-      <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">키</p>
-      <p className="text-sm text-[var(--foreground)] font-sans font-medium">{profile.height}</p>
-    </div>
-    <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
-      <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">흡연</p>
-      <p className="text-sm text-[var(--foreground)] font-sans font-medium">
-        {getSmokingText(profile.smoking)}
-      </p>
-    </div>
-    <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
-      <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">음주</p>
-      <p className="text-sm text-[var(--foreground)] font-sans font-medium">
-        {getDrinkingText(profile.drinking)}
-      </p>
-    </div>
-  </div>
-</div>
-
-{/* Bio Section */ }
-<div className="px-6 py-6 border-b border-[var(--foreground)]/10">
-  <h3 className="font-sans text-sm text-[var(--foreground)]/60 mb-2">자기소개</h3>
-  <p className="text-[var(--foreground)] font-sans leading-relaxed">{profile.bio}</p>
-</div>
-
-{/* Book Shelf Section */ }
-<div className="px-6 py-8">
-  <div className="flex items-center gap-2 mb-6">
-    <BookOpen className="w-5 h-5 text-[var(--primary)]" />
-    <h3 className="font-sans text-xl text-[var(--foreground)]">{profile.nickname}님의 책장 {profile.books.length}권</h3>
-    <div className="h-px flex-1 bg-[var(--primary)]/20 ml-2" />
-  </div>
-
-  {/* Book Grid */}
-  <div className="grid grid-cols-3 gap-4 mb-6">
-    {profile.books.map((book) => (
-      <button
-        key={book.id}
-        onClick={() => handleBookClick(book)}
-        className="group relative aspect-[2/3] rounded-lg overflow-hidden border border-[var(--foreground)]/10 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
-      >
-        <ImageWithFallback
-          src={book.cover}
-          alt={book.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2">
-          <p className="text-white text-xs font-sans line-clamp-2 leading-tight">
-            {book.title}
-          </p>
-        </div>
-      </button>
-    ))}
-  </div>
-
-  {/* Instruction */}
-  {!disableMatching && !isRequestSent && (
-    <div className="flex items-start gap-3 bg-[var(--primary)]/5 border border-[var(--primary)]/20 rounded-lg p-4">
-      <Heart className="w-5 h-5 text-[var(--primary)] flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="text-sm text-[var(--foreground)] font-sans leading-relaxed">
-          책을 선택하면 감상문을 읽을 수 있습니다.
-        </p>
-      </div>
-    </div>
-  )}
-
-  {/* Already Sent Notice */}
-  {!disableMatching && isRequestSent && existingRequest && (
-    <div>
-      <div className="flex items-start gap-3 bg-gradient-to-br from-[var(--primary)]/10 to-[var(--primary)]/5 border border-[var(--primary)]/30 rounded-lg p-4 mb-3">
-        <Heart className="w-5 h-5 text-[var(--primary)] flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <p className="text-sm text-[var(--foreground)] font-sans font-medium mb-2">
-            내가 보낸 편지
-          </p>
-          <div className="bg-white/60 rounded-lg p-3 border border-[var(--primary)]/20">
-            <p className="font-sans text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words">
-              {existingRequest.letter}
-            </p>
           </div>
-          <p className="text-xs text-[var(--foreground)]/50 font-sans mt-2">
-            {new Date(existingRequest.timestamp).toLocaleString('ko-KR', {
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}에 신청하셨습니다
-          </p>
+        )
+        }
+
+        {/* Additional Info Grid */}
+        <div className="px-6 py-4 border-b border-[var(--foreground)]/10">
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
+              <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">종교</p>
+              <p className="text-sm text-[var(--foreground)] font-sans font-medium">
+                {getReligionText(profile.religion)}
+              </p>
+            </div>
+            <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
+              <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">키</p>
+              <p className="text-sm text-[var(--foreground)] font-sans font-medium">{profile.height}</p>
+            </div>
+            <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
+              <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">흡연</p>
+              <p className="text-sm text-[var(--foreground)] font-sans font-medium">
+                {getSmokingText(profile.smoking)}
+              </p>
+            </div>
+            <div className="bg-white border border-[var(--foreground)]/10 rounded-lg p-3 text-center">
+              <p className="text-xs text-[var(--foreground)]/50 font-sans mb-1">음주</p>
+              <p className="text-sm text-[var(--foreground)] font-sans font-medium">
+                {getDrinkingText(profile.drinking)}
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  )}
-</div>
+
+        {/* Bio Section */}
+        <div className="px-6 py-6 border-b border-[var(--foreground)]/10">
+          <h3 className="font-sans text-sm text-[var(--foreground)]/60 mb-2">자기소개</h3>
+          <p className="text-[var(--foreground)] font-sans leading-relaxed">{profile.bio}</p>
+        </div>
+
+        {/* Book Shelf Section */}
+        <div className="px-6 py-8">
+          <div className="flex items-center gap-2 mb-6">
+            <BookOpen className="w-5 h-5 text-[var(--primary)]" />
+            <h3 className="font-sans text-xl text-[var(--foreground)]">{profile.nickname}님의 책장 {profile.books.length}권</h3>
+            <div className="h-px flex-1 bg-[var(--primary)]/20 ml-2" />
+          </div>
+
+          {/* Book Grid */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {profile.books.map((book) => (
+              <button
+                key={book.id}
+                onClick={() => handleBookClick(book)}
+                className="group relative aspect-[2/3] rounded-lg overflow-hidden border border-[var(--foreground)]/10 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
+              >
+                <ImageWithFallback
+                  src={book.cover}
+                  alt={book.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2">
+                  <p className="text-white text-xs font-sans line-clamp-2 leading-tight">
+                    {book.title}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Instruction */}
+          {!disableMatching && !isRequestSent && (
+            <div className="flex items-start gap-3 bg-[var(--primary)]/5 border border-[var(--primary)]/20 rounded-lg p-4">
+              <Heart className="w-5 h-5 text-[var(--primary)] flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-[var(--foreground)] font-sans leading-relaxed">
+                  책을 선택하면 감상문을 읽을 수 있습니다.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Already Sent Notice */}
+          {!disableMatching && isRequestSent && existingRequest && (
+            <div>
+              <div className="flex items-start gap-3 bg-gradient-to-br from-[var(--primary)]/10 to-[var(--primary)]/5 border border-[var(--primary)]/30 rounded-lg p-4 mb-3">
+                <Heart className="w-5 h-5 text-[var(--primary)] flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-[var(--foreground)] font-sans font-medium mb-2">
+                    내가 보낸 편지
+                  </p>
+                  <div className="bg-white/60 rounded-lg p-3 border border-[var(--primary)]/20">
+                    <p className="font-sans text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap break-words">
+                      {existingRequest.letter}
+                    </p>
+                  </div>
+                  <p className="text-xs text-[var(--foreground)]/50 font-sans mt-2">
+                    {new Date(existingRequest.timestamp).toLocaleString('ko-KR', {
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}에 신청하셨습니다
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div >
 
 
-  {/* Floating Match Request Button - Hidden in Spectator Mode */ }
-{
-  !isSpectator && (
-    <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-6 pb-8">
-      <button
-        onClick={handleOpenLetterModal}
-        disabled={!canRequest}
-        className={`w-full max-w-md mx-auto font-sans font-medium py-4 rounded-xl transition-all duration-300 shadow-2xl flex items-center justify-center gap-2
+      {/* Floating Match Request Button - Hidden in Spectator Mode */}
+      {
+        !isSpectator && (
+          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-6 pb-8">
+            <button
+              onClick={handleOpenLetterModal}
+              disabled={!canRequest}
+              className={`w-full max-w-md mx-auto font-sans font-medium py-4 rounded-xl transition-all duration-300 shadow-2xl flex items-center justify-center gap-2
             ${canRequest
-            ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/30"
-            : "bg-[#F5F5F0] text-[var(--foreground)]/40 cursor-not-allowed shadow-none"
-          }`}
-      >
-        {isMatched ? (
-          <>
-            <Heart className="w-5 h-5 fill-current" />
-            <span>매칭된 상대입니다</span>
-          </>
-        ) : isRequestReceived ? (
-          <>
-            <Heart className="w-5 h-5" />
-            <span>매칭 신청을 받았습니다</span>
-          </>
-        ) : isRequestSent ? (
-          <>
-            <Send className="w-5 h-5" />
-            <span>매칭 신청 완료</span>
-          </>
-        ) : disableMatching ? (
-          <>
-            <Heart className="w-5 h-5" />
-            <span>매칭 신청 불가</span>
-          </>
-        ) : (
-          <>
-            <Send className="w-5 h-5" />
-            <span>매칭 신청하기</span>
-          </>
-        )}
-      </button>
-    </div>
-  )
-}
+                  ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-[var(--primary)]/30"
+                  : "bg-[#F5F5F0] text-[var(--foreground)]/40 cursor-not-allowed shadow-none"
+                }`}
+            >
+              {isMatched ? (
+                <>
+                  <Heart className="w-5 h-5 fill-current" />
+                  <span>매칭된 상대입니다</span>
+                </>
+              ) : isRequestReceived ? (
+                <>
+                  <Heart className="w-5 h-5" />
+                  <span>매칭 신청을 받았습니다</span>
+                </>
+              ) : isRequestSent ? (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>매칭 신청 완료</span>
+                </>
+              ) : disableMatching ? (
+                <>
+                  <Heart className="w-5 h-5" />
+                  <span>매칭 신청 불가</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>매칭 신청하기</span>
+                </>
+              )}
+            </button>
+          </div>
+        )
+      }
 
-{/* Letter Modal */ }
-<MatchRequestLetterModal
-  isOpen={showLetterModal}
-  onClose={() => setShowLetterModal(false)}
-  onSend={handleSendLetter}
-  recipientNickname={profile.nickname}
-  recipientPhoto={profile.photos[0]}
-  isSending={isSendingRequest}
-/>
+      {/* Letter Modal */}
+      <MatchRequestLetterModal
+        isOpen={showLetterModal}
+        onClose={() => setShowLetterModal(false)}
+        onSend={handleSendLetter}
+        recipientNickname={profile.nickname}
+        recipientPhoto={profile.photos[0]}
+        isSending={isSendingRequest}
+      />
     </div >
   );
 }
