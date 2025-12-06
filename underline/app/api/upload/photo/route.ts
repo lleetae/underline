@@ -35,20 +35,41 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
+        // 1. Verify Authentication
+        const authHeader = request.headers.get('Authorization');
+        if (!authHeader) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        }
+
         const formData = await request.formData();
         const file = formData.get('photo') as File;
-        const userId = formData.get('userId') as string;
+
+        // We ignore the userId passed in formData and use the authenticated user's ID
+        // const userId = formData.get('userId') as string; 
+
+        // Check if user exists in member table (optional but good practice)
+        const { data: memberData, error: memberError } = await supabaseAdmin
+            .from('member')
+            .select('id')
+            .eq('auth_id', user.id)
+            .single();
+
+        if (memberError || !memberData) {
+            return NextResponse.json({ error: 'Member profile not found' }, { status: 404 });
+        }
+
+        // Use the member ID for filename
+        const userId = memberData.id;
 
         if (!file) {
             return NextResponse.json(
                 { error: 'No file provided' },
-                { status: 400 }
-            );
-        }
-
-        if (!userId) {
-            return NextResponse.json(
-                { error: 'User ID required' },
                 { status: 400 }
             );
         }

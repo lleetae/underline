@@ -66,8 +66,8 @@ export function CouponSelectionModal({
                                 </div>
                             </div>
                             <div className="text-right">
-                                <span className="text-xs text-[var(--foreground)]/40 line-through block">9,900원</span>
-                                <span className="text-lg font-bold text-red-500">4,950원</span>
+                                <span className="text-xs text-[var(--foreground)]/40 line-through block">19,900원</span>
+                                <span className="text-lg font-bold text-red-500">9,900원</span>
                             </div>
                         </button>
                     )}
@@ -87,7 +87,7 @@ export function CouponSelectionModal({
                             </div>
                         </div>
                         <div className="text-right">
-                            <span className="text-lg font-bold text-[var(--foreground)]">9,900원</span>
+                            <span className="text-lg font-bold text-[var(--foreground)]">19,900원</span>
                         </div>
                     </button>
                 </div>

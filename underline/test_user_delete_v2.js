@@ -44,7 +44,7 @@ async function testUserDelete() {
         .insert({
             user_id: userId,
             match_id: matchReq.id,
-            amount: 500,
+            amount: 19900,
             status: 'test_user_del'
         })
         .select()

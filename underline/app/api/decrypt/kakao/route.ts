@@ -40,7 +40,46 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Encrypted ID is required' }, { status: 400 });
         }
 
-        // 2. Decrypt using RPC
+        // 2. Authorization Check (CRITICAL SECURITY FIX)
+        // Ensure the requesting user is allowed to see this contact.
+        // Logic: Find the member with this encrypted ID, then check if there is an unlocked match between them.
+
+        const { data: targetMember, error: memberError } = await supabaseAdmin
+            .from('member')
+            .select('id')
+            .eq('kakao_id', encryptedId)
+            .single();
+
+        if (memberError || !targetMember) {
+            // If we can't find the member, we can't authorize. 
+            // Don't reveal member existence error if possible, but distinct from decryption error.
+            return NextResponse.json({ error: 'Invalid ID' }, { status: 404 });
+        }
+
+        const targetMemberId = targetMember.id;
+
+        // Find if they have a match request record
+        // Current user must be sender OR receiver, and target must be the OTHER one.
+        // AND is_unlocked must be true.
+        const { data: matchReq, error: matchError } = await supabaseAdmin
+            .from('match_requests')
+            .select('id, is_unlocked')
+            .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetMemberId}),and(sender_id.eq.${targetMemberId},receiver_id.eq.${user.id})`)
+            .eq('is_unlocked', true)
+            .maybeSingle();
+
+        if (matchError) {
+            console.error("Error checking match authorization:", matchError);
+            return NextResponse.json({ error: 'Database error' }, { status: 500 });
+        }
+
+        if (!matchReq) {
+            // Unauthorized: No unlocked match found between these two users
+            console.warn(`User ${user.id} attempted to decrypt ID of ${targetMemberId} without unlocked match.`);
+            return NextResponse.json({ error: 'Forbidden: You do not have permission to view this contact.' }, { status: 403 });
+        }
+
+        // 3. Decrypt using RPC
         const { data, error } = await supabaseAdmin.rpc('decrypt_kakao_id', {
             encrypted_text: encryptedId
         });

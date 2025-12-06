@@ -31,6 +31,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+        if (letter.length > 500) {
+            return NextResponse.json({ error: 'Letter too long (max 500 chars)' }, { status: 400 });
+        }
+
         // Get sender's member id
         const { data: senderData, error: senderError } = await supabaseAdmin
             .from('member')
