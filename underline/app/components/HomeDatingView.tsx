@@ -686,8 +686,8 @@ member!inner(
           </div>
         </div>
       )}
-      {/* PWA Install Modal (Option C) */}
-      <PWAInstallModal />
+      {/* PWA Install Modal (Option C) - Only for participants */}
+      {!isSpectator && <PWAInstallModal />}
     </div>
   );
 }
