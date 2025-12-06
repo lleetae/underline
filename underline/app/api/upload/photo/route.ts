@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
         // Check if user exists in member table (optional but good practice)
         // Check if user exists in member table (optional)
-        const { data: memberData, error: memberError } = await supabaseAdmin
+        const { data: memberData } = await supabaseAdmin
             .from('member')
             .select('id')
             .eq('auth_id', user.id)
