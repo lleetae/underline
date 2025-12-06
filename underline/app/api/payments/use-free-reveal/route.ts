@@ -53,7 +53,28 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'No free reveals available' }, { status: 400 });
         }
 
-        // 2. Deduct free reveal count
+        // 3. Fetch match request details AND Verify Ownership
+        const { data: matchData, error: matchError } = await supabase
+            .from('match_requests')
+            .select('sender_id, receiver_id, is_unlocked')
+            .eq('id', matchId)
+            .single();
+
+        if (matchError || !matchData) {
+            return NextResponse.json({ error: 'Match request not found' }, { status: 404 });
+        }
+
+        // Verify user is part of the match
+        if (matchData.sender_id !== member.id && matchData.receiver_id !== member.id) {
+            return NextResponse.json({ error: 'Unauthorized: You are not part of this match' }, { status: 403 });
+        }
+
+        // Verify not already unlocked
+        if (matchData.is_unlocked) {
+            return NextResponse.json({ error: 'Match is already unlocked' }, { status: 400 });
+        }
+
+        // 2. Deduct free reveal count (Now safe to deduct)
         const { error: updateError } = await supabase
             .from('member')
             .update({ free_reveals_count: member.free_reveals_count - 1 })
@@ -61,17 +82,6 @@ export async function POST(request: Request) {
 
         if (updateError) {
             return NextResponse.json({ error: 'Failed to update reveal count' }, { status: 500 });
-        }
-
-        // 3. Fetch match request details
-        const { data: matchData, error: matchError } = await supabase
-            .from('match_requests')
-            .select('sender_id, receiver_id')
-            .eq('id', matchId)
-            .single();
-
-        if (matchError || !matchData) {
-            return NextResponse.json({ error: 'Match request not found' }, { status: 404 });
         }
 
         // 4. Update match request to unlocked

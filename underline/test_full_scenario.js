@@ -41,7 +41,7 @@ async function testFullScenario() {
         .insert({
             user_id: userId,
             match_id: matchReq.id,
-            amount: 9900,
+            amount: 19900,
             status: 'completed'
         })
         .select()

@@ -117,7 +117,7 @@ export function CouponBoxView({ onBack }: { onBack: () => void }) {
                                 </div>
                             </div>
                             <p className="text-xs text-red-400 bg-red-50 p-3 rounded-lg">
-                                첫 연락처 교환 시 4,950원으로 할인됩니다.
+                                첫 연락처 교환 시 9,900원으로 할인됩니다.
                             </p>
                         </div>
                     )}

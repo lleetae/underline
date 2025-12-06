@@ -45,7 +45,7 @@ async function reproduceStrict() {
         .insert({
             user_id: userId,
             match_id: matchReq.id,
-            amount: 9900,
+            amount: 19900,
             status: 'completed', // CRITICAL
             payment_method: 'card'
         })

@@ -280,11 +280,11 @@ export function MatchList({
       return;
     }
 
-    let amount = 9900;
+    let amount = 19900;
     let goodsName = '연락처 잠금해제';
 
     if (type === 'discount' && member.has_welcome_coupon) {
-      amount = 4950;
+      amount = 9900;
       goodsName = '연락처 잠금해제 (첫 만남 50% 할인)';
     }
 
@@ -376,7 +376,7 @@ export function MatchList({
                 onClick={() => handlePayment(match)}
                 className="w-full bg-[var(--primary)] text-white hover:bg-[#b30000] font-sans font-medium py-3.5 rounded-lg transition-all duration-300 text-sm flex items-center justify-center gap-2 shadow-lg shadow-[var(--primary)]/20"
               >
-                연락처 잠금해제 (9,900원)
+                연락처 잠금해제 (19,900원)
               </button>
               <p className="text-[10px] text-center text-[var(--foreground)]/40">
                 * 한 명이 결제하면 두 분 모두에게 연락처가 공개됩니다.
