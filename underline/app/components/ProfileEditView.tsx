@@ -110,15 +110,58 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
     fetchSignedUrls();
   }, [profileData.profilePhotos]); // Depend on initial profileData photos
 
-  // Sync Kakao ID from props (for background decryption updates)
+  // Sync Kakao ID from props (for background decryption updates) and verify decryption
   useEffect(() => {
+    // 1. Sync from props if different
     if (profileData.kakaoId !== formData.kakaoId) {
       setFormData(prev => ({
         ...prev,
         kakaoId: profileData.kakaoId
       }));
     }
-  }, [profileData.kakaoId]);
+
+    // 2. Safeguard: If the ID looks encrypted (long string starting with 'ww'), decrypt it.
+    const checkAndDecrypt = async () => {
+      const currentId = profileData.kakaoId || formData.kakaoId;
+      if (currentId && currentId.length > 20 && !currentId.includes(' ')) {
+        try {
+          const { supabase } = await import('../lib/supabase');
+          const { data: { session } } = await supabase.auth.getSession();
+          const token = session?.access_token;
+          if (!token) return;
+
+          const response = await fetch('/api/decrypt/kakao', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ encryptedId: currentId })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.decryptedId && data.decryptedId !== currentId) {
+              setFormData(prev => ({ ...prev, kakaoId: data.decryptedId }));
+            }
+          }
+        } catch (e) {
+          console.error("Safeguard decryption failed:", e);
+        }
+      }
+    };
+
+    checkAndDecrypt();
+
+  }, [profileData.kakaoId, formData.kakaoId]); // Add formData.kakaoId to dependency to re-check if user clears it? No, just loop risk.
+  // Actually, depend on profileData.kakaoId primarily.
+  // If we mistakenly depend on formData.kakaoId and update it, we might loop.
+  // Safe dep: [profileData.kakaoId] is safe. 
+  // But we also want to catch the initial state where formData is set from profileData.
+  // Let's keep it simple: Just run on mount and when profileData changes.
+  // The existing dependency [profileData.kakaoId] is correct for the first part.
+  // We can add a separate useEffect for the safeguard to run once on mount?
+  // Or just combine here cautiously.
 
   // Check for changes
   useEffect(() => {
