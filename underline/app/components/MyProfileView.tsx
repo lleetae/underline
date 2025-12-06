@@ -133,10 +133,10 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
       }
       setUserId(user.id);
 
-      // 1. Fetch Member Profile
+      // 1. Optimized: Fetch Member AND Books in one query
       const { data: member, error: memberError } = await supabase
         .from('member')
-        .select('*')
+        .select('*, member_books(*)')
         .eq('auth_id', user.id)
         .single();
 
@@ -147,7 +147,6 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
         const blurredPhotos = member.photo_urls_blurred || [];
         const displayPhotos = blurredPhotos.length > 0 ? blurredPhotos : (member.photos || []);
 
-        // Initial Profile Data (without decrypted Kakao ID)
         setProfileData({
           nickname: member.nickname,
           gender: member.gender,
@@ -158,7 +157,7 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
           smoking: member.smoking,
           drinking: member.drinking,
           bio: member.bio,
-          kakaoId: member.kakao_id, // Keep encrypted initially
+          kakaoId: member.kakao_id,
           profilePhotos: displayPhotos.map((url: string, index: number) => ({
             id: index.toString(),
             url: url,
@@ -169,20 +168,42 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
           hasWelcomeCoupon: member.has_welcome_coupon || false,
         });
 
-        // 2. Parallel Operations: Fetch Books & Decrypt Kakao ID
-        const booksPromise = supabase
-          .from('member_books')
-          .select('*')
-          .eq('member_id', member.id)
-          .order('created_at', { ascending: false });
+        // Map books from the joined query
+        const memberBooks = member.member_books;
+        if (memberBooks) {
+          // Sort client-side since we can't easily order-by in a nested select without complex syntax or RPC
+          // Actually supabase js supports .order() on foreign table?
+          // .select('*, member_books(*)') returns array in arbitrary order usually.
+          // We'll sort by created_at descending in JS.
 
-        // Decrypt Kakao ID in background (not blocking UI)
+          const sortedBooks = memberBooks.sort((a: any, b: any) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+
+          const mappedBooks: Book[] = sortedBooks.map((b: any) => ({
+            id: b.id,
+            title: b.book_title,
+            author: b.book_author || "Unknown",
+            publisher: "",
+            cover: b.book_cover || "",
+            review: b.book_review || "",
+            reviewPreview: (b.book_review || "").split('\n')[0].slice(0, 80) + "...",
+            pageCount: b.page_count || 0,
+            isbn13: b.book_isbn13
+          }));
+          setBooks(mappedBooks);
+        }
+
+        // Decrypt Kakao ID in background
         if (member.kakao_id) {
           (async () => {
             try {
               const { data: { session } } = await supabase.auth.getSession();
               const token = session?.access_token;
 
+              // Optimization: Don't decrypt if we already have it? 
+              // No, we rely on API. 
+              // But this is low priority.
               const response = await fetch('/api/decrypt/kakao', {
                 method: 'POST',
                 headers: {
@@ -200,26 +221,6 @@ export function MyProfileView({ onLogout, onNavigate, selectedBookId }: { onLogo
               console.error("Error decrypting Kakao ID in background:", e);
             }
           })();
-        }
-
-        // Wait for books only
-        const { data: memberBooks, error: booksError } = await booksPromise;
-
-        if (booksError) throw booksError;
-
-        if (memberBooks) {
-          const mappedBooks: Book[] = memberBooks.map(b => ({
-            id: b.id,
-            title: b.book_title,
-            author: b.book_author || "Unknown",
-            publisher: "",
-            cover: b.book_cover || "",
-            review: b.book_review || "",
-            reviewPreview: (b.book_review || "").split('\n')[0].slice(0, 80) + "...",
-            pageCount: b.page_count || 0,
-            isbn13: b.book_isbn13
-          }));
-          setBooks(mappedBooks);
         }
       }
     } catch (error) {

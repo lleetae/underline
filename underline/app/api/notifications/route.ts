@@ -37,6 +37,29 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Parse query params
+        const url = new URL(request.url);
+        const unreadOnly = url.searchParams.get('unread_only') === 'true';
+
+        if (unreadOnly) {
+            console.log(`[API] Fetching unread count only for user: ${user.id}`);
+            const { count, error } = await supabaseAdmin
+                .from('notifications')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', user.id)
+                .eq('is_read', false);
+
+            if (error) {
+                console.error('[API] Error counting unread notifications:', error);
+                return NextResponse.json({ error: 'Failed to count notifications' }, { status: 500 });
+            }
+
+            return NextResponse.json({
+                notifications: [],
+                unreadCount: count || 0
+            });
+        }
+
         // 1. Fetch notifications (using Admin client to ensure no RLS blocking)
         console.log(`[API] Fetching notifications for user: ${user.id}`);
 
@@ -87,7 +110,7 @@ export async function GET(request: Request) {
             sender: n.sender_id ? senderMap.get(n.sender_id) || null : null
         }));
 
-        // Count unread
+        // Count unread (legacy calculation if not using params, but efficient enough for full list)
         const unreadCount = notifications.filter(n => !n.is_read).length;
 
         return NextResponse.json({
