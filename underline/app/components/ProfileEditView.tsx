@@ -188,7 +188,7 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
 
     setIsCheckingNickname(true);
     try {
-      const response = await fetch(`/ api / check - nickname ? nickname = ${encodeURIComponent(formData.nickname)} `);
+      const response = await fetch(`/api/check-nickname?nickname=${encodeURIComponent(formData.nickname)}`);
       const data = await response.json();
 
       if (response.ok && data.available) {
