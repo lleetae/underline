@@ -261,6 +261,9 @@ export function ProfileEditView({ profileData, onBack, onSave }: ProfileEditView
 
           const response = await fetch('/api/upload/photo', {
             method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            },
             body: uploadFormData
           });
 
